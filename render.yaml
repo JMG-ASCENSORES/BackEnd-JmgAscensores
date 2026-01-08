@@ -1,0 +1,44 @@
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: jmg-ascensores-db
+    env: docker
+    plan: free
+    region: oregon
+    databaseName: jmg_ascensores
+    databaseUser: jmg_user
+    ipAllowList: []
+
+  # Web Service (Backend API)
+  - type: web
+    name: jmg-ascensores-api
+    env: node
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_DIALECT
+        value: postgres
+      - key: DB_PORT
+        value: 5432
+      - key: DB_NAME
+        fromDatabase:
+          name: jmg-ascensores-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: jmg-ascensores-db
+          property: user
+      - key: DB_PASS
+        fromDatabase:
+          name: jmg-ascensores-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: jmg-ascensores-db
+          property: host
