@@ -17,13 +17,13 @@ const { loginSchema, refreshSchema } = require('../validators/auth.validator');
  *           schema:
  *             type: object
  *             required:
- *               - identificador
+ *               - dni
  *               - contrasena
  *             properties:
- *               identificador:
+ *               dni:
  *                 type: string
- *                 description: Correo, DNI o Código de Cliente
- *                 example: admin@jmg.com
+ *                 description: DNI del usuario
+ *                 example: 12345678
  *               contrasena:
  *                 type: string
  *                 description: Contraseña del usuario

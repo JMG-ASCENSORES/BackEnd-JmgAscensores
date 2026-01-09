@@ -4,11 +4,11 @@ const { generateAccessToken, generateRefreshToken, verifyToken } = require('../u
 
 /**
  * Authenticate user (Admin or Trabajador)
- * @param {string} identificador - DNI or email
+ * @param {string} dni - DNI
  * @param {string} contrasena - Password
  * @returns {Object} - User data and tokens
  */
-const login = async (identificador, contrasena) => {
+const login = async (dni, contrasena) => {
   let user = null;
   let tipo = null;
   let rol = null;
@@ -16,10 +16,7 @@ const login = async (identificador, contrasena) => {
   // Try to find in Administradores
   user = await Administrador.findOne({
     where: {
-      [require('sequelize').Op.or]: [
-        { dni: identificador },
-        { correo: identificador }
-      ],
+      dni: dni,
       activo: true
     }
   });
@@ -31,10 +28,7 @@ const login = async (identificador, contrasena) => {
     // Try to find in Trabajadores
     user = await Trabajador.findOne({
       where: {
-        [require('sequelize').Op.or]: [
-          { dni: identificador },
-          { correo: identificador }
-        ],
+        dni: dni,
         estado_activo: true
       }
     });
@@ -46,7 +40,7 @@ const login = async (identificador, contrasena) => {
       // Try to find in Clientes
       user = await Cliente.findOne({
         where: {
-          dni: identificador,
+          dni: dni,
           estado_activo: true
         }
       });

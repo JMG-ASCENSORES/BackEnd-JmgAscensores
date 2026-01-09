@@ -1,10 +1,10 @@
 const Joi = require('joi');
 
 const loginSchema = Joi.object({
-  identificador: Joi.string().required()
+  dni: Joi.string().required()
     .messages({
-      'string.empty': 'El identificador (DNI o correo) es requerido',
-      'any.required': 'El identificador (DNI o correo) es requerido'
+      'string.empty': 'El DNI es requerido',
+      'any.required': 'El DNI es requerido'
     }),
   contrasena: Joi.string().required()
     .messages({

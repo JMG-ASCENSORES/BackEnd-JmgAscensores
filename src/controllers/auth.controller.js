@@ -7,9 +7,9 @@ const { successResponse, errorResponse } = require('../utils/response.util');
  */
 const login = async (req, res, next) => {
   try {
-    const { identificador, contrasena } = req.body;
+    const { dni, contrasena } = req.body;
     
-    const result = await authService.login(identificador, contrasena);
+    const result = await authService.login(dni, contrasena);
 
     // Update session with IP and user agent
     const { Sesion } = require('../models');
