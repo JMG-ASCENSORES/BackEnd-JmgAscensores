@@ -7,22 +7,17 @@ const { Op } = require('sequelize');
  * Create a new client
  */
 const createClient = async (data) => {
-  // Generate code
-  let codigo = generateClientCode();
-  let codeExists = await Cliente.findOne({ where: { codigo } });
-  while (codeExists) {
-    codigo = generateClientCode();
-    codeExists = await Cliente.findOne({ where: { codigo } });
-  }
-
   if (data.contra) {
     data.contra = await hashPassword(data.contra);
   }
 
-  const client = await Cliente.create({
-    ...data,
-    codigo
-  });
+  // Check if DNI exists
+  const exists = await Cliente.findOne({ where: { dni: data.dni } });
+  if (exists) {
+    throw new Error('CLIENT_ALREADY_EXISTS'); 
+  }
+
+  const client = await Cliente.create(data);
 
   return client;
 };

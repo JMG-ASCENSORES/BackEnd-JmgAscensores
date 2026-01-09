@@ -10,9 +10,10 @@ const Cliente = sequelize.define('Cliente', {
   tipo_cliente: {
     type: DataTypes.STRING(50)
   },
-  codigo: {
-    type: DataTypes.STRING(50),
-    unique: true
+  dni: {
+    type: DataTypes.STRING(20),
+    unique: true,
+    allowNull: false
   },
   contra: {
     type: DataTypes.STRING(100)

@@ -45,7 +45,7 @@ const seedDatabase = async () => {
       contacto_nombre: 'Admin',
       contacto_apellido: 'Edificio',
       contra: passwordHash, // Password for client login
-      codigo: 'CLI-001' // Fixed code for testing
+      dni: '11223344' // DNI for testing
     });
 
     // 4. Create a sample Ascensor for that client

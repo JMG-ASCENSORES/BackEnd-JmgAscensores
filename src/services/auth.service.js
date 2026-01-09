@@ -46,10 +46,7 @@ const login = async (identificador, contrasena) => {
       // Try to find in Clientes
       user = await Cliente.findOne({
         where: {
-          [require('sequelize').Op.or]: [
-            { codigo: identificador },
-            { contacto_correo: identificador }
-          ],
+          dni: identificador,
           estado_activo: true
         }
       });
@@ -77,7 +74,7 @@ const login = async (identificador, contrasena) => {
   // Generate tokens
   const userPayload = {
     id: tipo === 'administrador' ? user.admin_id : (tipo === 'trabajador' ? user.trabajador_id : user.cliente_id),
-    dni: tipo === 'cliente' ? user.codigo : user.dni, // Use Code for clients
+    dni: user.dni,
     correo: tipo === 'cliente' ? user.contacto_correo : user.correo,
     rol,
     tipo
@@ -169,7 +166,7 @@ const refresh = async (refreshToken) => {
   // Generate new access token
   const userPayload = {
     id: decoded.id,
-    dni: decoded.tipo === 'cliente' ? user.codigo : user.dni,
+    dni: user.dni,
     correo: decoded.tipo === 'cliente' ? user.contacto_correo : user.correo,
     rol,
     tipo: decoded.tipo

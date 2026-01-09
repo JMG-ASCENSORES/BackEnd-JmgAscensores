@@ -1,6 +1,7 @@
 const Joi = require('joi');
 
 const createClientSchema = Joi.object({
+  dni: Joi.string().required().min(8).max(20),
   tipo_cliente: Joi.string().max(50).optional(),
   contra: Joi.string().max(100).optional(),
   ubicacion: Joi.string().max(300).required()
