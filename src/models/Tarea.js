@@ -18,23 +18,15 @@ const Tarea = sequelize.define('Tarea', {
   descripcion_tarea: {
     type: DataTypes.TEXT
   },
-  ubicacion: {
-    type: DataTypes.STRING(300)
-  },
   tipo_tarea: {
     type: DataTypes.STRING(100)
   },
   estado: {
-    type: DataTypes.STRING(50),
-    validate: {
-      isIn: [['pendiente', 'en_proceso', 'completada', 'cancelada']]
-    }
+    type: DataTypes.STRING(50)
   }
 }, {
   tableName: 'Tareas',
-  timestamps: true,
-  createdAt: 'fecha_creacion',
-  updatedAt: false
+  timestamps: false
 });
 
 module.exports = Tarea;

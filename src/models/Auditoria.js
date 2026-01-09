@@ -23,21 +23,6 @@ const Auditoria = sequelize.define('Auditoria', {
       isIn: [['INSERT', 'UPDATE', 'DELETE']]
     }
   },
-  registro_id: {
-    type: DataTypes.INTEGER
-  },
-  valores_anteriores: {
-    type: DataTypes.TEXT
-  },
-  valores_nuevos: {
-    type: DataTypes.TEXT
-  },
-  ip_address: {
-    type: DataTypes.STRING(50)
-  },
-  navegador: {
-    type: DataTypes.STRING(255)
-  },
   fecha_operacion: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW

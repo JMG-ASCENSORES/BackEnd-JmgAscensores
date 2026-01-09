@@ -7,10 +7,6 @@ const Asignacion = sequelize.define('Asignacion', {
     primaryKey: true,
     autoIncrement: true
   },
-  mantenimiento_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false
-  },
   trabajador_id: {
     type: DataTypes.INTEGER,
     allowNull: false
@@ -33,20 +29,7 @@ const Asignacion = sequelize.define('Asignacion', {
     type: DataTypes.DATE
   },
   estado_asignacion: {
-    type: DataTypes.STRING(50),
-    validate: {
-      isIn: [['asignada', 'confirmada', 'en_proceso', 'completada', 'cancelada']]
-    }
-  },
-  confirmado: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
-  },
-  fecha_confirmacion: {
-    type: DataTypes.DATE
-  },
-  observaciones: {
-    type: DataTypes.TEXT
+    type: DataTypes.STRING(50)
   }
 }, {
   tableName: 'Asignaciones',

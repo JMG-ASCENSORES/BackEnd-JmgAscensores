@@ -1,18 +1,47 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
 const { connectDB, sequelize } = require('./config/database');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, '..', process.env.UPLOAD_DIR || 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// CORS Configuration
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || 'http://localhost:4200',
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
 // Middlewares
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files (uploads)
+app.use('/uploads', express.static(uploadsDir));
+
+// Import routes
+const authRoutes = require('./routes/auth.routes');
+const usuarioRoutes = require('./routes/usuarios.routes');
 const clienteRoutes = require('./routes/clienteRoutes');
+const ascensorRoutes = require('./routes/ascensorRoutes');
+const mantenimientoRoutes = require('./routes/mantenimientoRoutes');
+
+// Register routes
+app.use('/api/auth', authRoutes);
+app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/clientes', clienteRoutes);
+app.use('/api/ascensores', ascensorRoutes);
+app.use('/api/mantenimientos', mantenimientoRoutes);
 
 // Swagger Documentation
 const swaggerUi = require('swagger-ui-express');
@@ -21,23 +50,54 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 // Test Route
 app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to JMG Ascensores API' });
+  res.json({ 
+    message: 'Welcome to JMG Ascensores API',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/auth',
+      usuarios: '/api/usuarios',
+      clientes: '/api/clientes',
+      docs: '/api-docs'
+    }
+  });
 });
+
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Endpoint no encontrado',
+    error: 'NOT_FOUND',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Global Error Handler
+const errorHandler = require('./middlewares/errorHandler.middleware');
+app.use(errorHandler);
 
 // Database Connection and Server Startup
 const startServer = async () => {
-  await connectDB();
-  
-  // Sync models (careful with { force: true } in production)
-  await sequelize.sync(); 
+  try {
+    await connectDB();
+    
+    // Sync models (force: false to preserve data)
+    await sequelize.sync({ force: false }); 
 
-  // Seed initial data
-  const seedDatabase = require('./seeders/initialData');
-  await seedDatabase();
+    // Seed initial data (Manual run recommended via init-db script)
+    // const seedDatabase = require('./seeders/initialData');
+    // await seedDatabase();
 
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
+    app.listen(PORT, () => {
+      console.log(`✅ Server is running on port ${PORT}`);
+      console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
+      console.log(`🌍 CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:4200'}`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
 };
 
 startServer();
+

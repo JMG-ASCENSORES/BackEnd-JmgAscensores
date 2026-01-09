@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const clienteController = require('../controllers/clienteController');
+const clientesController = require('../controllers/clientes.controller');
+const authenticate = require('../middlewares/auth.middleware');
+const validate = require('../middlewares/validate.middleware');
+const { createClientSchema, updateClientSchema } = require('../validators/clientes.validator');
 
 /**
  * @swagger
@@ -9,76 +12,51 @@ const clienteController = require('../controllers/clienteController');
  *     Cliente:
  *       type: object
  *       required:
- *         - razon_social
+ *         - tipo_cliente
  *         - ubicacion
  *       properties:
  *         cliente_id:
  *           type: integer
- *           description: Auto-generated ID
- *         razon_social:
+ *           description: ID autogenerado del cliente
+ *         codigo:
  *           type: string
- *           description: Business name
- *         ubicacion:
- *           type: string
- *           description: Location address
+ *           description: Código único del cliente
  *         tipo_cliente:
  *           type: string
- *           enum: [empresa, edificio, otro]
- *       example:
- *         razon_social: Edificio Miraflores
- *         ubicacion: Av. Larco 123
- *         tipo_cliente: edificio
+ *           description: Tipo de cliente (edificio, empresa, residencial)
+ *         ubicacion:
+ *           type: string
+ *           description: Dirección del cliente
+ *         telefono:
+ *           type: string
+ *           description: Teléfono de contacto
+ *         contacto_nombre:
+ *           type: string
+ *           description: Nombre del contacto principal
  */
 
 /**
  * @swagger
  * /api/clientes:
  *   get:
- *     summary: Returns the list of all clients
+ *     summary: Obtener todos los clientes
  *     tags: [Clientes]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: The list of clients
+ *         description: Lista de clientes
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Cliente'
- */
-router.get('/', clienteController.getAllClientes);
-
-/**
- * @swagger
- * /api/clientes/{id}:
- *   get:
- *     summary: Get a client by ID
- *     tags: [Clientes]
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: integer
- *         required: true
- *         description: The client ID
- *     responses:
- *       200:
- *         description: The client description
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Cliente'
- *       404:
- *         description: Client not found
- */
-router.get('/:id', clienteController.getClienteById);
-
-/**
- * @swagger
- * /api/clientes:
  *   post:
- *     summary: Create a new client
+ *     summary: Crear un nuevo cliente
  *     tags: [Clientes]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -87,17 +65,17 @@ router.get('/:id', clienteController.getClienteById);
  *             $ref: '#/components/schemas/Cliente'
  *     responses:
  *       201:
- *         description: The client was successfully created
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Cliente'
- *       500:
- *         description: Some server error
+ *         description: Cliente creado exitosamente
  */
-router.post('/', clienteController.createCliente);
-router.put('/:id', clienteController.updateCliente);
-router.delete('/:id', clienteController.deleteCliente);
 
+// Protected routes (Require Auth)
+router.use(authenticate);
+
+router.post('/', validate(createClientSchema), clientesController.createClient);
+router.get('/', clientesController.getClients);
+router.get('/:id', clientesController.getClientById);
+router.put('/:id', validate(updateClientSchema), clientesController.updateClient);
+router.delete('/:id', clientesController.deleteClient);
+router.get('/:id/ascensores', clientesController.getClientAscensores);
 
 module.exports = router;

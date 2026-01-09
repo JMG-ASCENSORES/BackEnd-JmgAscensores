@@ -38,10 +38,6 @@ Mantenimiento.hasMany(Tarea, { foreignKey: 'mantenimiento_id' });
 Tarea.belongsTo(Mantenimiento, { foreignKey: 'mantenimiento_id' });
 
 // 5. Asignaciones Relationships
-// Mantenimiento <-> Asignacion
-Mantenimiento.hasMany(Asignacion, { foreignKey: 'mantenimiento_id' });
-Asignacion.belongsTo(Mantenimiento, { foreignKey: 'mantenimiento_id' });
-
 // Trabajador <-> Asignacion
 Trabajador.hasMany(Asignacion, { foreignKey: 'trabajador_id' });
 Asignacion.belongsTo(Trabajador, { foreignKey: 'trabajador_id' });
@@ -55,10 +51,6 @@ Cliente.hasMany(Asignacion, { foreignKey: 'cliente_id' });
 Asignacion.belongsTo(Cliente, { foreignKey: 'cliente_id' });
 
 // 6. Informes Relationships
-// Mantenimiento <-> Informe
-Mantenimiento.hasMany(Informe, { foreignKey: 'mantenimiento_id' });
-Informe.belongsTo(Mantenimiento, { foreignKey: 'mantenimiento_id' });
-
 // Asignacion <-> Informe
 Asignacion.hasMany(Informe, { foreignKey: 'asignacion_id' });
 Informe.belongsTo(Asignacion, { foreignKey: 'asignacion_id' });
@@ -75,10 +67,6 @@ Informe.belongsTo(Cliente, { foreignKey: 'cliente_id' });
 Ascensor.hasMany(Informe, { foreignKey: 'ascensor_id' });
 Informe.belongsTo(Ascensor, { foreignKey: 'ascensor_id' });
 
-// Admin <-> Informe (Approved By)
-Administrador.hasMany(Informe, { foreignKey: 'aprobado_por', as: 'InformesAprobados' });
-Informe.belongsTo(Administrador, { foreignKey: 'aprobado_por', as: 'Aprobador' });
-
 // 7. Evidencias
 Informe.hasMany(Evidencia, { foreignKey: 'informe_id' });
 Evidencia.belongsTo(Informe, { foreignKey: 'informe_id' });
@@ -90,9 +78,6 @@ RutaDiaria.belongsTo(Trabajador, { foreignKey: 'trabajador_id' });
 // 9. Detalle Ruta
 RutaDiaria.hasMany(DetalleRuta, { foreignKey: 'ruta_id' });
 DetalleRuta.belongsTo(RutaDiaria, { foreignKey: 'ruta_id' });
-
-Mantenimiento.hasMany(DetalleRuta, { foreignKey: 'mantenimiento_id' });
-DetalleRuta.belongsTo(Mantenimiento, { foreignKey: 'mantenimiento_id' });
 
 Cliente.hasMany(DetalleRuta, { foreignKey: 'cliente_id' });
 DetalleRuta.belongsTo(Cliente, { foreignKey: 'cliente_id' });

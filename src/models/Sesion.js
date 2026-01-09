@@ -15,28 +15,6 @@ const Sesion = sequelize.define('Sesion', {
   },
   token_jwt: {
     type: DataTypes.TEXT
-  },
-  ip_address: {
-    type: DataTypes.STRING(50)
-  },
-  navegador: {
-    type: DataTypes.STRING(255)
-  },
-  dispositivo: {
-    type: DataTypes.STRING(100)
-  },
-  fecha_inicio: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW
-  },
-  fecha_fin: {
-    type: DataTypes.DATE
-  },
-  estado_sesion: {
-    type: DataTypes.STRING(50),
-    validate: {
-      isIn: [['activa', 'cerrada', 'expirada']]
-    }
   }
 }, {
   tableName: 'Sesiones',

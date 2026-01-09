@@ -8,14 +8,10 @@ const Ascensor = sequelize.define('Ascensor', {
     autoIncrement: true
   },
   cliente_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false
+    type: DataTypes.INTEGER
   },
   tipo_equipo: {
-    type: DataTypes.STRING(50),
-    validate: {
-      isIn: [['ascensor', 'plataforma', 'escalera']]
-    }
+    type: DataTypes.STRING(50)
   },
   marca: {
     type: DataTypes.STRING(100)
@@ -30,34 +26,17 @@ const Ascensor = sequelize.define('Ascensor', {
   capacidad: {
     type: DataTypes.STRING(100)
   },
-  piso_ubicacion: {
+  piso_cantidad: {
     type: DataTypes.INTEGER
-  },
-  designar_ubicacion: {
-    type: DataTypes.STRING(300)
-  },
-  numero_registro: {
-    type: DataTypes.STRING(50),
-    unique: true
-  },
-  fecha_instalacion: {
-    type: DataTypes.DATEONLY
   },
   fecha_ultimo_mantenimiento: {
     type: DataTypes.DATEONLY
   },
   estado: {
-    type: DataTypes.STRING(50),
-    validate: {
-      isIn: [['activo', 'inactivo', 'mantenimiento', 'fuera_servicio']]
-    }
+    type: DataTypes.STRING(50)
   },
   observaciones: {
     type: DataTypes.TEXT
-  },
-  activo: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true
   }
 }, {
   tableName: 'Ascensores',

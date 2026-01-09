@@ -26,39 +26,13 @@ const Notificacion = sequelize.define('Notificacion', {
     allowNull: false
   },
   canal_envio: {
-    type: DataTypes.STRING(50),
-    validate: {
-      isIn: [['whatsapp', 'email', 'sms', 'notificacion_app']]
-    }
+    type: DataTypes.STRING(50)
   },
   numero_telefono: {
     type: DataTypes.STRING(20)
   },
   correo_destino: {
     type: DataTypes.STRING(100)
-  },
-  leida: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
-  },
-  fecha_lectura: {
-    type: DataTypes.DATE
-  },
-  fecha_envio: {
-    type: DataTypes.DATE
-  },
-  estado_envio: {
-    type: DataTypes.STRING(50),
-    validate: {
-      isIn: [['pendiente', 'enviado', 'fallido', 'entregado']]
-    }
-  },
-  intento_envio: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0
-  },
-  motivo_fallo: {
-    type: DataTypes.STRING(255)
   }
 }, {
   tableName: 'Notificaciones',

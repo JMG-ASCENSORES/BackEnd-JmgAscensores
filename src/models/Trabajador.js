@@ -12,10 +12,6 @@ const Trabajador = sequelize.define('Trabajador', {
     allowNull: false,
     unique: true
   },
-  codigo: {
-    type: DataTypes.STRING(20),
-    unique: true
-  },
   nombre: {
     type: DataTypes.STRING(50),
     allowNull: false
@@ -38,9 +34,6 @@ const Trabajador = sequelize.define('Trabajador', {
   contrasena_hash: {
     type: DataTypes.STRING(255),
     allowNull: false
-  },
-  fecha_contrato: {
-    type: DataTypes.DATEONLY
   },
   especialidad: {
     type: DataTypes.STRING(100)

@@ -27,9 +27,6 @@ const Evidencia = sequelize.define('Evidencia', {
   descripcion: {
     type: DataTypes.STRING(300)
   },
-  orden: {
-    type: DataTypes.INTEGER
-  },
   fecha_carga: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW

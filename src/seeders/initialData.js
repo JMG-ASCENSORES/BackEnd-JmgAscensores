@@ -1,4 +1,5 @@
 const { Cliente, Ascensor, Trabajador, Administrador } = require('../models');
+const { hashPassword } = require('../utils/password.util');
 
 const seedDatabase = async () => {
   try {
@@ -10,6 +11,9 @@ const seedDatabase = async () => {
     }
 
     console.log('Seeding database...');
+    
+    // Create a common password for testing
+    const passwordHash = await hashPassword('123456');
 
     // 1. Create a sample Admin
     await Administrador.create({
@@ -17,7 +21,8 @@ const seedDatabase = async () => {
       nombre: 'Admin',
       apellido: 'Principal',
       correo: 'admin@jmg.com',
-      contrasena_hash: 'hashed_password_here', // In a real app, use bcrypt
+      contrasena_hash: passwordHash,
+      activo: true
     });
 
     // 2. Create a sample Trabajador
@@ -26,17 +31,21 @@ const seedDatabase = async () => {
       nombre: 'Juan',
       apellido: 'Perez',
       correo: 'juan.perez@jmg.com',
-      contrasena_hash: 'hashed_password_here',
+      contrasena_hash: passwordHash,
       especialidad: 'Mantenimiento preventivo',
+      estado_activo: true
     });
 
     // 3. Create a sample Cliente
     const cliente = await Cliente.create({
-      razon_social: 'Edificio Los Alamos',
       tipo_cliente: 'edificio',
       ubicacion: 'Av. Las Gardenias 456, Lima',
-      correo_contacto: 'contacto@losalamos.com',
-      telefono: '999888777'
+      contacto_correo: 'contacto@losalamos.com',
+      telefono: '999888777',
+      contacto_nombre: 'Admin',
+      contacto_apellido: 'Edificio',
+      contra: passwordHash, // Password for client login
+      codigo: 'CLI-001' // Fixed code for testing
     });
 
     // 4. Create a sample Ascensor for that client
@@ -46,7 +55,8 @@ const seedDatabase = async () => {
       marca: 'Schindler',
       modelo: 'S3300',
       numero_serie: 'SN-12345',
-      estado: 'activo'
+      estado: 'activo',
+      piso_cantidad: 10
     });
 
     console.log('Database seeded successfully!');

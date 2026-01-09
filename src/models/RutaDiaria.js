@@ -24,17 +24,8 @@ const RutaDiaria = sequelize.define('RutaDiaria', {
   hora_fin: {
     type: DataTypes.TIME
   },
-  distancia_estimada: {
-    type: DataTypes.FLOAT
-  },
   estado_ruta: {
-    type: DataTypes.STRING(50),
-    validate: {
-      isIn: [['planificada', 'en_proceso', 'completada', 'cancelada']]
-    }
-  },
-  observaciones: {
-    type: DataTypes.TEXT
+    type: DataTypes.STRING(50)
   }
 }, {
   tableName: 'RutasDiarias',

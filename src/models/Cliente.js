@@ -7,15 +7,8 @@ const Cliente = sequelize.define('Cliente', {
     primaryKey: true,
     autoIncrement: true
   },
-  razon_social: {
-    type: DataTypes.STRING(200),
-    allowNull: false
-  },
   tipo_cliente: {
-    type: DataTypes.STRING(50),
-    validate: {
-      isIn: [['empresa', 'edificio', 'otro']]
-    }
+    type: DataTypes.STRING(50)
   },
   codigo: {
     type: DataTypes.STRING(50),
@@ -25,22 +18,18 @@ const Cliente = sequelize.define('Cliente', {
     type: DataTypes.STRING(100)
   },
   ubicacion: {
-    type: DataTypes.STRING(300),
-    allowNull: false
+    type: DataTypes.STRING(300)
   },
   ciudad: {
     type: DataTypes.STRING(100)
   },
-  provincia: {
+  distrito: {
     type: DataTypes.STRING(100)
-  },
-  codigo_postal: {
-    type: DataTypes.STRING(10)
   },
   telefono: {
     type: DataTypes.STRING(20)
   },
-  correo_contacto: {
+  contacto_correo: {
     type: DataTypes.STRING(100)
   },
   contacto_nombre: {
@@ -51,13 +40,6 @@ const Cliente = sequelize.define('Cliente', {
   },
   contacto_telefono: {
     type: DataTypes.STRING(20)
-  },
-  ruc_cedula: {
-    type: DataTypes.STRING(20)
-  },
-  fecha_registro: {
-    type: DataTypes.DATEONLY,
-    defaultValue: DataTypes.NOW
   },
   estado_activo: {
     type: DataTypes.BOOLEAN,

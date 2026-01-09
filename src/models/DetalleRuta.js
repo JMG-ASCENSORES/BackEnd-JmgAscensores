@@ -11,30 +11,10 @@ const DetalleRuta = sequelize.define('DetalleRuta', {
     type: DataTypes.INTEGER,
     allowNull: false
   },
-  mantenimiento_id: {
-    type: DataTypes.INTEGER
-  },
-  orden_parada: {
-    type: DataTypes.INTEGER
-  },
-  cliente_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false
-  },
-  ascensor_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false
-  },
-  hora_llegada_estimada: {
+  hora_llegada: {
     type: DataTypes.TIME
   },
-  hora_llegada_real: {
-    type: DataTypes.TIME
-  },
-  hora_fin_estimada: {
-    type: DataTypes.TIME
-  },
-  hora_fin_real: {
+  hora_salida: {
     type: DataTypes.TIME
   },
   ubicacion_gps_llegada: {
@@ -42,15 +22,6 @@ const DetalleRuta = sequelize.define('DetalleRuta', {
   },
   ubicacion_gps_salida: {
     type: DataTypes.STRING(100)
-  },
-  estado_parada: {
-    type: DataTypes.STRING(50),
-    validate: {
-      isIn: [['pendiente', 'en_proceso', 'completada', 'cancelada']]
-    }
-  },
-  observaciones: {
-    type: DataTypes.TEXT
   }
 }, {
   tableName: 'DetalleRuta',

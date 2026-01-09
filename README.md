@@ -1,166 +1,343 @@
-# Backend JMG Ascensores API
+# JMG Ascensores - Backend API
 
-API REST para el sistema de gestión de JMG Ascensores, desarrollada con Node.js, Express y PostgreSQL.
+Sistema de gestión de mantenimientos de ascensores desarrollado con Node.js, Express y PostgreSQL.
 
-## 🚀 Tecnologías
+## 🚀 Características Implementadas
 
-- **Node.js** - Runtime de JavaScript
-- **Express** - Framework web
-- **PostgreSQL** - Base de datos relacional
-- **Sequelize** - ORM para PostgreSQL
-- **Swagger** - Documentación de API
-- **CORS** - Manejo de peticiones cross-origin
+### ✅ Autenticación JWT
+
+- Login para Administradores y Técnicos
+- Refresh tokens con expiración de 7 días
+- Logout con invalidación de sesión
+- Protección de rutas con middleware
+
+### ✅ Gestión de Usuarios (Técnicos)
+
+- CRUD completo (solo Admin)
+- Filtrado por especialidad
+- Ordenamiento por carga de trabajo
+- Soft delete para preservar historial
+- Validación de DNI y correo únicos
+
+### ✅ Infraestructura
+
+- Middlewares de autenticación y autorización
+- Validación de datos con Joi
+- Manejo global de errores
+- Utilidades para JWT, passwords y códigos únicos
+- CORS configurado para Angular
 
 ## 📋 Requisitos Previos
 
-- Node.js 14+
+- Node.js 18+
 - PostgreSQL 12+
 - npm o yarn
 
-## 🔧 Instalación Local
+## 🔧 Instalación
 
-### 1. Clonar el repositorio
+1. **Clonar el repositorio**
 
 ```bash
-git clone https://github.com/TU-USUARIO/Back---JMG.git
 cd Back---JMG
 ```
 
-### 2. Instalar dependencias
+2. **Instalar dependencias**
 
 ```bash
 npm install
 ```
 
-### 3. Configurar variables de entorno
-
-Crea un archivo `.env` en la raíz del proyecto basándote en `.env.example`:
+Si hay problemas con npm, instalar manualmente:
 
 ```bash
-cp .env.example .env
+npm install bcryptjs jsonwebtoken joi multer axios pdfkit express-rate-limit
+npm install @anthropic-ai/sdk twilio
 ```
 
-Edita el archivo `.env` con tus credenciales:
+3. **Configurar variables de entorno**
 
-```env
+Copiar `.env.example` a `.env` y configurar:
+
+```bash
+# Database
 DB_NAME=jmg_ascensores
-DB_USER=tu_usuario
-DB_PASS=tu_contraseña
+DB_USER=postgres
+DB_PASS=tu_password
 DB_HOST=localhost
-DB_DIALECT=postgres
 DB_PORT=5432
+
+# JWT
+JWT_SECRET=tu_clave_secreta_muy_segura
+JWT_REFRESH_SECRET=tu_clave_refresh_muy_segura
+JWT_EXPIRES_IN=1h
+JWT_REFRESH_EXPIRES_IN=7d
+
+# CORS
+CORS_ORIGIN=http://localhost:4200
+
+# Server
 PORT=3000
 NODE_ENV=development
 ```
 
-### 4. Crear la base de datos
+4. **Crear base de datos**
 
-```bash
-# Accede a PostgreSQL
-psql -U postgres
-
-# Crea la base de datos
+```sql
 CREATE DATABASE jmg_ascensores;
-
-# Sal de PostgreSQL
-\q
 ```
 
-### 5. Iniciar el servidor
-
-**Modo desarrollo (con auto-reload):**
+5. **Iniciar servidor**
 
 ```bash
+# Desarrollo
 npm run dev
-```
 
-**Modo producción:**
-
-```bash
+# Producción
 npm start
 ```
 
-El servidor estará corriendo en `http://localhost:3000`
+## 📚 API Endpoints
 
-## 📚 Documentación de la API
+### Autenticación
 
-Una vez que el servidor esté corriendo, accede a la documentación interactiva de Swagger:
+#### Login
 
-```
-http://localhost:3000/api-docs
-```
+```http
+POST /api/auth/login
+Content-Type: application/json
 
-## 🌐 Endpoints Principales
-
-### Raíz
-
-```
-GET /
+{
+  "identificador": "12345678",  // DNI o correo
+  "contrasena": "password123"
+}
 ```
 
-Retorna un mensaje de bienvenida.
+**Respuesta:**
 
-### Clientes
+```json
+{
+  "success": true,
+  "message": "Inicio de sesión exitoso",
+  "data": {
+    "user": {
+      "id": 1,
+      "dni": "12345678",
+      "nombre": "Juan",
+      "apellido": "Pérez",
+      "correo": "juan@example.com",
+      "rol": "ADMIN",
+      "tipo": "administrador"
+    },
+    "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+  }
+}
+```
+
+#### Refresh Token
+
+```http
+POST /api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+}
+```
+
+#### Logout
+
+```http
+POST /api/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+}
+```
+
+### Usuarios (Técnicos)
+
+**Nota:** Todos los endpoints requieren autenticación. Agregar header:
 
 ```
-GET    /api/clientes       - Obtener todos los clientes
-GET    /api/clientes/:id   - Obtener un cliente por ID
-POST   /api/clientes       - Crear un nuevo cliente
-PUT    /api/clientes/:id   - Actualizar un cliente
-DELETE /api/clientes/:id   - Eliminar un cliente
+Authorization: Bearer {accessToken}
 ```
 
-## 🚀 Despliegue en Producción
+#### Crear Usuario (Admin only)
 
-Para desplegar esta API en Render (o cualquier otro servicio), consulta la guía detallada:
+```http
+POST /api/usuarios
+Content-Type: application/json
+Authorization: Bearer {token}
 
-📖 **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Guía completa de despliegue en Render
+{
+  "dni": "87654321",
+  "nombre": "Carlos",
+  "apellido": "García",
+  "edad": 30,
+  "correo": "carlos@example.com",
+  "telefono": "987654321",
+  "contrasena": "password123",
+  "especialidad": "Ascensores",
+  "fecha_contrato": "2024-01-15"
+}
+```
 
-## 📁 Estructura del Proyecto
+#### Listar Usuarios (Admin only)
+
+```http
+GET /api/usuarios
+Authorization: Bearer {token}
+
+# Con filtros
+GET /api/usuarios?especialidad=Ascensores&estado_activo=true
+```
+
+#### Obtener Usuario por ID
+
+```http
+GET /api/usuarios/1
+Authorization: Bearer {token}
+```
+
+#### Actualizar Usuario (Admin only)
+
+```http
+PUT /api/usuarios/1
+Content-Type: application/json
+Authorization: Bearer {token}
+
+{
+  "nombre": "Carlos Actualizado",
+  "telefono": "999888777"
+}
+```
+
+#### Eliminar Usuario (Admin only)
+
+```http
+DELETE /api/usuarios/1
+Authorization: Bearer {token}
+```
+
+#### Filtrar por Especialidad (Admin only)
+
+```http
+GET /api/usuarios/especialidad/Ascensores
+Authorization: Bearer {token}
+```
+
+#### Ordenar por Carga de Trabajo (Admin only)
+
+```http
+GET /api/usuarios/carga-trabajo
+Authorization: Bearer {token}
+```
+
+## 🗂️ Estructura del Proyecto
 
 ```
 Back---JMG/
 ├── src/
 │   ├── config/
-│   │   ├── database.js      # Configuración de Sequelize
-│   │   └── swagger.js       # Configuración de Swagger
+│   │   ├── database.js          # Configuración de Sequelize
+│   │   └── swagger.js           # Configuración de Swagger
 │   ├── controllers/
-│   │   └── clienteController.js
+│   │   ├── auth.controller.js   # Controlador de autenticación
+│   │   └── usuarios.controller.js
+│   ├── middlewares/
+│   │   ├── auth.middleware.js   # Verificación de JWT
+│   │   ├── authorize.middleware.js  # Control de roles
+│   │   ├── validate.middleware.js   # Validación con Joi
+│   │   └── errorHandler.middleware.js
 │   ├── models/
-│   │   └── Cliente.js
+│   │   ├── Administrador.js
+│   │   ├── Trabajador.js
+│   │   ├── Cliente.js
+│   │   ├── Ascensor.js
+│   │   ├── Mantenimiento.js
+│   │   ├── Sesion.js
+│   │   └── ... (14 modelos en total)
 │   ├── routes/
+│   │   ├── auth.routes.js
+│   │   ├── usuarios.routes.js
 │   │   └── clienteRoutes.js
+│   ├── services/
+│   │   ├── auth.service.js      # Lógica de negocio de auth
+│   │   └── usuarios.service.js
+│   ├── utils/
+│   │   ├── jwt.util.js          # Generación y verificación de JWT
+│   │   ├── password.util.js     # Hash y comparación de passwords
+│   │   ├── response.util.js     # Formateadores de respuesta
+│   │   └── codeGenerator.util.js
+│   ├── validators/
+│   │   ├── auth.validator.js    # Esquemas Joi para auth
+│   │   └── usuarios.validator.js
 │   ├── seeders/
-│   │   └── initialData.js   # Datos iniciales
-│   └── app.js               # Punto de entrada
-├── .env.example             # Ejemplo de variables de entorno
+│   │   └── initialData.js       # Datos iniciales
+│   └── app.js                   # Punto de entrada
+├── .env.example
 ├── .gitignore
 ├── package.json
-├── render.yaml              # Configuración para Render
-├── DEPLOYMENT.md            # Guía de despliegue
 └── README.md
 ```
 
-## 🤝 Contribuir
+## 🔐 Roles y Permisos
 
-1. Haz fork del proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Haz commit de tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Haz push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+### ADMIN (Administrador)
 
-## 👥 Equipo
+- Acceso completo a todos los endpoints
+- Crear, editar y eliminar técnicos
+- Gestionar clientes y equipos
+- Ver auditoría completa
 
-Este proyecto está siendo desarrollado por múltiples colaboradores para JMG Ascensores.
+### TECNICO (Trabajador)
 
-## 📝 Licencia
+- Ver su propio perfil
+- Ver sus trabajos asignados
+- Registrar informes de mantenimiento
+- Actualizar rutas diarias
 
-ISC
+## 🛡️ Seguridad
+
+- ✅ Passwords hasheados con bcrypt (10 rounds)
+- ✅ JWT con expiración configurable
+- ✅ Refresh tokens para renovación segura
+- ✅ CORS configurado para Angular
+- ✅ Validación de entrada con Joi
+- ✅ Protección contra inyección SQL (Sequelize)
+- ✅ Manejo seguro de errores
+
+## 📝 Próximos Pasos
+
+- [ ] Implementar CRUD de Clientes
+- [ ] Implementar CRUD de Equipos (Ascensores)
+- [ ] Implementar gestión de Mantenimientos
+- [ ] Implementar sistema de Informes con PDF
+- [ ] Integrar Claude AI para sugerencias
+- [ ] Integrar Twilio para notificaciones
+- [ ] Implementar auditoría automática
+
+## 🐛 Troubleshooting
+
+### Error de conexión a la base de datos
+
+Verificar que PostgreSQL esté corriendo y las credenciales en `.env` sean correctas.
+
+### Error "Token inválido"
+
+El token puede haber expirado. Usar el endpoint `/api/auth/refresh` para renovarlo.
+
+### Error "DNI ya existe"
+
+El DNI debe ser único. Verificar que no exista otro usuario con el mismo DNI.
 
 ## 📞 Soporte
 
-Para preguntas o problemas, por favor abre un issue en el repositorio de GitHub.
+Para problemas o consultas, contactar al equipo de desarrollo.
 
 ---
 
-**Desarrollado con ❤️ para JMG Ascensores**
+**Versión:** 1.0.0  
+**Última actualización:** Enero 2026
