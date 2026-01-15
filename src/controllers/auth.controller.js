@@ -24,29 +24,14 @@ const login = async (req, res, next) => {
     );
 
 
-    // Set cookies with tokens
-    const isProduction = process.env.NODE_ENV === 'production';
-    
-    // Access Token cookie (1 hour)
-    res.cookie('accessToken', result.accessToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: 'strict',
-      maxAge: 60 * 60 * 1000 // 1 hour
-    });
-
-    // Refresh Token cookie (depends on user type, set in service)
-    res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: 'strict',
-      maxAge: result.user.rol === 'ADMIN' ? 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000 // 1h for admin, 7d for others
-    });
-
-    // Send response without tokens (they're in cookies now)
+    // Send response with tokens
     res.status(200).json(
       successResponse(
-        { user: result.user },
+        { 
+          user: result.user,
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken
+        },
         'Inicio de sesión exitoso'
       )
     );
@@ -99,16 +84,11 @@ const refreshToken = async (req, res, next) => {
  */
 const logout = async (req, res, next) => {
   try {
-    // Get refresh token from cookie or body (backwards compatibility)
-    const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
+    const { refreshToken } = req.body;
     
     if (refreshToken) {
       await authService.logout(refreshToken);
     }
-
-    // Clear cookies
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
 
     res.status(200).json(
       successResponse(null, 'Sesión cerrada exitosamente')
