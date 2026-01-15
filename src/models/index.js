@@ -16,6 +16,7 @@ const Auditoria = require('./Auditoria');
 const Sesion = require('./Sesion');
 const HistorialEstadoMantenimiento = require('./HistorialEstadoMantenimiento');
 const Configuracion = require('./Configuracion');
+const Programacion = require('./Programacion');
 
 // ============================================
 // ASSOCIATIONS
@@ -113,6 +114,13 @@ HistorialEstadoMantenimiento.belongsTo(Mantenimiento, { foreignKey: 'mantenimien
 Administrador.hasMany(HistorialEstadoMantenimiento, { foreignKey: 'cambio_realizado_por' });
 HistorialEstadoMantenimiento.belongsTo(Administrador, { foreignKey: 'cambio_realizado_por' });
 
+// 14. Programaciones
+Programacion.belongsTo(Trabajador, { foreignKey: 'trabajador_id' });
+Trabajador.hasMany(Programacion, { foreignKey: 'trabajador_id' });
+
+Programacion.belongsTo(Cliente, { foreignKey: 'cliente_id' });
+Cliente.hasMany(Programacion, { foreignKey: 'cliente_id' });
+
 module.exports = {
   sequelize,
   Administrador,
@@ -130,5 +138,6 @@ module.exports = {
   Auditoria,
   Sesion,
   HistorialEstadoMantenimiento,
-  Configuracion
+  Configuracion,
+  Programacion
 };
