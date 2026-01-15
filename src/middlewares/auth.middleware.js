@@ -6,16 +6,22 @@ const { errorResponse } = require('../utils/response.util');
  */
 const authenticate = async (req, res, next) => {
   try {
-    // Get token from header
-    const authHeader = req.headers.authorization;
+    let token;
+
+    // Try to get token from cookie first (preferred method)
+    if (req.cookies && req.cookies.accessToken) {
+      token = req.cookies.accessToken;
+    } 
+    // Fall back to Authorization header (backwards compatibility)
+    else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      token = req.headers.authorization.substring(7); // Remove 'Bearer ' prefix
+    }
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
       return res.status(401).json(
         errorResponse('No se proporcionó token de autenticación', 'NO_TOKEN')
       );
     }
-
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
     // Verify token
     const decoded = verifyToken(token);

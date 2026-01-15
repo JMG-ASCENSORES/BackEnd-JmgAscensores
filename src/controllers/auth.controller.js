@@ -23,8 +23,32 @@ const login = async (req, res, next) => {
       }
     );
 
+
+    // Set cookies with tokens
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    // Access Token cookie (1 hour)
+    res.cookie('accessToken', result.accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 1000 // 1 hour
+    });
+
+    // Refresh Token cookie (depends on user type, set in service)
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'strict',
+      maxAge: result.user.rol === 'ADMIN' ? 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000 // 1h for admin, 7d for others
+    });
+
+    // Send response without tokens (they're in cookies now)
     res.status(200).json(
-      successResponse(result, 'Inicio de sesión exitoso')
+      successResponse(
+        { user: result.user },
+        'Inicio de sesión exitoso'
+      )
     );
   } catch (error) {
     if (error.message === 'INVALID_CREDENTIALS') {
@@ -75,9 +99,16 @@ const refreshToken = async (req, res, next) => {
  */
 const logout = async (req, res, next) => {
   try {
-    const { refreshToken } = req.body;
+    // Get refresh token from cookie or body (backwards compatibility)
+    const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
     
-    await authService.logout(refreshToken);
+    if (refreshToken) {
+      await authService.logout(refreshToken);
+    }
+
+    // Clear cookies
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
 
     res.status(200).json(
       successResponse(null, 'Sesión cerrada exitosamente')

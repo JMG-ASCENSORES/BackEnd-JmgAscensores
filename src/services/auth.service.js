@@ -77,12 +77,16 @@ const login = async (dni, contrasena) => {
   const accessToken = generateAccessToken(userPayload);
   const refreshToken = generateRefreshToken(userPayload);
 
-  // Create session
+  // Create session with expiration based on user type
+  const sessionExpiration = tipo === 'administrador' 
+    ? 60 * 60 * 1000 // 1 hour for administrators
+    : 7 * 24 * 60 * 60 * 1000; // 7 days for technicians and clients
+
   const sessionData = {
     token: refreshToken,
     ip_address: null, // Will be set in controller
     user_agent: null, // Will be set in controller
-    expira_en: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+    expira_en: new Date(Date.now() + sessionExpiration)
   };
 
   if (tipo === 'administrador') {
