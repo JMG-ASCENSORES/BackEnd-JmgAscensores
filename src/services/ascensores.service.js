@@ -30,7 +30,7 @@ const getAscensores = async (filters = {}) => {
     where,
     include: [{
       model: Cliente,
-      attributes: ['cliente_id', 'codigo', 'tipo_cliente', 'ubicacion']
+      attributes: ['cliente_id', 'tipo_cliente', 'ubicacion']
     }],
     order: [['fecha_creacion', 'DESC']]
   });
@@ -43,7 +43,7 @@ const getAscensorById = async (id) => {
   const ascensor = await Ascensor.findByPk(id, {
     include: [{
       model: Cliente,
-      attributes: ['cliente_id', 'codigo', 'tipo_cliente', 'ubicacion', 'telefono']
+      attributes: ['cliente_id', 'tipo_cliente', 'ubicacion', 'telefono']
     }]
   });
   if (!ascensor) throw new Error('ASCENSOR_NOT_FOUND');
