@@ -1,6 +1,5 @@
 const { Trabajador, Asignacion } = require('../models');
 const { hashPassword } = require('../utils/password.util');
-const { generateWorkerCode } = require('../utils/codeGenerator.util');
 const { Op } = require('sequelize');
 
 /**
@@ -24,18 +23,9 @@ const createUser = async (userData) => {
   // Hash password
   const contrasena_hash = await hashPassword(userData.contrasena);
 
-  // Generate unique code
-  let codigo = generateWorkerCode();
-  let codeExists = await Trabajador.findOne({ where: { codigo } });
-  while (codeExists) {
-    codigo = generateWorkerCode();
-    codeExists = await Trabajador.findOne({ where: { codigo } });
-  }
-
   // Create user
   const user = await Trabajador.create({
     ...userData,
-    codigo,
     contrasena_hash,
     contrasena: undefined // Remove plain password
   });
