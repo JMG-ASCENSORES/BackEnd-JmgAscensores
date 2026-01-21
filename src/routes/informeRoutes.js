@@ -20,7 +20,7 @@ router.use(authenticate);
  *           type: integer
  *         tipo_informe:
  *           type: string
- *           enum: [tecnico, incidencia, rutina]
+ *           enum: [Técnico, Mantenimiento]
  *         descripcion:
  *           type: string
  *         fecha_informe:

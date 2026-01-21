@@ -6,7 +6,7 @@ const createInforme = async (data) => {
 
 const getInformes = async () => {
   return await Informe.findAll({
-    include: ['Mantenimiento', 'Cliente'], // Assuming associations exist
+    include: ['Cliente', 'Trabajador'], // Updated to use valid associations. 'Mantenimiento' association does not exist on Informe.
     order: [['fecha_informe', 'DESC']]
   });
 };
