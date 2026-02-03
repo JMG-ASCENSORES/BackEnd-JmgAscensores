@@ -80,9 +80,15 @@ const generateReportPDF = (reportData, res) => {
         currentY += 18;
     };
 
-    drawRow('Cliente:', reportData.Cliente?.nombre_comercial);
-    drawRow('Dirección:', reportData.Cliente?.direccion);
-    drawRow('Contacto:', reportData.Cliente?.contacto_nombre);
+    const clientName = reportData.Cliente?.nombre_comercial 
+                    || `${reportData.Cliente?.contacto_nombre || ''} ${reportData.Cliente?.contacto_apellido || ''}`.trim() 
+                    || 'Cliente General';
+
+    const contactName = `${reportData.Cliente?.contacto_nombre || ''} ${reportData.Cliente?.contacto_apellido || ''}`.trim() || 'N/A';
+
+    drawRow('Cliente:', clientName);
+    drawRow('Dirección:', reportData.Cliente?.direccion || reportData.Cliente?.ubicacion || 'No registrada');
+    drawRow('Contacto:', contactName);
     drawRow('Técnico:', `${reportData.Trabajador?.nombre || ''} ${reportData.Trabajador?.apellido || ''}`);
 
     // --- SECCIÓN: DETALLES DEL TRABAJO ---
