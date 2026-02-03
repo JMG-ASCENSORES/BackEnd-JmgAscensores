@@ -12,7 +12,9 @@ const getInformes = async () => {
 };
 
 const getInformeById = async (id) => {
-  const informe = await Informe.findByPk(id);
+  const informe = await Informe.findByPk(id, {
+    include: ['Cliente', 'Trabajador']
+  });
   if (!informe) throw new Error('INFORME_NOT_FOUND');
   return informe;
 };

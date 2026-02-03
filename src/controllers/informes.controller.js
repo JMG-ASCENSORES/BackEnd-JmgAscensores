@@ -1,4 +1,5 @@
 const informesService = require('../services/informes.service');
+const pdfService = require('../services/pdf.service');
 const { successResponse, errorResponse } = require('../utils/response.util');
 
 const createInforme = async (req, res, next) => {
@@ -55,10 +56,37 @@ const deleteInforme = async (req, res, next) => {
   }
 };
 
+const getInformePdf = async (req, res, next) => {
+  try {
+    const informe = await informesService.getInformeById(req.params.id);
+    
+    // Set headers for PDF response
+    // Set headers for PDF response
+    const cleanString = (str) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]/g, '');
+
+    const clientName = cleanString(informe.Cliente?.nombre_comercial || informe.Cliente?.contacto_nombre || 'Cliente');
+    const tipo = cleanString(informe.tipo_informe);
+    const filename = `${informe.informe_id}_${tipo}_${clientName}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+
+    pdfService.generateReportPDF(informe, res);
+    
+  } catch (error) {
+     if (error.message === 'INFORME_NOT_FOUND') {
+      return res.status(404).json(errorResponse('Informe no encontrado', 'NOT_FOUND'));
+    }
+    next(error);
+  }
+};
+
 module.exports = {
   createInforme,
   getInformes,
   getInformeById,
   updateInforme,
-  deleteInforme
+  updateInforme,
+  deleteInforme,
+  getInformePdf
 };

@@ -105,6 +105,7 @@ router.get('/', informesController.getInformes);
  *       200:
  *         description: Informe eliminado
  */
+router.get('/:id/pdf', informesController.getInformePdf);
 router.get('/:id', informesController.getInformeById);
 router.put('/:id', validate(updateInformeSchema), informesController.updateInforme);
 router.delete('/:id', informesController.deleteInforme);
