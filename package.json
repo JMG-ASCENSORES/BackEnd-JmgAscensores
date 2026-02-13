@@ -6,7 +6,11 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "backup": "node src/scripts/backup-database.js",
+    "restore": "node src/scripts/restore-database.js",
+    "verify": "node src/scripts/verify-migration.js",
+    "check-tables": "node src/scripts/check-tables.js"
   },
   "keywords": [],
   "author": "",

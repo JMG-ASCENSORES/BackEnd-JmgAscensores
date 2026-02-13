@@ -1,0 +1,15 @@
+[
+  {
+    "programacion_id": 1,
+    "titulo": "Mantenimiento Preventivo Torre A",
+    "fecha_inicio": "2026-01-15T02:36:52.173Z",
+    "fecha_fin": "2026-01-16T02:36:52.173Z",
+    "trabajador_id": null,
+    "cliente_id": null,
+    "estado": "pendiente",
+    "color": "#28a745",
+    "descripcion": "Revisión general de ascensores",
+    "fecha_creacion": "2026-01-15T02:36:52.181Z",
+    "fecha_actualizacion": "2026-01-15T02:36:52.181Z"
+  }
+]

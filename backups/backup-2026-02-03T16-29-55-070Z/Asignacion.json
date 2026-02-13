@@ -1,0 +1,322 @@
+[
+  {
+    "asignacion_id": 49,
+    "trabajador_id": 2,
+    "admin_id": 1,
+    "cliente_id": 1,
+    "fecha_asignacion": "2026-01-05T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-05T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-05T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 50,
+    "trabajador_id": 3,
+    "admin_id": 1,
+    "cliente_id": 2,
+    "fecha_asignacion": "2026-01-05T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-05T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-06T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 51,
+    "trabajador_id": 4,
+    "admin_id": 1,
+    "cliente_id": 3,
+    "fecha_asignacion": "2026-01-05T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-06T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-06T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 52,
+    "trabajador_id": 5,
+    "admin_id": 1,
+    "cliente_id": 4,
+    "fecha_asignacion": "2026-01-06T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-06T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-07T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 53,
+    "trabajador_id": 6,
+    "admin_id": 1,
+    "cliente_id": 5,
+    "fecha_asignacion": "2026-01-06T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-06T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-08T05:00:00.000Z",
+    "estado_asignacion": "EN_PROCESO"
+  },
+  {
+    "asignacion_id": 54,
+    "trabajador_id": 7,
+    "admin_id": 1,
+    "cliente_id": 6,
+    "fecha_asignacion": "2026-01-06T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-07T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-07T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 55,
+    "trabajador_id": 8,
+    "admin_id": 1,
+    "cliente_id": 7,
+    "fecha_asignacion": "2026-01-07T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-07T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-08T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 56,
+    "trabajador_id": 9,
+    "admin_id": 1,
+    "cliente_id": 8,
+    "fecha_asignacion": "2026-01-07T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-08T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-09T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 57,
+    "trabajador_id": 10,
+    "admin_id": 1,
+    "cliente_id": 9,
+    "fecha_asignacion": "2026-01-07T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-07T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-10T05:00:00.000Z",
+    "estado_asignacion": "EN_PROCESO"
+  },
+  {
+    "asignacion_id": 58,
+    "trabajador_id": 11,
+    "admin_id": 1,
+    "cliente_id": 10,
+    "fecha_asignacion": "2026-01-08T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-08T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-08T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 59,
+    "trabajador_id": 12,
+    "admin_id": 1,
+    "cliente_id": 11,
+    "fecha_asignacion": "2026-01-08T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-08T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-09T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 60,
+    "trabajador_id": 13,
+    "admin_id": 1,
+    "cliente_id": 12,
+    "fecha_asignacion": "2026-01-08T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-09T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-10T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 61,
+    "trabajador_id": 14,
+    "admin_id": 1,
+    "cliente_id": 13,
+    "fecha_asignacion": "2026-01-09T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-09T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-09T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 62,
+    "trabajador_id": 15,
+    "admin_id": 1,
+    "cliente_id": 14,
+    "fecha_asignacion": "2026-01-09T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-09T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-11T05:00:00.000Z",
+    "estado_asignacion": "EN_PROCESO"
+  },
+  {
+    "asignacion_id": 63,
+    "trabajador_id": 16,
+    "admin_id": 1,
+    "cliente_id": 15,
+    "fecha_asignacion": "2026-01-09T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-10T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-10T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 64,
+    "trabajador_id": 17,
+    "admin_id": 1,
+    "cliente_id": 16,
+    "fecha_asignacion": "2026-01-10T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-10T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-11T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 65,
+    "trabajador_id": 18,
+    "admin_id": 1,
+    "cliente_id": 17,
+    "fecha_asignacion": "2026-01-10T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-11T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-12T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 66,
+    "trabajador_id": 19,
+    "admin_id": 1,
+    "cliente_id": 1,
+    "fecha_asignacion": "2026-01-10T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-10T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-13T05:00:00.000Z",
+    "estado_asignacion": "EN_PROCESO"
+  },
+  {
+    "asignacion_id": 67,
+    "trabajador_id": 20,
+    "admin_id": 1,
+    "cliente_id": 2,
+    "fecha_asignacion": "2026-01-11T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-11T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-11T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 68,
+    "trabajador_id": 21,
+    "admin_id": 1,
+    "cliente_id": 3,
+    "fecha_asignacion": "2026-01-11T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-11T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-12T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 69,
+    "trabajador_id": 22,
+    "admin_id": 1,
+    "cliente_id": 4,
+    "fecha_asignacion": "2026-01-11T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-12T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-13T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 70,
+    "trabajador_id": 23,
+    "admin_id": 1,
+    "cliente_id": 5,
+    "fecha_asignacion": "2026-01-12T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-12T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-12T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 71,
+    "trabajador_id": 24,
+    "admin_id": 1,
+    "cliente_id": 6,
+    "fecha_asignacion": "2026-01-12T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-12T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-14T05:00:00.000Z",
+    "estado_asignacion": "EN_PROCESO"
+  },
+  {
+    "asignacion_id": 72,
+    "trabajador_id": 25,
+    "admin_id": 1,
+    "cliente_id": 7,
+    "fecha_asignacion": "2026-01-12T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-13T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-13T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 73,
+    "trabajador_id": 26,
+    "admin_id": 1,
+    "cliente_id": 8,
+    "fecha_asignacion": "2026-01-13T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-13T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-14T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 74,
+    "trabajador_id": 27,
+    "admin_id": 1,
+    "cliente_id": 9,
+    "fecha_asignacion": "2026-01-13T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-14T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-15T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 75,
+    "trabajador_id": 28,
+    "admin_id": 1,
+    "cliente_id": 10,
+    "fecha_asignacion": "2026-01-13T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-13T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-16T05:00:00.000Z",
+    "estado_asignacion": "EN_PROCESO"
+  },
+  {
+    "asignacion_id": 76,
+    "trabajador_id": 29,
+    "admin_id": 1,
+    "cliente_id": 11,
+    "fecha_asignacion": "2026-01-14T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-14T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-14T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 77,
+    "trabajador_id": 30,
+    "admin_id": 1,
+    "cliente_id": 12,
+    "fecha_asignacion": "2026-01-14T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-14T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-15T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 78,
+    "trabajador_id": 31,
+    "admin_id": 1,
+    "cliente_id": 13,
+    "fecha_asignacion": "2026-01-14T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-15T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-16T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 79,
+    "trabajador_id": 32,
+    "admin_id": 1,
+    "cliente_id": 14,
+    "fecha_asignacion": "2026-01-15T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-15T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-15T05:00:00.000Z",
+    "estado_asignacion": "COMPLETADA"
+  },
+  {
+    "asignacion_id": 80,
+    "trabajador_id": 33,
+    "admin_id": 1,
+    "cliente_id": 15,
+    "fecha_asignacion": "2026-01-15T05:00:00.000Z",
+    "fecha_inicio_asignacion": "2026-01-15T05:00:00.000Z",
+    "fecha_fin_asignacion": "2026-01-17T05:00:00.000Z",
+    "estado_asignacion": "EN_PROCESO"
+  }
+]
