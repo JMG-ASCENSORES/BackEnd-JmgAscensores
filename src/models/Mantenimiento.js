@@ -13,6 +13,26 @@ const Mantenimiento = sequelize.define('Mantenimiento', {
   ascensor_id: {
     type: DataTypes.INTEGER
   },
+  titulo: {
+    type: DataTypes.STRING(100)
+  },
+  trabajador_id: {
+    type: DataTypes.INTEGER
+  },
+  tipo_trabajo: {
+    type: DataTypes.STRING(50),
+    defaultValue: 'mantenimiento'
+  },
+  color: {
+    type: DataTypes.STRING(20),
+    defaultValue: '#3788d8'
+  },
+  fecha_inicio: {
+    type: DataTypes.DATE
+  },
+  fecha_fin: {
+    type: DataTypes.DATE
+  },
   fecha_programada: {
     type: DataTypes.DATE
   },
@@ -26,9 +46,13 @@ const Mantenimiento = sequelize.define('Mantenimiento', {
     type: DataTypes.STRING(500)
   },
   estado: {
-    type: DataTypes.STRING(50)
+    type: DataTypes.STRING(50),
+    defaultValue: 'pendiente'
   },
   observaciones: {
+    type: DataTypes.TEXT
+  },
+  descripcion: {
     type: DataTypes.TEXT
   }
 }, {

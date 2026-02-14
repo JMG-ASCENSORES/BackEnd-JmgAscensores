@@ -72,6 +72,24 @@ router.get(
 
 /**
  * @swagger
+ * /api/usuarios/tecnicos:
+ *   get:
+ *     summary: Listar técnicos activos (para dropdowns)
+ *     tags: [Usuarios]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista simplificada de técnicos activos
+ */
+router.get(
+  '/tecnicos',
+  authenticate,
+  usuariosController.getTecnicos
+);
+
+/**
+ * @swagger
  * /api/usuarios/carga-trabajo:
  *   get:
  *     summary: Ver carga de trabajo de técnicos
