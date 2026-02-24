@@ -47,6 +47,35 @@ const getUsers = async (req, res, next) => {
 };
 
 /**
+ * Get all active technicians (for dropdowns/selects)
+ * GET /api/usuarios/tecnicos
+ */
+const getTecnicos = async (req, res, next) => {
+  try {
+    const filters = {
+      estado_activo: true
+    };
+    
+    const tecnicos = await usuariosService.getUsers(filters);
+    
+    // Return simplified format for dropdowns
+    const tecnicosSimplificados = tecnicos.map(t => ({
+      trabajador_id: t.trabajador_id,
+      nombre: t.nombre,
+      apellido: t.apellido,
+      nombre_completo: `${t.nombre} ${t.apellido}`,
+      especialidad: t.especialidad
+    }));
+    
+    res.status(200).json(
+      successResponse(tecnicosSimplificados, 'Técnicos obtenidos exitosamente')
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Get user by ID
  * GET /api/usuarios/:id
  */
@@ -144,6 +173,7 @@ const getUsersByWorkload = async (req, res, next) => {
 module.exports = {
   createUser,
   getUsers,
+  getTecnicos,
   getUserById,
   updateUser,
   deleteUser,

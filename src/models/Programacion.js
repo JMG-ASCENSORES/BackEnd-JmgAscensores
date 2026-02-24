@@ -35,6 +35,21 @@ const Programacion = sequelize.define('Programacion', {
       key: 'cliente_id'
     }
   },
+  ascensor_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Ascensores',
+      key: 'ascensor_id'
+    }
+  },
+  tipo_trabajo: {
+    type: DataTypes.STRING(50),
+    defaultValue: 'mantenimiento',
+    validate: {
+      isIn: [['mantenimiento', 'reparacion', 'inspeccion', 'emergencia']]
+    }
+  },
   estado: {
     type: DataTypes.STRING(50),
     defaultValue: 'pendiente', // pendiente, completado, cancelado

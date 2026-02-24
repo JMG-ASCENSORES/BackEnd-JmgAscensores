@@ -1,4 +1,4 @@
-const { Programacion, Trabajador, Cliente } = require('../models');
+const { Programacion, Trabajador, Cliente, Ascensor } = require('../models');
 const { Op } = require('sequelize');
 const { successResponse, errorResponse } = require('../utils/response.util');
 
@@ -28,11 +28,15 @@ const getProgramaciones = async (req, res, next) => {
       include: [
         {
           model: Trabajador,
-          attributes: ['nombre', 'apellido']
+          attributes: ['trabajador_id', 'nombre', 'apellido', 'especialidad']
         },
         {
           model: Cliente,
-          attributes: ['contacto_nombre', 'contacto_apellido']
+          attributes: ['cliente_id', 'contacto_nombre', 'contacto_apellido', 'razon_social']
+        },
+        {
+          model: Ascensor,
+          attributes: ['ascensor_id', 'tipo_equipo', 'marca', 'modelo', 'numero_serie']
         }
       ]
     });
@@ -47,10 +51,13 @@ const getProgramaciones = async (req, res, next) => {
       extendedProps: {
         trabajador_id: evento.trabajador_id,
         cliente_id: evento.cliente_id,
+        ascensor_id: evento.ascensor_id,
+        tipo_trabajo: evento.tipo_trabajo,
         estado: evento.estado,
         descripcion: evento.descripcion,
         trabajador: evento.Trabajador,
-        cliente: evento.Cliente
+        cliente: evento.Cliente,
+        ascensor: evento.Ascensor
       }
     }));
 
@@ -73,7 +80,7 @@ const eventsIsArray = (data) => data;
  */
 const createProgramacion = async (req, res, next) => {
   try {
-    const { titulo, start, end, trabajador_id, cliente_id, color, descripcion } = req.body;
+    const { titulo, start, end, trabajador_id, cliente_id, ascensor_id, tipo_trabajo, color, descripcion } = req.body;
 
     const nuevaProgramacion = await Programacion.create({
       titulo,
@@ -81,6 +88,8 @@ const createProgramacion = async (req, res, next) => {
       fecha_fin: end,     // FullCalendar envía 'end'
       trabajador_id,
       cliente_id,
+      ascensor_id,
+      tipo_trabajo: tipo_trabajo || 'mantenimiento',
       color,
       descripcion,
       estado: 'pendiente'
@@ -101,7 +110,7 @@ const createProgramacion = async (req, res, next) => {
 const updateProgramacion = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { start, end, titulo, color, estado, descripcion, trabajador_id, cliente_id } = req.body;
+    const { start, end, titulo, color, estado, descripcion, trabajador_id, cliente_id, ascensor_id, tipo_trabajo } = req.body;
 
     const programacion = await Programacion.findByPk(id);
 
@@ -120,6 +129,8 @@ const updateProgramacion = async (req, res, next) => {
     if (descripcion) programacion.descripcion = descripcion;
     if (trabajador_id !== undefined) programacion.trabajador_id = trabajador_id;
     if (cliente_id !== undefined) programacion.cliente_id = cliente_id;
+    if (ascensor_id !== undefined) programacion.ascensor_id = ascensor_id;
+    if (tipo_trabajo) programacion.tipo_trabajo = tipo_trabajo;
 
     await programacion.save();
 

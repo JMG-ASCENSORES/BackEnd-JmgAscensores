@@ -38,6 +38,10 @@ Mantenimiento.belongsTo(Ascensor, { foreignKey: 'ascensor_id' });
 Mantenimiento.hasMany(Tarea, { foreignKey: 'mantenimiento_id' });
 Tarea.belongsTo(Mantenimiento, { foreignKey: 'mantenimiento_id' });
 
+// 4.5 Mantenimientos <-> Trabajador
+Mantenimiento.belongsTo(Trabajador, { foreignKey: 'trabajador_id' });
+Trabajador.hasMany(Mantenimiento, { foreignKey: 'trabajador_id' });
+
 // 5. Asignaciones Relationships
 // Trabajador <-> Asignacion
 Trabajador.hasMany(Asignacion, { foreignKey: 'trabajador_id' });
@@ -120,6 +124,9 @@ Trabajador.hasMany(Programacion, { foreignKey: 'trabajador_id' });
 
 Programacion.belongsTo(Cliente, { foreignKey: 'cliente_id' });
 Cliente.hasMany(Programacion, { foreignKey: 'cliente_id' });
+
+Programacion.belongsTo(Ascensor, { foreignKey: 'ascensor_id' });
+Ascensor.hasMany(Programacion, { foreignKey: 'ascensor_id' });
 
 module.exports = {
   sequelize,
