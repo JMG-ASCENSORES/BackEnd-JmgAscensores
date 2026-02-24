@@ -170,6 +170,57 @@ const getUsersByWorkload = async (req, res, next) => {
   }
 };
 
+/**
+ * Get own profile (for authenticated worker)
+ * GET /api/usuarios/me
+ */
+const getMyProfile = async (req, res, next) => {
+  try {
+    const user = await usuariosService.getUserById(req.user.id);
+    res.status(200).json(
+      successResponse(user, 'Perfil obtenido exitosamente')
+    );
+  } catch (error) {
+    if (error.message === 'USER_NOT_FOUND') {
+      return res.status(404).json(
+        errorResponse('Usuario no encontrado', 'USER_NOT_FOUND')
+      );
+    }
+    next(error);
+  }
+};
+
+/**
+ * Update own profile (for authenticated worker)
+ * PUT /api/usuarios/me
+ */
+const updateMyProfile = async (req, res, next) => {
+  try {
+    // Workers can only update their own limited fields
+    const allowedFields = ['nombre', 'apellido', 'correo', 'telefono', 'contrasena_hash'];
+    const filtered = {};
+    for (const key of allowedFields) {
+      if (req.body[key] !== undefined) filtered[key] = req.body[key];
+    }
+    const user = await usuariosService.updateUser(req.user.id, filtered);
+    res.status(200).json(
+      successResponse(user, 'Perfil actualizado exitosamente')
+    );
+  } catch (error) {
+    if (error.message === 'USER_NOT_FOUND') {
+      return res.status(404).json(
+        errorResponse('Usuario no encontrado', 'USER_NOT_FOUND')
+      );
+    }
+    if (error.message === 'EMAIL_EXISTS') {
+      return res.status(409).json(
+        errorResponse('El correo ya está registrado', 'EMAIL_EXISTS')
+      );
+    }
+    next(error);
+  }
+};
+
 module.exports = {
   createUser,
   getUsers,
@@ -178,5 +229,7 @@ module.exports = {
   updateUser,
   deleteUser,
   getUsersBySpecialty,
-  getUsersByWorkload
+  getUsersByWorkload,
+  getMyProfile,
+  updateMyProfile
 };

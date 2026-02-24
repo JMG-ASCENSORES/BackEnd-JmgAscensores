@@ -70,6 +70,10 @@ router.get(
   usuariosController.getUsers
 );
 
+// ── /me: perfil propio del trabajador autenticado ──
+router.get('/me', authenticate, usuariosController.getMyProfile);
+router.put('/me', authenticate, usuariosController.updateMyProfile);
+
 /**
  * @swagger
  * /api/usuarios/tecnicos:
