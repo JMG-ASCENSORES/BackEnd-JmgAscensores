@@ -93,8 +93,8 @@ const startServer = async () => {
   try {
     await connectDB();
     
-    // Sync models (force: false to preserve data)
-    await sequelize.sync({ force: false }); 
+    // Sync models — alter:true adds missing columns without dropping data
+    await sequelize.sync({ force: false, alter: true }); 
 
     // Seed initial data (Manual run recommended via init-db script)
     // const seedDatabase = require('./seeders/initialData');

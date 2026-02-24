@@ -18,8 +18,24 @@ const Cliente = sequelize.define('Cliente', {
   contra: {
     type: DataTypes.STRING(100)
   },
+  ruc: {
+    type: DataTypes.STRING(20),
+    allowNull: true
+  },
+  nombre_comercial: {
+    type: DataTypes.STRING(200),
+    allowNull: true
+  },
   ubicacion: {
     type: DataTypes.STRING(300)
+  },
+  latitud: {
+    type: DataTypes.FLOAT,
+    allowNull: true
+  },
+  longitud: {
+    type: DataTypes.FLOAT,
+    allowNull: true
   },
   ciudad: {
     type: DataTypes.STRING(100)
