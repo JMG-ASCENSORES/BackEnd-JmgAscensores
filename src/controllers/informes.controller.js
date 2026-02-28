@@ -13,7 +13,7 @@ const createInforme = async (req, res, next) => {
 
 const getInformes = async (req, res, next) => {
   try {
-    const informes = await informesService.getInformes();
+    const informes = await informesService.getInformes(req.query || {});
     res.status(200).json(successResponse(informes, 'Lista de informes'));
   } catch (error) {
     next(error);

@@ -4,9 +4,15 @@ const createInforme = async (data) => {
   return await Informe.create(data);
 };
 
-const getInformes = async () => {
+const getInformes = async (filters = {}) => {
+  const where = {};
+  if (filters.tipo_informe) where.tipo_informe = filters.tipo_informe;
+  if (filters.cliente_id) where.cliente_id = filters.cliente_id;
+  if (filters.trabajador_id) where.trabajador_id = filters.trabajador_id;
+  
   return await Informe.findAll({
-    include: ['Cliente', 'Trabajador'], // Updated to use valid associations. 'Mantenimiento' association does not exist on Informe.
+    where,
+    include: ['Cliente', 'Trabajador'],
     order: [['fecha_informe', 'DESC']]
   });
 };
