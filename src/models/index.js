@@ -4,7 +4,7 @@ const Administrador = require('./Administrador');
 const Trabajador = require('./Trabajador');
 const Cliente = require('./Cliente');
 const Ascensor = require('./Ascensor');
-const Mantenimiento = require('./Mantenimiento');
+
 const Tarea = require('./Tarea');
 const Asignacion = require('./Asignacion');
 const Informe = require('./Informe');
@@ -26,21 +26,7 @@ const Programacion = require('./Programacion');
 Cliente.hasMany(Ascensor, { foreignKey: 'cliente_id' });
 Ascensor.belongsTo(Cliente, { foreignKey: 'cliente_id' });
 
-// 2. Clientes <-> Mantenimientos
-Cliente.hasMany(Mantenimiento, { foreignKey: 'cliente_id' });
-Mantenimiento.belongsTo(Cliente, { foreignKey: 'cliente_id' });
-
-// 3. Ascensores <-> Mantenimientos
-Ascensor.hasMany(Mantenimiento, { foreignKey: 'ascensor_id' });
-Mantenimiento.belongsTo(Ascensor, { foreignKey: 'ascensor_id' });
-
-// 4. Mantenimientos <-> Tareas
-Mantenimiento.hasMany(Tarea, { foreignKey: 'mantenimiento_id' });
-Tarea.belongsTo(Mantenimiento, { foreignKey: 'mantenimiento_id' });
-
-// 4.5 Mantenimientos <-> Trabajador
-Mantenimiento.belongsTo(Trabajador, { foreignKey: 'trabajador_id' });
-Trabajador.hasMany(Mantenimiento, { foreignKey: 'trabajador_id' });
+// 2. Clientes <-> (Sin Mantenimientos - usar Programaciones)
 
 // 5. Asignaciones Relationships
 // Trabajador <-> Asignacion
@@ -111,9 +97,7 @@ Sesion.belongsTo(Administrador, { foreignKey: 'admin_id' });
 Trabajador.hasMany(Sesion, { foreignKey: 'trabajador_id' });
 Sesion.belongsTo(Trabajador, { foreignKey: 'trabajador_id' });
 
-// 13. Historial Mantenimiento
-Mantenimiento.hasMany(HistorialEstadoMantenimiento, { foreignKey: 'mantenimiento_id' });
-HistorialEstadoMantenimiento.belongsTo(Mantenimiento, { foreignKey: 'mantenimiento_id' });
+// 13. Historial Mantenimiento (solo Admin)
 
 Administrador.hasMany(HistorialEstadoMantenimiento, { foreignKey: 'cambio_realizado_por' });
 HistorialEstadoMantenimiento.belongsTo(Administrador, { foreignKey: 'cambio_realizado_por' });
@@ -134,7 +118,6 @@ module.exports = {
   Trabajador,
   Cliente,
   Ascensor,
-  Mantenimiento,
   Tarea,
   Asignacion,
   Informe,

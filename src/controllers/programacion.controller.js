@@ -3,67 +3,63 @@ const { Op } = require('sequelize');
 const { successResponse, errorResponse } = require('../utils/response.util');
 
 /**
- * Obtener programaciones (eventos) en un rango de fechas
- * GET /api/programaciones?start=YYYY-MM-DD&end=YYYY-MM-DD
+ * Obtener programaciones (eventos)
+ * GET /api/programaciones
+ * No filtra por fecha en SQL porque las columnas son TEXT en la DB.
  */
 const getProgramaciones = async (req, res, next) => {
   try {
-    const { start, end } = req.query;
+    const { trabajador_id, cliente_id, ascensor_id } = req.query;
 
-    if (!start || !end) {
-      return res.status(400).json(
-        errorResponse('Se requieren parámetros start y end', 'MISSING_PARAMS')
-      );
-    }
+    const whereClause = {};
+    if (trabajador_id) whereClause.trabajador_id = trabajador_id;
+    if (cliente_id)   whereClause.cliente_id   = cliente_id;
+    if (ascensor_id)  whereClause.ascensor_id  = ascensor_id;
 
     const eventos = await Programacion.findAll({
-      where: {
-        fecha_inicio: {
-          [Op.gte]: new Date(start)
-        },
-        fecha_fin: {
-          [Op.lte]: new Date(end)
-        }
-      },
+      where: whereClause,
       include: [
         {
           model: Trabajador,
-          attributes: ['trabajador_id', 'nombre', 'apellido', 'especialidad']
+          attributes: ['trabajador_id', 'nombre', 'apellido', 'especialidad'],
+          required: false
         },
         {
           model: Cliente,
-          attributes: ['cliente_id', 'contacto_nombre', 'contacto_apellido', 'razon_social']
+          attributes: ['cliente_id', 'contacto_nombre', 'contacto_apellido'],
+          required: false
         },
         {
           model: Ascensor,
-          attributes: ['ascensor_id', 'tipo_equipo', 'marca', 'modelo', 'numero_serie']
+          attributes: ['ascensor_id', 'tipo_equipo', 'marca', 'modelo', 'numero_serie'],
+          required: false
         }
-      ]
+      ],
+      order: [['programacion_id', 'ASC']]
     });
 
-    // Mapear al formato que prefiere FullCalendar (opcional, o hacerlo en frontend)
     const eventosFormateados = eventos.map(evento => ({
       id: evento.programacion_id,
-      title: evento.titulo,
-      start: evento.fecha_inicio,
-      end: evento.fecha_fin,
-      color: evento.color,
+      title: evento.titulo || `Programación #${evento.programacion_id}`,
+      start: evento.fecha_inicio || new Date().toISOString(),
+      end: evento.fecha_fin || evento.fecha_inicio || new Date().toISOString(),
+      color: evento.color || '#3788d8',
       extendedProps: {
         trabajador_id: evento.trabajador_id,
-        cliente_id: evento.cliente_id,
-        ascensor_id: evento.ascensor_id,
-        tipo_trabajo: evento.tipo_trabajo,
-        estado: evento.estado,
-        descripcion: evento.descripcion,
-        trabajador: evento.Trabajador,
-        cliente: evento.Cliente,
-        ascensor: evento.Ascensor
+        cliente_id:    evento.cliente_id,
+        ascensor_id:   evento.ascensor_id,
+        tipo_trabajo:  evento.tipo_trabajo,
+        estado:        evento.estado,
+        descripcion:   evento.descripcion,
+        trabajador:    evento.Trabajador,
+        cliente:       evento.Cliente,
+        ascensor:      evento.Ascensor
       }
     }));
 
-    res.status(200).json(eventsIsArray(eventosFormateados)); // FullCalendar espera array directo a veces, pero mantendremos standar API
-    // Nota: Si el frontend usa el servicio Angular, podemos devolver el objeto standard
+    return res.status(200).json(eventosFormateados);
   } catch (error) {
+    console.error('Error en getProgramaciones:', error);
     next(error);
   }
 };

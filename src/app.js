@@ -36,7 +36,7 @@ const authRoutes = require('./routes/auth.routes');
 const usuarioRoutes = require('./routes/usuarios.routes');
 const clienteRoutes = require('./routes/clienteRoutes');
 const ascensorRoutes = require('./routes/ascensorRoutes');
-const mantenimientoRoutes = require('./routes/mantenimientoRoutes');
+
 const tareaRoutes = require('./routes/tareaRoutes');
 const informeRoutes = require('./routes/informeRoutes');
 const evidenciaRoutes = require('./routes/evidenciaRoutes');
@@ -48,7 +48,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/clientes', clienteRoutes);
 app.use('/api/ascensores', ascensorRoutes);
-app.use('/api/mantenimientos', mantenimientoRoutes);
+
 app.use('/api/tareas', tareaRoutes);
 app.use('/api/informes', informeRoutes);
 app.use('/api/evidencias', evidenciaRoutes);
