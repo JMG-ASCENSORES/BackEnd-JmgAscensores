@@ -102,9 +102,12 @@ Sesion.belongsTo(Trabajador, { foreignKey: 'trabajador_id' });
 Administrador.hasMany(HistorialEstadoMantenimiento, { foreignKey: 'cambio_realizado_por' });
 HistorialEstadoMantenimiento.belongsTo(Administrador, { foreignKey: 'cambio_realizado_por' });
 
-// 14. Programaciones
-Programacion.belongsTo(Trabajador, { foreignKey: 'trabajador_id' });
-Trabajador.hasMany(Programacion, { foreignKey: 'trabajador_id' });
+// 14. Programaciones — 4 técnicos (columns: trabajador_id, tecnico2_id, tecnico3_id, tecnico4_id)
+Programacion.belongsTo(Trabajador, { foreignKey: 'trabajador_id', as: 'Tecnico1' });
+Programacion.belongsTo(Trabajador, { foreignKey: 'tecnico2_id',   as: 'Tecnico2' });
+Programacion.belongsTo(Trabajador, { foreignKey: 'tecnico3_id',   as: 'Tecnico3' });
+Programacion.belongsTo(Trabajador, { foreignKey: 'tecnico4_id',   as: 'Tecnico4' });
+Trabajador.hasMany(Programacion, { foreignKey: 'trabajador_id', as: 'ProgramacionesPrimarias' });
 
 Programacion.belongsTo(Cliente, { foreignKey: 'cliente_id' });
 Cliente.hasMany(Programacion, { foreignKey: 'cliente_id' });

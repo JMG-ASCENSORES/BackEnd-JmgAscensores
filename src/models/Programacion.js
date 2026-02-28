@@ -19,13 +19,29 @@ const Programacion = sequelize.define('Programacion', {
     type: DataTypes.DATE, // Includes time
     allowNull: false
   },
+  // Técnico 1 (principal — legacy field)
   trabajador_id: {
     type: DataTypes.INTEGER,
     allowNull: true,
-    references: {
-      model: 'Trabajadores',
-      key: 'trabajador_id'
-    }
+    references: { model: 'Trabajadores', key: 'trabajador_id' }
+  },
+  // Técnico 2
+  tecnico2_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: { model: 'Trabajadores', key: 'trabajador_id' }
+  },
+  // Técnico 3
+  tecnico3_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: { model: 'Trabajadores', key: 'trabajador_id' }
+  },
+  // Técnico 4
+  tecnico4_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: { model: 'Trabajadores', key: 'trabajador_id' }
   },
   cliente_id: {
     type: DataTypes.INTEGER,
