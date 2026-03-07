@@ -1,0 +1,71 @@
+{
+  "timestamp": "2026-03-05T17-35-13-354Z",
+  "database": "jmg_ascensores2",
+  "host": "dpg-d6125bali9vc73fmed6g-a.oregon-postgres.render.com",
+  "tables": {
+    "Administrador": {
+      "filename": "Administrador.json",
+      "recordCount": 1
+    },
+    "Trabajador": {
+      "filename": "Trabajador.json",
+      "recordCount": 33
+    },
+    "Cliente": {
+      "filename": "Cliente.json",
+      "recordCount": 17
+    },
+    "Ascensor": {
+      "filename": "Ascensor.json",
+      "recordCount": 32
+    },
+    "Tarea": {
+      "filename": "Tarea.json",
+      "recordCount": 0
+    },
+    "Asignacion": {
+      "filename": "Asignacion.json",
+      "recordCount": 32
+    },
+    "Informe": {
+      "filename": "Informe.json",
+      "recordCount": 34
+    },
+    "Evidencia": {
+      "filename": "Evidencia.json",
+      "recordCount": 0
+    },
+    "RutaDiaria": {
+      "filename": "RutaDiaria.json",
+      "recordCount": 0
+    },
+    "DetalleRuta": {
+      "filename": "DetalleRuta.json",
+      "recordCount": 0
+    },
+    "Notificacion": {
+      "filename": "Notificacion.json",
+      "recordCount": 0
+    },
+    "Auditoria": {
+      "filename": "Auditoria.json",
+      "recordCount": 0
+    },
+    "Sesion": {
+      "filename": "Sesion.json",
+      "recordCount": 75
+    },
+    "HistorialEstadoMantenimiento": {
+      "filename": "HistorialEstadoMantenimiento.json",
+      "recordCount": 0
+    },
+    "Configuracion": {
+      "filename": "Configuracion.json",
+      "recordCount": 0
+    },
+    "Programacion": {
+      "filename": "Programacion.json",
+      "recordCount": 12
+    }
+  }
+}

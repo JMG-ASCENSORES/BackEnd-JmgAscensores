@@ -1,0 +1,12 @@
+[
+  {
+    "admin_id": 1,
+    "dni": "12345678",
+    "nombre": "Admin",
+    "apellido": "Principal",
+    "correo": "admin@jmg.com",
+    "contrasena_hash": "$2a$10$hy4GRxgPDxWJrrjwKKKcmex77/nj9BHNp6mfFgzaMEyd78gZJ.iXi",
+    "activo": true,
+    "fecha_creacion": "2026-01-09T02:48:40.484Z"
+  }
+]

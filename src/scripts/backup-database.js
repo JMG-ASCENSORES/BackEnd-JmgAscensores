@@ -16,7 +16,6 @@ const EXPORT_ORDER = [
   'Trabajador',
   'Cliente',
   'Ascensor',
-  'Mantenimiento',
   'Tarea',
   'Asignacion',
   'Informe',

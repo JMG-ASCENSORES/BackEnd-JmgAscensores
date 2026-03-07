@@ -42,7 +42,6 @@ async function verifyMigration(metadataPath) {
       'Trabajador',
       'Cliente',
       'Ascensor',
-      'Mantenimiento',
       'Tarea',
       'Asignacion',
       'Informe',
@@ -133,15 +132,7 @@ async function verifyMigration(metadataPath) {
       });
       console.log('✅ Relación Cliente → Ascensor funciona');
 
-      // Test: Mantenimiento con Cliente y Ascensor
-      const mantenimiento = await models.Mantenimiento.findOne({
-        include: [
-          { model: models.Cliente },
-          { model: models.Ascensor }
-        ],
-        limit: 1
-      });
-      console.log('✅ Relación Mantenimiento → Cliente/Ascensor funciona');
+
 
       // Test: Informe con relaciones
       const informe = await models.Informe.findOne({
