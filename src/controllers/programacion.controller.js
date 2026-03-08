@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const { Programacion, Trabajador, Cliente, Ascensor } = require('../models');
 const { successResponse, errorResponse } = require('../utils/response.util');
 
@@ -67,10 +68,22 @@ const toEvento = (p) => {
 // ─── GET /api/programaciones ───────────────────────────────────────────────────
 const getProgramaciones = async (req, res, next) => {
   try {
-    const { cliente_id, ascensor_id } = req.query;
+    const { cliente_id, ascensor_id, start, end } = req.query;
     const whereClause = {};
+    
     if (cliente_id)  whereClause.cliente_id  = cliente_id;
     if (ascensor_id) whereClause.ascensor_id = ascensor_id;
+    
+    // Filtro por fechas
+    if (start && end) {
+      whereClause.fecha_inicio = {
+        [Op.between]: [start, end]
+      };
+    } else if (start) {
+      whereClause.fecha_inicio = { [Op.gte]: start };
+    } else if (end) {
+      whereClause.fecha_inicio = { [Op.lte]: end };
+    }
 
     const eventos = await Programacion.findAll({
       where: whereClause,
