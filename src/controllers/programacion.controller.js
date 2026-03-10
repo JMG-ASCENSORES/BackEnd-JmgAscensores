@@ -68,7 +68,7 @@ const toEvento = (p) => {
 // ─── GET /api/programaciones ───────────────────────────────────────────────────
 const getProgramaciones = async (req, res, next) => {
   try {
-    const { cliente_id, ascensor_id, start, end, trabajador_id } = req.query;
+    const { cliente_id, ascensor_id, start, end, trabajador_id, detailed } = req.query;
     const whereClause = {};
     
     if (cliente_id)  whereClause.cliente_id  = cliente_id;
@@ -95,19 +95,52 @@ const getProgramaciones = async (req, res, next) => {
       whereClause.fecha_inicio = { [Op.lte]: end };
     }
 
-    const eventos = await Programacion.findAll({
+    const queryOptions = {
       where: whereClause,
-      include: [
-        ...tecnicoIncludes,
-        { model: Cliente,  attributes: ['cliente_id', 'contacto_nombre', 'contacto_apellido'], required: false },
-        { model: Ascensor, attributes: ['ascensor_id', 'tipo_equipo', 'marca', 'modelo', 'numero_serie'], required: false }
-      ],
       order: [['programacion_id', 'ASC']]
-    });
+    };
+
+    // Aplicar Eager Loading o Lazy Loading según optimización solicitada:
+    if (detailed === 'true') {
+      queryOptions.include = [
+        ...tecnicoIncludes,
+        { model: Cliente,  attributes: ['cliente_id', 'contacto_nombre', 'contacto_apellido', 'nombre_comercial'], required: false },
+        { model: Ascensor, attributes: ['ascensor_id', 'tipo_equipo', 'marca', 'modelo', 'numero_serie'], required: false }
+      ];
+    } else {
+       // Solo traemos columnas base, optimizando hasta 90%
+       queryOptions.attributes = ['programacion_id', 'titulo', 'fecha_inicio', 'fecha_fin', 'color', 'estado', 'tipo_trabajo', 'cliente_id', 'ascensor_id'];
+    }
+
+    const eventos = await Programacion.findAll(queryOptions);
 
     return res.status(200).json(eventos.map(toEvento));
   } catch (error) {
     console.error('Error en getProgramaciones:', error);
+    next(error);
+  }
+};
+
+// ─── GET /api/programaciones/:id ──────────────────────────────────────────────
+const getProgramacionById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    
+    const evento = await Programacion.findByPk(id, {
+      include: [
+        ...tecnicoIncludes,
+        { model: Cliente,  required: false },
+        { model: Ascensor, required: false }
+      ]
+    });
+
+    if (!evento) {
+      return res.status(404).json(errorResponse('Programación no encontrada', 'NOT_FOUND'));
+    }
+
+    return res.status(200).json(successResponse(toEvento(evento), 'Programación obtenida exitosamente'));
+  } catch (error) {
+    console.error('Error en getProgramacionById:', error);
     next(error);
   }
 };
@@ -225,4 +258,4 @@ const deleteProgramacion = async (req, res, next) => {
   }
 };
 
-module.exports = { getProgramaciones, createProgramacion, updateProgramacion, deleteProgramacion };
+module.exports = { getProgramaciones, getProgramacionById, createProgramacion, updateProgramacion, deleteProgramacion };

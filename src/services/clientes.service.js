@@ -23,11 +23,37 @@ const createClient = async (data) => {
 };
 
 /**
- * Get all clients
+ * Get all clients (Legacy list)
  */
 const getClients = async () => {
   return await Cliente.findAll({
     where: { estado_activo: true },
+    order: [['fecha_creacion', 'DESC']]
+  });
+};
+
+/**
+ * Get clients paginated and/or searched
+ */
+const getClientsPaginated = async ({ page, limit, search }) => {
+  const offset = (page - 1) * limit;
+  const whereClause = { estado_activo: true };
+
+  if (search) {
+    const searchCondition = { [Op.iLike]: `%${search}%` };
+    whereClause[Op.or] = [
+      { contacto_nombre: searchCondition },
+      { contacto_apellido: searchCondition },
+      { nombre_comercial: searchCondition },
+      { ruc: searchCondition },
+      { dni: searchCondition }
+    ];
+  }
+
+  return await Cliente.findAndCountAll({
+    where: whereClause,
+    limit,
+    offset,
     order: [['fecha_creacion', 'DESC']]
   });
 };
@@ -78,6 +104,7 @@ const getClientAscensores = async (id) => {
 module.exports = {
   createClient,
   getClients,
+  getClientsPaginated,
   getClientById,
   updateClient,
   deleteClient,
