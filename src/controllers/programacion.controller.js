@@ -97,7 +97,10 @@ const getProgramaciones = async (req, res, next) => {
 
     const queryOptions = {
       where: whereClause,
-      order: [['programacion_id', 'ASC']]
+      order: [
+        ['fecha_inicio', 'ASC'],
+        ['programacion_id', 'ASC']
+      ]
     };
 
     // Aplicar Eager Loading o Lazy Loading según optimización solicitada:
