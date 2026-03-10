@@ -68,11 +68,21 @@ const toEvento = (p) => {
 // ─── GET /api/programaciones ───────────────────────────────────────────────────
 const getProgramaciones = async (req, res, next) => {
   try {
-    const { cliente_id, ascensor_id, start, end } = req.query;
+    const { cliente_id, ascensor_id, start, end, trabajador_id } = req.query;
     const whereClause = {};
     
     if (cliente_id)  whereClause.cliente_id  = cliente_id;
     if (ascensor_id) whereClause.ascensor_id = ascensor_id;
+    
+    // Si queremos filtrar por un técnico específico, tiene que estar en alguno de los 4 slots
+    if (trabajador_id) {
+        whereClause[Op.or] = [
+            { trabajador_id: trabajador_id },
+            { tecnico2_id: trabajador_id },
+            { tecnico3_id: trabajador_id },
+            { tecnico4_id: trabajador_id }
+        ];
+    }
     
     // Filtro por fechas
     if (start && end) {
