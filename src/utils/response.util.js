@@ -4,13 +4,15 @@
  * @param {string} message - Success message
  * @returns {Object} - Formatted success response
  */
-const successResponse = (data = null, message = 'Operación realizada exitosamente') => {
-  return {
+const successResponse = (data = null, message = 'Operación realizada exitosamente', meta = undefined) => {
+  const res = {
     success: true,
     message,
     data,
     timestamp: new Date().toISOString()
   };
+  if (meta) { res.meta = meta; }
+  return res;
 };
 
 /**

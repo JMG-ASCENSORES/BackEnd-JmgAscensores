@@ -8,6 +8,7 @@ router.use(authenticate);
 
 // Routes
 router.get('/', programacionController.getProgramaciones);
+router.get('/:id', programacionController.getProgramacionById);
 router.post('/', programacionController.createProgramacion);
 router.put('/:id', programacionController.updateProgramacion);
 router.delete('/:id', programacionController.deleteProgramacion);
