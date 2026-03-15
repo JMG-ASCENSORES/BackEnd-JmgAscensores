@@ -34,14 +34,21 @@ const generateRandomSchedule = async () => {
             'Ajuste de puertas automáticas'
         ];
 
+        // ── Limpiar programaciones existentes ──
+        //const deleted = await Programacion.destroy({ where: {} });
+        //console.log(`🗑️  Se eliminaron ${deleted} programaciones existentes.`);
+
         const programacionesToCreate = [];
         
-        // Generate for the period of today - 10 days up to today + 40 days
-        const currentDate = new Date();
-        
-        console.log('Generando data dummy de programaciones...');
+        // ── Rango: 1 de junio 2026 → 31 de diciembre 2026 ──
+        const rangeStart = new Date(2026, 1, 1);  // Año, mes (0-indexed), día (Inicial)
+        const rangeEnd   = new Date(2026, 12, 31);  // Año, mes (0-indexed), día (Final)
+        const totalDays  = Math.round((rangeEnd - rangeStart) / (1000 * 60 * 60 * 24));
+        const today      = new Date();
 
-        for (let idx = 0; idx < 120; idx++) {
+        console.log(`Generando data dummy de programaciones (${rangeStart.toLocaleDateString()} → ${rangeEnd.toLocaleDateString()})...`);
+
+        for (let idx = 0; idx < 200; idx++) {
             // Pick random client and one of their elevators if they have one
             const randomClient = clientes[Math.floor(Math.random() * clientes.length)];
             let randomAscensorId = null;
@@ -50,35 +57,50 @@ const generateRandomSchedule = async () => {
                 randomAscensorId = randomAscensor.ascensor_id;
             }
 
-            // Pick 1 to 4 random unique technicians
-            const numTechs = Math.floor(Math.random() * 3) + 1; // 1 to 3 techs mostly
+            // Pick 1 to 3 random unique technicians
+            const numTechs = Math.floor(Math.random() * 3) + 1;
             const techsForJob = [];
-            const shuffledTechs = trabajadores.sort(() => 0.5 - Math.random());
+            const shuffledTechs = [...trabajadores].sort(() => 0.5 - Math.random());
             for (let i = 0; i < numTechs; i++) {
                 if(shuffledTechs[i]) {
                     techsForJob.push(shuffledTechs[i].trabajador_id);
                 }
             }
 
-            // Random Day between today-10 and today+40
-            const dayOffset = Math.floor(Math.random() * 50) - 10; 
-            const eventDate = new Date(currentDate);
-            eventDate.setDate(currentDate.getDate() + dayOffset);
+            // Random day within the march–july range
+            const dayOffset = Math.floor(Math.random() * totalDays);
+            const eventDate = new Date(rangeStart);
+            eventDate.setDate(rangeStart.getDate() + dayOffset);
 
-            // Random Start Hour between 08:00 and 16:00
-            const startHour = Math.floor(Math.random() * 9) + 8;
-            eventDate.setHours(startHour, 0, 0, 0);
+            // Random Start Hour between 08:00 and 17:00 (jornada laboral)
+            const startHour = Math.floor(Math.random() * 9) + 8;  // 8..16
+            const startMin  = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+            eventDate.setHours(startHour, startMin, 0, 0);
 
-            // Random End Hour (1 to 4 hours later)
-            const duration = Math.floor(Math.random() * 4) + 1;
+            // Random duration (1 to 4 hours), capped so end ≤ 17:00
+            const maxDuration = Math.min(4, 17 - startHour);
+            const duration = Math.max(1, Math.floor(Math.random() * maxDuration) + 1);
             const endDate = new Date(eventDate);
-            endDate.setHours(startHour + duration, 0, 0, 0);
+            endDate.setHours(startHour + duration, startMin, 0, 0);
 
-            const ISOStart = eventDate.toISOString().split('.')[0]; // remove ms
-            const ISOEnd = endDate.toISOString().split('.')[0];
+            // Format as LOCAL ISO string (YYYY-MM-DDTHH:mm:00) to avoid UTC offset
+            // shifting the date to the next day — matches the format the frontend produces.
+            const pad = (n) => String(n).padStart(2, '0');
+            const localISO = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
 
-            const tipo = tiposTrabajo[Math.floor(Math.random() * tiposTrabajo.length)];
+            const ISOStart = localISO(eventDate);
+            const ISOEnd   = localISO(endDate);
+
+            const tipo   = tiposTrabajo[Math.floor(Math.random() * tiposTrabajo.length)];
             const titulo = titulosBase[Math.floor(Math.random() * titulosBase.length)];
+
+            // Estado basado en si la fecha ya pasó o no
+            let estado;
+            if (eventDate < today) {
+                estado = Math.random() < 0.85 ? 'completado' : 'en_progreso';
+            } else {
+                estado = 'pendiente';
+            }
 
             programacionesToCreate.push({
                 titulo: titulo,
@@ -87,7 +109,7 @@ const generateRandomSchedule = async () => {
                 tipo_trabajo: tipo,
                 color: colores[tipo],
                 descripcion: 'Revisar según el historial técnico. Traer herramientas de precisión. Reportarse con conserjería al llegar.',
-                estado: dayOffset < 0 ? 'completado' : 'pendiente',
+                estado: estado,
                 cliente_id: randomClient.cliente_id,
                 ascensor_id: randomAscensorId,
                 trabajador_id: techsForJob[0] || null,
