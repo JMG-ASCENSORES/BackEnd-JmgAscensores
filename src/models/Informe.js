@@ -7,8 +7,9 @@ const Informe = sequelize.define('Informe', {
     primaryKey: true,
     autoIncrement: true
   },
-  asignacion_id: {
-    type: DataTypes.INTEGER
+  orden_id: {
+    type: DataTypes.INTEGER,
+    comment: 'Referencia a la Orden de Trabajo (Mantenimiento/Reparación)'
   },
   trabajador_id: {
     type: DataTypes.INTEGER,
@@ -23,10 +24,12 @@ const Informe = sequelize.define('Informe', {
     allowNull: false
   },
   tipo_informe: {
-    type: DataTypes.STRING(50)
+    type: DataTypes.STRING(50),
+    comment: 'Ej: preventivo, correctivo/reparacion'
   },
   descripcion_trabajo: {
-    type: DataTypes.TEXT
+    type: DataTypes.TEXT,
+    comment: 'Resumen del trabajo realizado'
   },
   observaciones: {
     type: DataTypes.TEXT
@@ -35,7 +38,7 @@ const Informe = sequelize.define('Informe', {
     type: DataTypes.STRING(100)
   },
   fecha_informe: {
-    type: DataTypes.DATE
+    type: DataTypes.DATEONLY
   },
   hora_informe: {
     type: DataTypes.TIME

@@ -5,8 +5,6 @@ const Trabajador = require('./Trabajador');
 const Cliente = require('./Cliente');
 const Ascensor = require('./Ascensor');
 
-const Tarea = require('./Tarea');
-const Asignacion = require('./Asignacion');
 const Informe = require('./Informe');
 const Evidencia = require('./Evidencia');
 const RutaDiaria = require('./RutaDiaria');
@@ -14,9 +12,13 @@ const DetalleRuta = require('./DetalleRuta');
 const Notificacion = require('./Notificacion');
 const Auditoria = require('./Auditoria');
 const Sesion = require('./Sesion');
-const HistorialEstadoMantenimiento = require('./HistorialEstadoMantenimiento');
 const Configuracion = require('./Configuracion');
 const Programacion = require('./Programacion');
+
+// Nuevos modelos
+const TareaMaestra = require('./TareaMaestra');
+const OrdenTrabajo = require('./OrdenTrabajo');
+const DetalleOrden = require('./DetalleOrden');
 
 // ============================================
 // ASSOCIATIONS
@@ -28,23 +30,30 @@ Ascensor.belongsTo(Cliente, { foreignKey: 'cliente_id' });
 
 // 2. Clientes <-> (Sin Mantenimientos - usar Programaciones)
 
-// 5. Asignaciones Relationships
-// Trabajador <-> Asignacion
-Trabajador.hasMany(Asignacion, { foreignKey: 'trabajador_id' });
-Asignacion.belongsTo(Trabajador, { foreignKey: 'trabajador_id' });
+// 6. OrdenTrabajo Relationships
+// Programacion <-> OrdenTrabajo
+Programacion.hasOne(OrdenTrabajo, { foreignKey: 'programacion_id' });
+OrdenTrabajo.belongsTo(Programacion, { foreignKey: 'programacion_id' });
 
-// Admin <-> Asignacion
-Administrador.hasMany(Asignacion, { foreignKey: 'admin_id' });
-Asignacion.belongsTo(Administrador, { foreignKey: 'admin_id' });
+// OrdenTrabajo <-> Cliente
+Cliente.hasMany(OrdenTrabajo, { foreignKey: 'cliente_id' });
+OrdenTrabajo.belongsTo(Cliente, { foreignKey: 'cliente_id' });
 
-// Cliente <-> Asignacion
-Cliente.hasMany(Asignacion, { foreignKey: 'cliente_id' });
-Asignacion.belongsTo(Cliente, { foreignKey: 'cliente_id' });
+// OrdenTrabajo <-> Ascensor
+Ascensor.hasMany(OrdenTrabajo, { foreignKey: 'ascensor_id' });
+OrdenTrabajo.belongsTo(Ascensor, { foreignKey: 'ascensor_id' });
 
-// 6. Informes Relationships
-// Asignacion <-> Informe
-Asignacion.hasMany(Informe, { foreignKey: 'asignacion_id' });
-Informe.belongsTo(Asignacion, { foreignKey: 'asignacion_id' });
+// OrdenTrabajo <-> DetalleOrden
+OrdenTrabajo.hasMany(DetalleOrden, { foreignKey: 'orden_id' });
+DetalleOrden.belongsTo(OrdenTrabajo, { foreignKey: 'orden_id' });
+
+// TareaMaestra <-> DetalleOrden
+TareaMaestra.hasMany(DetalleOrden, { foreignKey: 'tarea_maestra_id' });
+DetalleOrden.belongsTo(TareaMaestra, { foreignKey: 'tarea_maestra_id' });
+
+// OrdenTrabajo <-> Informe
+OrdenTrabajo.hasOne(Informe, { foreignKey: 'orden_id' });
+Informe.belongsTo(OrdenTrabajo, { foreignKey: 'orden_id' });
 
 // Trabajador <-> Informe
 Trabajador.hasMany(Informe, { foreignKey: 'trabajador_id' });
@@ -97,11 +106,6 @@ Sesion.belongsTo(Administrador, { foreignKey: 'admin_id' });
 Trabajador.hasMany(Sesion, { foreignKey: 'trabajador_id' });
 Sesion.belongsTo(Trabajador, { foreignKey: 'trabajador_id' });
 
-// 13. Historial Mantenimiento (solo Admin)
-
-Administrador.hasMany(HistorialEstadoMantenimiento, { foreignKey: 'cambio_realizado_por' });
-HistorialEstadoMantenimiento.belongsTo(Administrador, { foreignKey: 'cambio_realizado_por' });
-
 // 14. Programaciones — 4 técnicos (columns: trabajador_id, tecnico2_id, tecnico3_id, tecnico4_id)
 Programacion.belongsTo(Trabajador, { foreignKey: 'trabajador_id', as: 'Tecnico1' });
 Programacion.belongsTo(Trabajador, { foreignKey: 'tecnico2_id',   as: 'Tecnico2' });
@@ -121,8 +125,6 @@ module.exports = {
   Trabajador,
   Cliente,
   Ascensor,
-  Tarea,
-  Asignacion,
   Informe,
   Evidencia,
   RutaDiaria,
@@ -130,7 +132,9 @@ module.exports = {
   Notificacion,
   Auditoria,
   Sesion,
-  HistorialEstadoMantenimiento,
   Configuracion,
-  Programacion
+  Programacion,
+  TareaMaestra,
+  OrdenTrabajo,
+  DetalleOrden
 };

@@ -1,4 +1,4 @@
-const { Trabajador, Asignacion } = require('../models');
+const { Trabajador, OrdenTrabajo, Programacion } = require('../models');
 const { hashPassword } = require('../utils/password.util');
 const { Op } = require('sequelize');
 
@@ -167,11 +167,16 @@ const getUsersByWorkload = async () => {
         [
           require('sequelize').literal(`(
             SELECT COUNT(*)
-            FROM "Asignaciones" AS asignacion
-            INNER JOIN "Mantenimientos" AS mantenimiento
-            ON asignacion.mantenimiento_id = mantenimiento.mantenimiento_id
-            WHERE asignacion.trabajador_id = "Trabajador".trabajador_id
-            AND mantenimiento.estado IN ('pendiente', 'en_proceso')
+            FROM "Programaciones" AS programacion
+            LEFT JOIN "OrdenesTrabajo" AS orden
+            ON programacion.programacion_id = orden.programacion_id
+            WHERE (
+              programacion.trabajador_id = "Trabajador".trabajador_id OR 
+              programacion.tecnico2_id = "Trabajador".trabajador_id OR 
+              programacion.tecnico3_id = "Trabajador".trabajador_id OR 
+              programacion.tecnico4_id = "Trabajador".trabajador_id
+            )
+            AND (orden.estado IS NULL OR orden.estado = 'en_progreso')
           )`),
           'carga_trabajo'
         ]

@@ -37,7 +37,8 @@ const usuarioRoutes = require('./routes/usuarios.routes');
 const clienteRoutes = require('./routes/clienteRoutes');
 const ascensorRoutes = require('./routes/ascensorRoutes');
 
-const tareaRoutes = require('./routes/tareaRoutes');
+const tareaMaestraRoutes = require('./routes/tareaMaestraRoutes');
+const ordenTrabajoRoutes = require('./routes/ordenTrabajoRoutes');
 const informeRoutes = require('./routes/informeRoutes');
 const evidenciaRoutes = require('./routes/evidenciaRoutes');
 const rutaRoutes = require('./routes/rutaRoutes');
@@ -49,11 +50,13 @@ app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/clientes', clienteRoutes);
 app.use('/api/ascensores', ascensorRoutes);
 
-app.use('/api/tareas', tareaRoutes);
+app.use('/api/tareas-maestras', tareaMaestraRoutes);
+app.use('/api/ordenes-trabajo', ordenTrabajoRoutes);
 app.use('/api/informes', informeRoutes);
 app.use('/api/evidencias', evidenciaRoutes);
 app.use('/api/rutas', rutaRoutes);
 app.use('/api/programaciones', programacionRoutes);
+
 
 // Swagger Documentation
 const swaggerUi = require('swagger-ui-express');
