@@ -163,11 +163,49 @@ const parseTecnicoIds = (trabajador_ids) => {
   };
 };
 
+/**
+ * Verifica si hay superposición de horarios para los técnicos involucrados
+ */
+const getConflictosCount = async (start, end, tecnicoIdsObj, excludeId = null) => {
+  const ids = [tecnicoIdsObj.trabajador_id, tecnicoIdsObj.tecnico2_id, tecnicoIdsObj.tecnico3_id, tecnicoIdsObj.tecnico4_id].filter(Boolean);
+  if (ids.length === 0) return 0;
+
+  const whereClause = {
+    [Op.or]: [
+      { trabajador_id: { [Op.in]: ids } },
+      { tecnico2_id: { [Op.in]: ids } },
+      { tecnico3_id: { [Op.in]: ids } },
+      { tecnico4_id: { [Op.in]: ids } }
+    ],
+    fecha_inicio: { [Op.lt]: end },
+    fecha_fin: { [Op.gt]: start },
+    estado: { [Op.ne]: 'cancelado' } // Si está cancelado, el tiempo está libre
+  };
+
+  if (excludeId) {
+    whereClause.programacion_id = { [Op.ne]: excludeId };
+  }
+
+  return await Programacion.count({ where: whereClause });
+};
+
 // ─── POST /api/programaciones ──────────────────────────────────────────────────
 const createProgramacion = async (req, res, next) => {
   try {
     const { titulo, start, end, trabajador_ids, cliente_id, ascensor_id, tipo_trabajo, color, descripcion } = req.body;
+
+    // Validación temporal estricta
+    if (new Date(start) >= new Date(end)) {
+      return res.status(400).json(errorResponse('La hora de fin debe ser posterior a la hora de inicio.', 'BAD_REQUEST'));
+    }
+
     const tecnicoIds = parseTecnicoIds(trabajador_ids);
+
+    // Validación de conflictos (anti-solapamiento)
+    const conflictos = await getConflictosCount(start, end, tecnicoIds);
+    if (conflictos > 0) {
+      return res.status(409).json(errorResponse('Conflicto detectado: Uno o más técnicos seleccionados ya tienen trabajos programados en este horario.', 'CONFLICT'));
+    }
 
     const nueva = await Programacion.create({
       titulo:        titulo,
@@ -207,6 +245,32 @@ const updateProgramacion = async (req, res, next) => {
     const programacion = await Programacion.findByPk(id);
     if (!programacion) {
       return res.status(404).json(errorResponse('Programación no encontrada', 'NOT_FOUND'));
+    }
+
+    // Preparar fechas definitivas para validación temporal
+    const finalStart = start || programacion.fecha_inicio;
+    const finalEnd = end || programacion.fecha_fin;
+
+    if (new Date(finalStart) >= new Date(finalEnd)) {
+      return res.status(400).json(errorResponse('La hora de fin debe ser posterior a la hora de inicio.', 'BAD_REQUEST'));
+    }
+
+    // Verificar conflictos si las fechas cambiaron o los técnicos cambiaron
+    // Por seguridad, armamos los técnicos propuestos a evaluar
+    let propTecIds = { 
+      trabajador_id: programacion.trabajador_id,
+      tecnico2_id:   programacion.tecnico2_id,
+      tecnico3_id:   programacion.tecnico3_id,
+      tecnico4_id:   programacion.tecnico4_id
+    };
+    if (Array.isArray(trabajador_ids)) {
+      propTecIds = parseTecnicoIds(trabajador_ids);
+    }
+    
+    // Validar siempre conflictos exceptuando a sí mismo
+    const conflictos = await getConflictosCount(finalStart, finalEnd, propTecIds, id);
+    if (conflictos > 0) {
+      return res.status(409).json(errorResponse('Conflicto detectado: Uno o más técnicos seleccionados ya tienen trabajos programados en este horario.', 'CONFLICT'));
     }
 
     // Actualizar campos simples
