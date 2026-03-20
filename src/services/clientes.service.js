@@ -25,9 +25,16 @@ const createClient = async (data) => {
 /**
  * Get all clients (Legacy list)
  */
-const getClients = async () => {
+const getClients = async (activeFilter) => {
+  const where = {};
+  if (activeFilter !== undefined) {
+     where.estado_activo = activeFilter;
+  } else {
+     where.estado_activo = true; // Keep legacy default isolated
+  }
+  
   return await Cliente.findAll({
-    where: { estado_activo: true },
+    where,
     order: [['fecha_creacion', 'DESC']]
   });
 };

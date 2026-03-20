@@ -32,7 +32,11 @@ const getClients = async (req, res, next) => {
     }
 
     // Comportamiento Legacy (sin paginación)
-    const clients = await clientesService.getClients();
+    let activeFilter;
+    if (req.query.estado_activo !== undefined) {
+       activeFilter = req.query.estado_activo === 'false' || req.query.estado_activo === '0' ? false : true;
+    }
+    const clients = await clientesService.getClients(activeFilter);
     res.status(200).json(successResponse(clients, 'Clientes obtenidos exitosamente'));
   } catch (error) {
     next(error);
