@@ -23,8 +23,11 @@ const Ascensor = sequelize.define('Ascensor', {
     type: DataTypes.STRING(100),
     unique: true
   },
-  capacidad: {
-    type: DataTypes.STRING(100)
+  capacidad_kg: {
+    type: DataTypes.INTEGER
+  },
+  capacidad_personas: {
+    type: DataTypes.INTEGER
   },
   piso_cantidad: {
     type: DataTypes.INTEGER

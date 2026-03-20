@@ -6,11 +6,12 @@ const createAscensorSchema = Joi.object({
   marca: Joi.string().max(100).optional(),
   modelo: Joi.string().max(100).optional(),
   numero_serie: Joi.string().max(100).required(),
-  capacidad: Joi.string().max(100).optional(),
-  piso_cantidad: Joi.number().integer().optional(),
-  fecha_ultimo_mantenimiento: Joi.date().iso().optional(),
+  capacidad_kg: Joi.number().integer().min(0).allow(null, '').optional(),
+  capacidad_personas: Joi.number().integer().min(0).allow(null, '').optional(),
+  piso_cantidad: Joi.number().integer().allow(null, '').optional(),
+  fecha_ultimo_mantenimiento: Joi.date().iso().allow(null, '').optional(),
   estado: Joi.string().max(50).optional(),
-  observaciones: Joi.string().optional()
+  observaciones: Joi.string().allow('', null).optional()
 });
 
 const updateAscensorSchema = Joi.object({
@@ -19,11 +20,12 @@ const updateAscensorSchema = Joi.object({
   marca: Joi.string().max(100).optional(),
   modelo: Joi.string().max(100).optional(),
   numero_serie: Joi.string().max(100).optional(),
-  capacidad: Joi.string().max(100).optional(),
-  piso_cantidad: Joi.number().integer().optional(),
-  fecha_ultimo_mantenimiento: Joi.date().iso().optional(),
+  capacidad_kg: Joi.number().integer().min(0).allow(null, '').optional(),
+  capacidad_personas: Joi.number().integer().min(0).allow(null, '').optional(),
+  piso_cantidad: Joi.number().integer().allow(null, '').optional(),
+  fecha_ultimo_mantenimiento: Joi.date().iso().allow(null, '').optional(),
   estado: Joi.string().max(50).optional(),
-  observaciones: Joi.string().optional()
+  observaciones: Joi.string().allow('', null).optional()
 });
 
 module.exports = {

@@ -30,7 +30,7 @@ const getAscensores = async (filters = {}) => {
     where,
     include: [{
       model: Cliente,
-      attributes: ['cliente_id', 'tipo_cliente', 'ubicacion']
+      attributes: ['cliente_id', 'tipo_cliente', 'ubicacion', 'nombre_comercial', 'contacto_nombre', 'contacto_apellido']
     }],
     order: [['fecha_creacion', 'DESC']]
   });
