@@ -1,129 +1,98 @@
-const PDFDocument = require('pdfkit');
+const puppeteer = require('puppeteer');
 const path = require('path');
 const fs = require('fs');
 
-const generateReportPDF = (reportData, res) => {
-    const doc = new PDFDocument({ margin: 50, size: 'A4' });
-    doc.pipe(res);
+const generateReportPDF = async (reportData, res) => {
+    try {
+        const templatePath = path.join(__dirname, '../templates/informe_template.html');
+        let html = fs.readFileSync(templatePath, 'utf8');
 
-    // Paleta de colores
-    const primaryColor = '#003B73'; 
-    const accentColor = reportData.tipo_informe === 'Mantenimiento' ? '#003B73' : '#10B981';
-    const textColor = '#333333';
-    const lightGray = '#F5F5F5';
+        // Configuración de Colores y Títulos
+        const isMaintenance = reportData.tipo_informe.toLowerCase() === 'mantenimiento';
+        const reportTitle = isMaintenance ? 'INFORME DE MANTENIMIENTO' : 'INFORME TÉCNICO';
+        const titleColorClass = isMaintenance ? 'text-[#003B73]' : 'text-emerald-600';
+        const borderColorClass = isMaintenance ? 'border-[#003B73]' : 'border-emerald-600';
 
-    // --- ENCABEZADO ---
-    doc.rect(0, 0, 612, 120).fill(primaryColor); 
+        // Procesamiento del Logo a Base64
+        let logoBase64 = '';
+        const logoPath = path.join(__dirname, '../assets/jmg_logo.png');
+        if (fs.existsSync(logoPath)) {
+            const logoData = fs.readFileSync(logoPath);
+            logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`;
+        }
 
-    const logoPath = path.join(__dirname, '../assets/jmg_logo.png');
-    
-    if (fs.existsSync(logoPath)) {
-        // Colocamos el logo. Al ya tener el nombre, no imprimimos "JMG ASCENSORES" en texto.
-        doc.image(logoPath, 50, 30, { width: 140 }); 
-    } else {
-        // Backup en texto solo si el archivo de imagen falla
-        doc
-            .fillColor('#FFFFFF')
-            .fontSize(22)
-            .font('Helvetica-Bold')
-            .text('JMG ASCENSORES', 50, 50);
+        // Datos del Cliente y Técnico
+        const clientObj = reportData.Cliente || {};
+        const techObj = reportData.Trabajador || {};
+        const clientName = clientObj.nombre_comercial || `${clientObj.contacto_nombre || ''} ${clientObj.contacto_apellido || ''}`.trim() || 'Cliente General';
+        const contactName = `${clientObj.contacto_nombre || ''} ${clientObj.contacto_apellido || ''}`.trim() || 'N/A';
+        const clientAddress = clientObj.direccion || clientObj.ubicacion || 'No registrada';
+        const techName = `${techObj.nombre || ''} ${techObj.apellido || ''}`.trim();
+        const formattedDate = new Date(reportData.fecha_informe).toLocaleDateString('es-ES');
+        const reportIdPadded = reportData.informe_id.toString().padStart(6, '0');
+
+        // Reemplazo de Variables (Simple Interpolation)
+        const replacements = {
+            '{{logoBase64}}': logoBase64,
+            '{{reportTitle}}': reportTitle,
+            '{{titleColorClass}}': titleColorClass,
+            '{{borderColorClass}}': borderColorClass,
+            '{{reportId}}': reportIdPadded,
+            '{{fechaEmision}}': formattedDate,
+            '{{clientName}}': clientName,
+            '{{contactName}}': contactName,
+            '{{clientAddress}}': clientAddress,
+            '{{techName}}': techName,
+            '{{workDescription}}': reportData.descripcion_trabajo || 'Sin descripción detallada.',
+            '{{techObservations}}': reportData.observaciones_tecnico || ''
+        };
+
+        for (const [key, value] of Object.entries(replacements)) {
+            // Usamos split y join en lugar de replaceAll para máxima compatibilidad node version
+            html = html.split(key).join(value || '');
+        }
+
+        // Si no hay logo base64, limpia las etiquetas que se basan en él mediante un regex simple de condicionales
+        if (!logoBase64) {
+            html = html.replace('{{#if logoBase64}}', '').replace('{{else}}', '').replace('{{/if}}', '');
+        } else {
+             html = html.replace('{{#if logoBase64}}', '')
+                        .replace(/{{else}}[\s\S]*?{{\/if}}/, ''); // Elimina el bloque else
+        }
+
+        if (!reportData.observaciones_tecnico) {
+             html = html.replace(/{{#if techObservations}}[\s\S]*?{{\/if}}/, '');
+        } else {
+             html = html.replace('{{#if techObservations}}', '').replace('{{/if}}', '');
+        }
+
+        // Iniciar Puppeteer
+        const browser = await puppeteer.launch({
+            headless: "new",
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+        
+        const page = await browser.newPage();
+        
+        // Esperamos a networkidle0 para garantizar que Tailwind CDN inyecte todos los estilos
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+        
+        const pdfBuffer = await page.pdf({ 
+            format: 'A4', 
+            printBackground: true,
+            margin: { top: '0', right: '0', bottom: '0', left: '0' }
+        });
+        
+        await browser.close();
+        
+        // Enviar buffer PDF al cliente
+        res.end(pdfBuffer);
+    } catch (error) {
+        console.error('Error al generar PDF con Puppeteer:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ success: false, message: 'Error interno generando el PDF' });
+        }
     }
-
-    // Datos de la empresa alineados a la derecha
-    doc
-        .fillColor('#FFFFFF')
-        .font('Helvetica')
-        .fontSize(10)
-        .text('RUC: 20421037648', 400, 45, { align: 'right' })
-        .text('Villa el Salvador - Lima, Perú', 400, 60, { align: 'right' })
-        .text('jmgascensores@gmail.com', 400, 75, { align: 'right' });
-
-    // --- TÍTULO DEL INFORME ---
-    const reportTitle = reportData.tipo_informe === 'Mantenimiento' ? 'INFORME DE MANTENIMIENTO' : 'INFORME TÉCNICO';
-    
-    doc.moveDown(5);
-    doc
-        .fillColor(accentColor)
-        .fontSize(18)
-        .font('Helvetica-Bold')
-        .text(reportTitle, 50, 150, { align: 'center' });
-
-    // Línea decorativa bajo el título
-    doc
-        .moveTo(200, 172)
-        .lineTo(412, 172)
-        .strokeColor(accentColor)
-        .lineWidth(1)
-        .stroke();
-
-    doc
-        .fillColor(textColor)
-        .fontSize(10)
-        .font('Helvetica')
-        .text(`N° Informe: ${reportData.informe_id.toString().padStart(6, '0')}`, 50, 185, { align: 'center' })
-        .text(`Fecha de Emisión: ${new Date(reportData.fecha_informe).toLocaleDateString('es-ES')}`, 50, 200, { align: 'center' });
-
-    // --- SECCIÓN: INFORMACIÓN DEL CLIENTE ---
-    doc.moveDown(2);
-    const customerBoxTop = 230;
-    
-    doc.rect(50, customerBoxTop, 500, 20).fill(lightGray);
-    doc.fillColor(primaryColor).font('Helvetica-Bold').fontSize(11).text('DATOS DEL CLIENTE', 60, customerBoxTop + 5);
-
-    doc.fillColor(textColor).font('Helvetica').fontSize(10);
-    const col1 = 60, col2 = 160;
-    let currentY = customerBoxTop + 30;
-
-    const drawRow = (label, value) => {
-        doc.font('Helvetica-Bold').text(label, col1, currentY);
-        doc.font('Helvetica').text(value || 'N/A', col2, currentY);
-        currentY += 18;
-    };
-
-    const clientName = reportData.Cliente?.nombre_comercial 
-                    || `${reportData.Cliente?.contacto_nombre || ''} ${reportData.Cliente?.contacto_apellido || ''}`.trim() 
-                    || 'Cliente General';
-
-    const contactName = `${reportData.Cliente?.contacto_nombre || ''} ${reportData.Cliente?.contacto_apellido || ''}`.trim() || 'N/A';
-
-    drawRow('Cliente:', clientName);
-    drawRow('Dirección:', reportData.Cliente?.direccion || reportData.Cliente?.ubicacion || 'No registrada');
-    drawRow('Contacto:', contactName);
-    drawRow('Técnico:', `${reportData.Trabajador?.nombre || ''} ${reportData.Trabajador?.apellido || ''}`);
-
-    // --- SECCIÓN: DETALLES DEL TRABAJO ---
-    currentY += 10;
-    doc.rect(50, currentY, 500, 20).fill(lightGray);
-    doc.fillColor(primaryColor).font('Helvetica-Bold').text('DESCRIPCIÓN DEL TRABAJO REALIZADO', 60, currentY + 5);
-    
-    currentY += 30;
-    doc.fillColor(textColor).font('Helvetica').fontSize(10);
-    doc.text(reportData.descripcion_trabajo || 'Sin descripción detallada.', 50, currentY, {
-        width: 500,
-        align: 'justify',
-        lineGap: 4
-    });
-
-    // --- OBSERVACIONES ---
-    if (reportData.observaciones_tecnico) {
-        doc.moveDown(2);
-        doc.fillColor('#D32F2F').font('Helvetica-Bold').text('OBSERVACIONES:');
-        doc.fillColor(textColor).font('Helvetica').text(reportData.observaciones_tecnico, { width: 500 });
-    }
-
-    // --- FIRMAS ---
-    const footerY = 720;
-    doc.strokeColor('#CCCCCC').lineWidth(1);
-    
-    doc.moveTo(70, footerY).lineTo(230, footerY).stroke();
-    doc.moveTo(370, footerY).lineTo(530, footerY).stroke();
-
-    doc
-        .fontSize(9)
-        .text('Firma del Técnico', 70, footerY + 10, { width: 160, align: 'center' })
-        .text('Firma del Cliente', 370, footerY + 10, { width: 160, align: 'center' });
-
-    doc.end();
 };
 
 module.exports = { generateReportPDF };

@@ -17,7 +17,7 @@ if (!fs.existsSync(uploadsDir)) {
 
 // CORS Configuration
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || 'http://localhost:4200',
+  origin: ['http://localhost:4200', 'http://localhost:4201', 'http://localhost:4202'],
   credentials: true,
   optionsSuccessStatus: 200
 };

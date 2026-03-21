@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe JMG</title>
+    <!-- Incluir Tailwind CSS vía CDN para diseño estático -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Helvetica', 'Arial', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .page-break { page-break-before: always; }
+        @page { size: A4; margin: 0; }
+        .jmg-primary { color: #003B73; }
+        .jmg-bg-primary { background-color: #003B73; }
+        .jmg-success { color: #10B981; }
+        .jmg-border-success { border-bottom-color: #10B981; }
+    </style>
+</head>
+<body class="bg-white min-h-screen text-slate-800 p-8 w-full">
+
+    <!-- Header Corporativo -->
+    <div class="jmg-bg-primary rounded-t-xl text-white p-4 flex justify-between items-center shadow-md">
+        <div class="flex items-center gap-4">
+            <!-- Logo si existe se pasará en base64 u omitirá si no, usamos texto fallback elegante -->
+            {{#if logoBase64}}
+            <img src="{{logoBase64}}" alt="JMG Logo" class="h-16 bg-white p-1 rounded">
+            {{else}}
+            <h1 class="text-3xl font-extrabold tracking-tight">JMG ASCENSORES</h1>
+            {{/if}}
+        </div>
+        <div class="text-right text-xs opacity-90 leading-relaxed font-medium">
+            <p>RUC: 20421037648</p>
+            <p>Villa el Salvador - Lima, Perú</p>
+            <p>jmgascensores@gmail.com</p>
+            <p>Tel: +51 999 999 999</p>
+        </div>
+    </div>
+
+    <!-- Título Documento -->
+    <div class="mt-4 text-center mb-6">
+        <h2 class="text-2xl font-black uppercase tracking-widest {{titleColorClass}} border-b-2 inline-block pb-2 {{borderColorClass}}">
+            {{reportTitle}}
+        </h2>
+        <div class="mt-2 text-slate-500 font-semibold text-sm flex justify-center gap-6">
+            <span><i class="opacity-75">N° Informe:</i> {{reportId}}</span>
+            <span><i class="opacity-75">Emisión:</i> {{fechaEmision}}</span>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="space-y-4 px-4">
+        
+        <!-- Bloque Cliente -->
+        <section>
+            <div class="bg-slate-100 px-4 py-2 rounded-t-lg border-l-4 jmg-bg-primary">
+                <h3 class="jmg-primary font-bold text-sm tracking-widest">📋 DATOS DEL CLIENTE</h3>
+            </div>
+            <div class="border border-slate-200 rounded-b-lg p-5 grid grid-cols-2 gap-y-4 text-sm">
+                <div>
+                    <p class="text-slate-400 text-xs font-bold uppercase mb-1">Nombre Comercial</p>
+                    <p class="font-semibold text-slate-800">{{clientName}}</p>
+                </div>
+                <div>
+                    <p class="text-slate-400 text-xs font-bold uppercase mb-1">Contacto Registrado</p>
+                    <p class="font-medium text-slate-700">{{contactName}}</p>
+                </div>
+                <div class="col-span-2">
+                    <p class="text-slate-400 text-xs font-bold uppercase mb-1">Dirección / Ubicación</p>
+                    <p class="font-medium text-slate-700">{{clientAddress}}</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bloque Técnico -->
+        <section>
+            <div class="bg-slate-100 px-4 py-2 rounded-t-lg border-l-4 jmg-bg-primary">
+                <h3 class="jmg-primary font-bold text-sm tracking-widest">👷‍♂️ PERSONAL ASIGNADO</h3>
+            </div>
+            <div class="border border-slate-200 rounded-b-lg p-5">
+                <p class="text-slate-400 text-xs font-bold uppercase mb-1">Técnico Responsable</p>
+                <p class="font-semibold text-slate-800">{{techName}}</p>
+            </div>
+        </section>
+
+        <!-- Bloque Descripción -->
+        <section>
+            <div class="bg-slate-100 px-4 py-2 rounded-t-lg border-l-4 jmg-bg-primary">
+                <h3 class="jmg-primary font-bold text-sm tracking-widest">🔧 DESCRIPCIÓN DEL TRABAJO REALIZADO</h3>
+            </div>
+            <div class="border border-slate-200 rounded-b-lg p-6 bg-slate-50 relative min-h-[200px]">
+                <p class="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{{workDescription}}</p>
+            </div>
+        </section>
+
+        <!-- Observaciones -->
+        {{#if techObservations}}
+        <section class="mt-6">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-5 border-l-4 border-l-red-500">
+                <h3 class="text-red-700 font-bold text-sm uppercase mb-2">⚠️ Observaciones del Técnico</h3>
+                <p class="text-red-900 text-sm italic">{{techObservations}}</p>
+            </div>
+        </section>
+        {{/if}}
+
+    </div>
+
+    <div class="break-inside-avoid">
+        <!-- Firmas Footer -->
+        <div class="mt-8 w-full flex justify-between px-16 text-center text-sm font-semibold text-slate-500">
+            <div class="w-48">
+                <div class="border-t-2 border-slate-300 pt-3">Firma del Técnico</div>
+            </div>
+            <div class="w-48">
+                <div class="border-t-2 border-slate-300 pt-3">Firma del Cliente</div>
+            </div>
+        </div>
+
+        <div class="text-center text-xs text-slate-400 mt-6 pb-2">
+            Documento generado digitalmente por Plataforma JMG Ascensores
+        </div>
+    </div>
+
+</body>
+</html>

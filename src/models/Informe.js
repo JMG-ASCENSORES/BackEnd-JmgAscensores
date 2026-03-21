@@ -25,10 +25,20 @@ const Informe = sequelize.define('Informe', {
   },
   tipo_informe: {
     type: DataTypes.STRING(50),
+    allowNull: false,
+    validate: {
+      notEmpty: true,
+      isIn: [['Técnico', 'Mantenimiento']]
+    },
     comment: 'Ej: preventivo, correctivo/reparacion'
   },
   descripcion_trabajo: {
     type: DataTypes.TEXT,
+    allowNull: false,
+    validate: {
+      notEmpty: true,
+      len: [10, 5000]
+    },
     comment: 'Resumen del trabajo realizado'
   },
   observaciones: {
@@ -38,10 +48,15 @@ const Informe = sequelize.define('Informe', {
     type: DataTypes.STRING(100)
   },
   fecha_informe: {
-    type: DataTypes.DATEONLY
+    type: DataTypes.DATEONLY,
+    allowNull: false,
+    validate: {
+      isDate: true
+    }
   },
   hora_informe: {
-    type: DataTypes.TIME
+    type: DataTypes.TIME,
+    allowNull: false
   },
   firma_tecnico: {
     type: DataTypes.TEXT

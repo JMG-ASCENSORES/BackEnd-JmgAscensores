@@ -13,8 +13,33 @@ const createInforme = async (req, res, next) => {
 
 const getInformes = async (req, res, next) => {
   try {
-    const informes = await informesService.getInformes(req.query || {});
-    res.status(200).json(successResponse(informes, 'Lista de informes'));
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const offset = (page - 1) * limit;
+
+    const result = await informesService.getInformes(req.query || {}, { limit, offset });
+    
+    // Si findAndCountAll se usó correctamente
+    if (result.count !== undefined) {
+       const totalPages = Math.ceil(result.count / limit);
+       res.status(200).json(successResponse({
+         informes: result.rows,
+         meta: { 
+            total: result.count, 
+            page, 
+            limit, 
+            totalPages,
+            totalMaintenance: result.statsMantenimiento || 0,
+            totalTechnical: result.statsTecnico || 0 
+         }
+       }, 'Lista de informes paginada'));
+    } else {
+       // Fallback por si acaso
+       res.status(200).json(successResponse({
+         informes: result,
+         meta: { total: result.length, page: 1, limit: result.length, totalPages: 1 }
+       }, 'Lista de informes'));
+    }
   } catch (error) {
     next(error);
   }
@@ -61,17 +86,23 @@ const getInformePdf = async (req, res, next) => {
     const informe = await informesService.getInformeById(req.params.id);
     
     // Set headers for PDF response
-    // Set headers for PDF response
-    const cleanString = (str) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]/g, '');
+    const typePrefix = informe.tipo_informe === 'Mantenimiento' ? 'MAN' : 'TEC';
+    const reportNum = informe.informe_id.toString().padStart(6, '0');
+    const clientNameRaw = informe.Cliente?.nombre_comercial || informe.Cliente?.contacto_nombre || 'Cliente';
+    
+    // Limpieza suave para el nombre del archivo (evitar caracteres prohibidos en sistemas de archivos)
+    const clientNameClean = clientNameRaw.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9\s-]/g, '')
+      .trim();
 
-    const clientName = cleanString(informe.Cliente?.nombre_comercial || informe.Cliente?.contacto_nombre || 'Cliente');
-    const tipo = cleanString(informe.tipo_informe);
-    const filename = `${informe.informe_id}_${tipo}_${clientName}.pdf`;
+    const filename = `${typePrefix} - ${reportNum} - ${clientNameClean}.pdf`;
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
 
-    pdfService.generateReportPDF(informe, res);
+    await pdfService.generateReportPDF(informe, res);
+    
     
   } catch (error) {
      if (error.message === 'INFORME_NOT_FOUND') {
