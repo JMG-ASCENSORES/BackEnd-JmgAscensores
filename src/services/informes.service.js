@@ -1,7 +1,61 @@
-const { Informe } = require('../models');
+const { Informe, OrdenTrabajo, Programacion, Firma } = require('../models');
 
 const createInforme = async (data) => {
-  return await Informe.create(data);
+  //console.log('[createInforme] Datos recibidos - firma_tecnico_id:', data.firma_tecnico_id, '| firma_cliente_id:', data.firma_cliente_id, '| firma_tecnico (tiene data):', !!data.firma_tecnico);
+  
+  if (data.orden_id) {
+    const existing = await Informe.findOne({ where: { orden_id: data.orden_id } });
+    if (existing) {
+      throw new Error('INFORME_DUPLICADO');
+    }
+  }
+
+  // Lógica para crear/actualizar firmas a partir del base64
+  if (data.firma_tecnico && !data.firma_tecnico_id) {
+    const { Trabajador } = require('../models');
+    const worker = await Trabajador.findByPk(data.trabajador_id);
+    if (worker && worker.firma_defecto_id) {
+      await Firma.update({ base64_data: data.firma_tecnico }, { where: { firma_id: worker.firma_defecto_id } });
+      data.firma_tecnico_id = worker.firma_defecto_id;
+    } else {
+      const firmaT = await Firma.create({ base64_data: data.firma_tecnico });
+      data.firma_tecnico_id = firmaT.firma_id;
+    }
+    delete data.firma_tecnico;
+  }
+  
+  if (data.firma_cliente && !data.firma_cliente_id) {
+    // Buscar si ya existe una firma previa para este ascensor
+    const op = require('sequelize').Op;
+    const lastReport = await Informe.findOne({
+      where: { ascensor_id: data.ascensor_id, firma_cliente_id: { [op.ne]: null } },
+      order: [['fecha_informe', 'DESC'], ['informe_id', 'DESC']]
+    });
+
+    if (lastReport && lastReport.firma_cliente_id) {
+      await Firma.update({ base64_data: data.firma_cliente }, { where: { firma_id: lastReport.firma_cliente_id } });
+      data.firma_cliente_id = lastReport.firma_cliente_id;
+    } else {
+      const firmaC = await Firma.create({ base64_data: data.firma_cliente });
+      data.firma_cliente_id = firmaC.firma_id;
+    }
+    delete data.firma_cliente;
+  }
+
+  const informe = await Informe.create(data);
+
+  if (data.orden_id) {
+    const orden = await OrdenTrabajo.findByPk(data.orden_id);
+    if (orden) {
+      await orden.update({ estado: 'completado' });
+      await Programacion.update(
+        { estado: 'completado' },
+        { where: { programacion_id: orden.programacion_id } }
+      );
+    }
+  }
+
+  return informe;
 };
 
 const getInformes = async (filters = {}, pagination = {}) => {
@@ -33,7 +87,7 @@ const getInformes = async (filters = {}, pagination = {}) => {
   const queryOptions = {
     where,
     include: ['Cliente', 'Trabajador'],
-    order: [['fecha_informe', 'DESC']]
+    order: [['fecha_creacion', 'DESC']]
   };
 
   if (pagination.limit) {
@@ -52,7 +106,7 @@ const getInformes = async (filters = {}, pagination = {}) => {
 
 const getInformeById = async (id) => {
   const informe = await Informe.findByPk(id, {
-    include: ['Cliente', 'Trabajador']
+    include: ['Cliente', 'Trabajador', 'FirmaTecnico', 'FirmaCliente']
   });
   if (!informe) throw new Error('INFORME_NOT_FOUND');
   return informe;
@@ -61,6 +115,30 @@ const getInformeById = async (id) => {
 const updateInforme = async (id, data) => {
   const informe = await Informe.findByPk(id);
   if (!informe) throw new Error('INFORME_NOT_FOUND');
+  
+  // Lógica para crear/actualizar firmas a partir del base64 en updates
+  if (data.firma_tecnico && !data.firma_tecnico_id) {
+    if (informe.firma_tecnico_id) {
+      await Firma.update({ base64_data: data.firma_tecnico }, { where: { firma_id: informe.firma_tecnico_id } });
+      data.firma_tecnico_id = informe.firma_tecnico_id;
+    } else {
+      const firmaT = await Firma.create({ base64_data: data.firma_tecnico });
+      data.firma_tecnico_id = firmaT.firma_id;
+    }
+    delete data.firma_tecnico;
+  }
+  
+  if (data.firma_cliente && !data.firma_cliente_id) {
+    if (informe.firma_cliente_id) {
+      await Firma.update({ base64_data: data.firma_cliente }, { where: { firma_id: informe.firma_cliente_id } });
+      data.firma_cliente_id = informe.firma_cliente_id;
+    } else {
+      const firmaC = await Firma.create({ base64_data: data.firma_cliente });
+      data.firma_cliente_id = firmaC.firma_id;
+    }
+    delete data.firma_cliente;
+  }
+  
   await informe.update(data);
   return informe;
 };

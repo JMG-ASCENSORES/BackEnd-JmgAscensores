@@ -1,4 +1,0 @@
---- PASSWORD CHECK START ---
-RESULT: Password verification for 12345678 is true
-INFO: Hash in DB is $2a$10$hy4GRxgPDxWJrrjwKKKcmex77/nj9BHNp6mfFgzaMEyd78gZJ.iXi
---- PASSWORD CHECK END ---

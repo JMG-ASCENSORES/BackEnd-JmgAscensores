@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Programacion, Trabajador, Cliente, Ascensor, OrdenTrabajo } = require('../models');
+const { Programacion, Trabajador, Cliente, Ascensor, OrdenTrabajo, Informe } = require('../models');
 const { successResponse, errorResponse } = require('../utils/response.util');
 
 /**
@@ -61,7 +61,8 @@ const toEvento = (p) => {
       descripcion:    p.descripcion,
       cliente:        p.Cliente  || null,
       ascensor:       p.Ascensor || null,
-      orden_id:       p.OrdenTrabajo?.orden_id || null
+      orden_id:       p.OrdenTrabajo?.orden_id || null,
+      informe_id:     p.OrdenTrabajo?.Informe?.informe_id || null
     }
   };
 };
@@ -110,7 +111,12 @@ const getProgramaciones = async (req, res, next) => {
         ...tecnicoIncludes,
         { model: Cliente,  attributes: ['cliente_id', 'contacto_nombre', 'contacto_apellido', 'nombre_comercial'], required: false },
         { model: Ascensor, attributes: ['ascensor_id', 'tipo_equipo', 'marca', 'modelo', 'numero_serie'], required: false },
-        { model: OrdenTrabajo, attributes: ['orden_id', 'estado'], required: false }
+        { 
+          model: OrdenTrabajo, 
+          attributes: ['orden_id', 'estado'], 
+          required: false,
+          include: [{ model: Informe, attributes: ['informe_id'], required: false }]
+        }
       ];
     } else {
        // Solo traemos columnas base, optimizando hasta 90%
@@ -136,7 +142,11 @@ const getProgramacionById = async (req, res, next) => {
         ...tecnicoIncludes,
         { model: Cliente,  required: false },
         { model: Ascensor, required: false },
-        { model: OrdenTrabajo, required: false }
+        { 
+          model: OrdenTrabajo, 
+          required: false,
+          include: [{ model: Informe, attributes: ['informe_id'], required: false }]
+        }
       ]
     });
 
@@ -221,6 +231,14 @@ const createProgramacion = async (req, res, next) => {
       color:         color || '#3788d8',
       descripcion,
       estado: 'pendiente'
+    });
+
+    // Crear la Orden de Trabajo automáticamente vinculada a esta programación
+    await OrdenTrabajo.create({
+        programacion_id: nueva.programacion_id,
+        cliente_id: nueva.cliente_id,
+        ascensor_id: nueva.ascensor_id,
+        estado: 'en_progreso'
     });
 
     // Recargar con includes para devolver datos completos

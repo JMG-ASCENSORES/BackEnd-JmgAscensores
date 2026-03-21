@@ -107,11 +107,17 @@
     <div class="break-inside-avoid">
         <!-- Firmas Footer -->
         <div class="mt-8 w-full flex justify-between px-16 text-center text-sm font-semibold text-slate-500">
-            <div class="w-48">
-                <div class="border-t-2 border-slate-300 pt-3">Firma del Técnico</div>
+            <div class="w-48 flex flex-col items-center">
+                {{#if firmaTecnico}}
+                <img src="{{firmaTecnico}}" alt="Firma Técnico" class="h-20 mb-1 object-contain">
+                {{/if}}
+                <div class="border-t-2 border-slate-300 pt-3 w-full">Firma del Técnico</div>
             </div>
-            <div class="w-48">
-                <div class="border-t-2 border-slate-300 pt-3">Firma del Cliente</div>
+            <div class="w-48 flex flex-col items-center">
+                {{#if firmaCliente}}
+                <img src="{{firmaCliente}}" alt="Firma Cliente" class="h-20 mb-1 object-contain">
+                {{/if}}
+                <div class="border-t-2 border-slate-300 pt-3 w-full">Firma del Cliente</div>
             </div>
         </div>
 

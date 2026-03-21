@@ -2,13 +2,16 @@ const puppeteer = require('puppeteer');
 const path = require('path');
 const fs = require('fs');
 
-const generateReportPDF = async (reportData, res) => {
+const generateReportPDF = async (report, res) => {
     try {
+        // Asegurar que reportData sea un objeto plano
+        const reportData = (typeof report.get === 'function') ? report.get({ plain: true }) : report;
+
         const templatePath = path.join(__dirname, '../templates/informe_template.html');
         let html = fs.readFileSync(templatePath, 'utf8');
 
         // Configuración de Colores y Títulos
-        const isMaintenance = reportData.tipo_informe.toLowerCase() === 'mantenimiento';
+        const isMaintenance = reportData.tipo_informe?.toLowerCase() === 'mantenimiento';
         const reportTitle = isMaintenance ? 'INFORME DE MANTENIMIENTO' : 'INFORME TÉCNICO';
         const titleColorClass = isMaintenance ? 'text-[#003B73]' : 'text-emerald-600';
         const borderColorClass = isMaintenance ? 'border-[#003B73]' : 'border-emerald-600';
@@ -28,10 +31,42 @@ const generateReportPDF = async (reportData, res) => {
         const contactName = `${clientObj.contacto_nombre || ''} ${clientObj.contacto_apellido || ''}`.trim() || 'N/A';
         const clientAddress = clientObj.direccion || clientObj.ubicacion || 'No registrada';
         const techName = `${techObj.nombre || ''} ${techObj.apellido || ''}`.trim();
-        const formattedDate = new Date(reportData.fecha_informe).toLocaleDateString('es-ES');
-        const reportIdPadded = reportData.informe_id.toString().padStart(6, '0');
+        const formattedDate = reportData.fecha_informe ? new Date(reportData.fecha_informe).toLocaleDateString('es-ES') : '';
+        const reportIdPadded = (reportData.informe_id || 0).toString().padStart(6, '0');
 
-        // Reemplazo de Variables (Simple Interpolation)
+        // Formatear firmas con prefijo si falta
+        const ensureBase64Prefix = (str) => {
+            if (!str) return '';
+            if (str.startsWith('data:image')) return str;
+            return `data:image/png;base64,${str}`;
+        };
+
+        const firmaTecnico = ensureBase64Prefix(reportData.FirmaTecnico?.base64_data);
+        const firmaCliente = ensureBase64Prefix(reportData.FirmaCliente?.base64_data);
+
+        // 1. Resolver los if/else primero (antes de inyectar variables)
+        const processConditional = (htmlStr, condition, tagName) => {
+            // Caso 1: {{#if tag}} ... {{else}} ... {{/if}}
+            const regexWithElse = new RegExp(`{{#if ${tagName}}}([\\s\\S]*?){{else}}([\\s\\S]*?){{\\/if}}`, 'g');
+            htmlStr = htmlStr.replace(regexWithElse, (match, ifBlock, elseBlock) => {
+                return condition ? ifBlock : elseBlock;
+            });
+            
+            // Caso 2: {{#if tag}} ... {{/if}} (sin else)
+            const regexWithoutElse = new RegExp(`{{#if ${tagName}}}([\\s\\S]*?){{\\/if}}`, 'g');
+            htmlStr = htmlStr.replace(regexWithoutElse, (match, ifBlock) => {
+                return condition ? ifBlock : '';
+            });
+            
+            return htmlStr;
+        };
+
+        html = processConditional(html, !!logoBase64, 'logoBase64');
+        html = processConditional(html, !!(reportData.observaciones || reportData.observaciones_tecnico), 'techObservations');
+        html = processConditional(html, !!firmaTecnico, 'firmaTecnico');
+        html = processConditional(html, !!firmaCliente, 'firmaCliente');
+
+        // 2. Reemplazo de Variables (Simple Interpolation)
         const replacements = {
             '{{logoBase64}}': logoBase64,
             '{{reportTitle}}': reportTitle,
@@ -44,26 +79,13 @@ const generateReportPDF = async (reportData, res) => {
             '{{clientAddress}}': clientAddress,
             '{{techName}}': techName,
             '{{workDescription}}': reportData.descripcion_trabajo || 'Sin descripción detallada.',
-            '{{techObservations}}': reportData.observaciones_tecnico || ''
+            '{{techObservations}}': reportData.observaciones || reportData.observaciones_tecnico || '',
+            '{{firmaTecnico}}': firmaTecnico,
+            '{{firmaCliente}}': firmaCliente
         };
 
         for (const [key, value] of Object.entries(replacements)) {
-            // Usamos split y join en lugar de replaceAll para máxima compatibilidad node version
             html = html.split(key).join(value || '');
-        }
-
-        // Si no hay logo base64, limpia las etiquetas que se basan en él mediante un regex simple de condicionales
-        if (!logoBase64) {
-            html = html.replace('{{#if logoBase64}}', '').replace('{{else}}', '').replace('{{/if}}', '');
-        } else {
-             html = html.replace('{{#if logoBase64}}', '')
-                        .replace(/{{else}}[\s\S]*?{{\/if}}/, ''); // Elimina el bloque else
-        }
-
-        if (!reportData.observaciones_tecnico) {
-             html = html.replace(/{{#if techObservations}}[\s\S]*?{{\/if}}/, '');
-        } else {
-             html = html.replace('{{#if techObservations}}', '').replace('{{/if}}', '');
         }
 
         // Iniciar Puppeteer
@@ -73,19 +95,15 @@ const generateReportPDF = async (reportData, res) => {
         });
         
         const page = await browser.newPage();
-        
-        // Esperamos a networkidle0 para garantizar que Tailwind CDN inyecte todos los estilos
         await page.setContent(html, { waitUntil: 'networkidle0' });
         
         const pdfBuffer = await page.pdf({ 
             format: 'A4', 
             printBackground: true,
-            margin: { top: '0', right: '0', bottom: '0', left: '0' }
+            margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' }
         });
         
         await browser.close();
-        
-        // Enviar buffer PDF al cliente
         res.end(pdfBuffer);
     } catch (error) {
         console.error('Error al generar PDF con Puppeteer:', error);

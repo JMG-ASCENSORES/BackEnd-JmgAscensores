@@ -58,11 +58,13 @@ const Informe = sequelize.define('Informe', {
     type: DataTypes.TIME,
     allowNull: false
   },
-  firma_tecnico: {
-    type: DataTypes.TEXT
+  firma_tecnico_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   },
-  firma_cliente: {
-    type: DataTypes.TEXT
+  firma_cliente_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   },
   url_documento: {
     type: DataTypes.STRING(255)

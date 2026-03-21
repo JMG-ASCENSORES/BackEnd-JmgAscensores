@@ -197,7 +197,7 @@ const getMyProfile = async (req, res, next) => {
 const updateMyProfile = async (req, res, next) => {
   try {
     // Workers can only update their own limited fields
-    const allowedFields = ['nombre', 'apellido', 'correo', 'telefono', 'contrasena_hash'];
+    const allowedFields = ['nombre', 'apellido', 'correo', 'telefono', 'contrasena_hash', 'firma_defecto_base64'];
     const filtered = {};
     for (const key of allowedFields) {
       if (req.body[key] !== undefined) filtered[key] = req.body[key];

@@ -19,6 +19,7 @@ const Programacion = require('./Programacion');
 const TareaMaestra = require('./TareaMaestra');
 const OrdenTrabajo = require('./OrdenTrabajo');
 const DetalleOrden = require('./DetalleOrden');
+const Firma = require('./Firma');
 
 // ============================================
 // ASSOCIATIONS
@@ -66,6 +67,17 @@ Informe.belongsTo(Cliente, { foreignKey: 'cliente_id' });
 // Ascensor <-> Informe
 Ascensor.hasMany(Informe, { foreignKey: 'ascensor_id' });
 Informe.belongsTo(Ascensor, { foreignKey: 'ascensor_id' });
+
+// Firma <-> Informe
+Firma.hasMany(Informe, { foreignKey: 'firma_tecnico_id', as: 'InformesTecnico' });
+Informe.belongsTo(Firma, { foreignKey: 'firma_tecnico_id', as: 'FirmaTecnico' });
+
+Firma.hasMany(Informe, { foreignKey: 'firma_cliente_id', as: 'InformesCliente' });
+Informe.belongsTo(Firma, { foreignKey: 'firma_cliente_id', as: 'FirmaCliente' });
+
+// Firma <-> Trabajador
+Firma.hasMany(Trabajador, { foreignKey: 'firma_defecto_id', as: 'TrabajadoresConFirma' });
+Trabajador.belongsTo(Firma, { foreignKey: 'firma_defecto_id', as: 'FirmaPredeterminada' });
 
 // 7. Evidencias
 Informe.hasMany(Evidencia, { foreignKey: 'informe_id' });
@@ -136,5 +148,6 @@ module.exports = {
   Programacion,
   TareaMaestra,
   OrdenTrabajo,
-  DetalleOrden
+  DetalleOrden,
+  Firma
 };

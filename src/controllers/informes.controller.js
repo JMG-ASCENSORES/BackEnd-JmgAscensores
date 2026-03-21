@@ -7,6 +7,9 @@ const createInforme = async (req, res, next) => {
     const informe = await informesService.createInforme(req.body);
     res.status(201).json(successResponse(informe, 'Informe creado exitosamente'));
   } catch (error) {
+    if (error.message === 'INFORME_DUPLICADO') {
+      return res.status(409).json(errorResponse('Ya existe un informe para este trabajo.', 'CONFLICT'));
+    }
     next(error);
   }
 };
@@ -116,7 +119,6 @@ module.exports = {
   createInforme,
   getInformes,
   getInformeById,
-  updateInforme,
   updateInforme,
   deleteInforme,
   getInformePdf

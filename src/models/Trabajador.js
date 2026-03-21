@@ -44,6 +44,10 @@ const Trabajador = sequelize.define('Trabajador', {
   estado_activo: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
+  },
+  firma_defecto_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   }
 }, {
   tableName: 'Trabajadores',

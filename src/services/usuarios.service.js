@@ -69,7 +69,8 @@ const getUsers = async (filters = {}) => {
  */
 const getUserById = async (id) => {
   const user = await Trabajador.findByPk(id, {
-    attributes: { exclude: ['contrasena_hash'] }
+    attributes: { exclude: ['contrasena_hash'] },
+    include: ['FirmaPredeterminada']
   });
 
   if (!user) {
@@ -90,6 +91,23 @@ const updateUser = async (id, updateData) => {
 
   if (!user) {
     throw new Error('USER_NOT_FOUND');
+  }
+
+  // Lógica para guardar firma por defecto en el perfil
+  if (updateData.firma_defecto_base64) {
+    const { Firma } = require('../models');
+    if (user.firma_defecto_id) {
+      // Actualizar firma existente
+      await Firma.update(
+        { base64_data: updateData.firma_defecto_base64 },
+        { where: { firma_id: user.firma_defecto_id } }
+      );
+    } else {
+      // Crear nueva si no tiene
+      const nueva = await Firma.create({ base64_data: updateData.firma_defecto_base64 });
+      updateData.firma_defecto_id = nueva.firma_id;
+    }
+    delete updateData.firma_defecto_base64;
   }
 
   // If updating email, check uniqueness
