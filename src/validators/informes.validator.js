@@ -6,7 +6,7 @@ const createInformeSchema = Joi.object({
   fecha_informe: Joi.date().iso().optional(),
   hora_informe: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).optional(),
   observaciones: Joi.string().allow('', null).optional(),
-  orden_id: Joi.number().required(),
+  orden_id: Joi.number().optional(),
   cliente_id: Joi.number().required(),
   ascensor_id: Joi.number().required(),
   trabajador_id: Joi.number().required(),

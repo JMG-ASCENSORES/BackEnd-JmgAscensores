@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Programacion, Trabajador, Cliente, Ascensor } = require('../models');
+const { Programacion, Trabajador, Cliente, Ascensor, OrdenTrabajo } = require('../models');
 const { successResponse, errorResponse } = require('../utils/response.util');
 
 /**
@@ -60,7 +60,8 @@ const toEvento = (p) => {
       estado:         p.estado,
       descripcion:    p.descripcion,
       cliente:        p.Cliente  || null,
-      ascensor:       p.Ascensor || null
+      ascensor:       p.Ascensor || null,
+      orden_id:       p.OrdenTrabajo?.orden_id || null
     }
   };
 };
@@ -108,7 +109,8 @@ const getProgramaciones = async (req, res, next) => {
       queryOptions.include = [
         ...tecnicoIncludes,
         { model: Cliente,  attributes: ['cliente_id', 'contacto_nombre', 'contacto_apellido', 'nombre_comercial'], required: false },
-        { model: Ascensor, attributes: ['ascensor_id', 'tipo_equipo', 'marca', 'modelo', 'numero_serie'], required: false }
+        { model: Ascensor, attributes: ['ascensor_id', 'tipo_equipo', 'marca', 'modelo', 'numero_serie'], required: false },
+        { model: OrdenTrabajo, attributes: ['orden_id', 'estado'], required: false }
       ];
     } else {
        // Solo traemos columnas base, optimizando hasta 90%
@@ -133,7 +135,8 @@ const getProgramacionById = async (req, res, next) => {
       include: [
         ...tecnicoIncludes,
         { model: Cliente,  required: false },
-        { model: Ascensor, required: false }
+        { model: Ascensor, required: false },
+        { model: OrdenTrabajo, required: false }
       ]
     });
 
