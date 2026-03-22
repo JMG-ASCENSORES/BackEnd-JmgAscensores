@@ -45,7 +45,7 @@ Ascensor.hasMany(OrdenTrabajo, { foreignKey: 'ascensor_id' });
 OrdenTrabajo.belongsTo(Ascensor, { foreignKey: 'ascensor_id' });
 
 // OrdenTrabajo <-> DetalleOrden
-OrdenTrabajo.hasMany(DetalleOrden, { foreignKey: 'orden_id' });
+OrdenTrabajo.hasMany(DetalleOrden, { foreignKey: 'orden_id', as: 'detalles' });
 DetalleOrden.belongsTo(OrdenTrabajo, { foreignKey: 'orden_id' });
 
 // TareaMaestra <-> DetalleOrden

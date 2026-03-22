@@ -23,7 +23,7 @@ const getOrdenesTrabajo = async (query = {}) => {
       { model: Programacion },
       { model: Cliente },
       { model: Ascensor },
-      { model: DetalleOrden, include: [TareaMaestra] }
+      { model: DetalleOrden, as: 'detalles', include: [TareaMaestra] }
     ],
     order: [['fecha_creacion', 'DESC']]
   });
@@ -35,7 +35,7 @@ const getOrdenTrabajoById = async (id) => {
       { model: Programacion },
       { model: Cliente },
       { model: Ascensor },
-      { model: DetalleOrden, include: [TareaMaestra] }
+      { model: DetalleOrden, as: 'detalles', include: [TareaMaestra] }
     ]
   });
   if (!orden) throw new Error('ORDEN_NOT_FOUND');

@@ -34,11 +34,7 @@ const Informe = sequelize.define('Informe', {
   },
   descripcion_trabajo: {
     type: DataTypes.TEXT,
-    allowNull: false,
-    validate: {
-      notEmpty: true,
-      len: [10, 5000]
-    },
+    allowNull: true,
     comment: 'Resumen del trabajo realizado'
   },
   observaciones: {
@@ -52,6 +48,32 @@ const Informe = sequelize.define('Informe', {
     allowNull: false,
     validate: {
       isDate: true
+    },
+    get() {
+      const rawValue = this.getDataValue('fecha_informe');
+      if (!rawValue) return rawValue;
+      if (typeof rawValue === 'string') return rawValue.split('T')[0];
+      
+      // Si Sequelize carga un objeto Date, SIEMPRE extraer la parte ISO UTC
+      // para evitar que la zona horaria local (Peru UTC-5) reste un día a medianoche.
+      if (rawValue instanceof Date) {
+        return rawValue.toISOString().split('T')[0];
+      }
+      return rawValue;
+    },
+    set(val) {
+      if (!val) {
+        this.setDataValue('fecha_informe', val);
+        return;
+      }
+      // Asegurar que guardamos solo 'YYYY-MM-DD'
+      if (typeof val === 'string') {
+        this.setDataValue('fecha_informe', val.split('T')[0]);
+      } else if (val instanceof Date) {
+        this.setDataValue('fecha_informe', val.toISOString().split('T')[0]);
+      } else {
+        this.setDataValue('fecha_informe', val);
+      }
     }
   },
   hora_informe: {

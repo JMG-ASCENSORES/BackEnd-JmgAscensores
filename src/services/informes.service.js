@@ -42,6 +42,34 @@ const createInforme = async (data) => {
     delete data.firma_cliente;
   }
 
+  // Si es mantenimiento Y no tiene orden_id Y trae detalles (checklist), crear orden automática
+  if (data.tipo_informe === 'Mantenimiento' && !data.orden_id && data.detalles) {
+    const { DetalleOrden } = require('../models');
+    
+    // Crear Orden de Trabajo "huérfana" pero vinculada
+    const nuevaOrden = await OrdenTrabajo.create({
+      cliente_id: data.cliente_id,
+      ascensor_id: data.ascensor_id,
+      trabajador_id: data.trabajador_id,
+      tipo_trabajo: 'Mantenimiento',
+      estado: 'completado',
+      fecha_programada: data.fecha_informe || new Date()
+    });
+
+    // Guardar los detalles del checklist
+    for (const item of data.detalles) {
+      await DetalleOrden.create({
+        orden_id: nuevaOrden.orden_id,
+        tarea_maestra_id: item.tarea_maestra_id || item.tarea_id,
+        realizado: item.realizado || false,
+        observaciones: item.observaciones || ''
+      });
+    }
+
+    data.orden_id = nuevaOrden.orden_id;
+    delete data.detalles; // Limpiar para que no choque con el create del Informe
+  }
+
   const informe = await Informe.create(data);
 
   if (data.orden_id) {
@@ -64,12 +92,12 @@ const getInformes = async (filters = {}, pagination = {}) => {
   if (filters.cliente_id) where.cliente_id = filters.cliente_id;
   if (filters.trabajador_id) where.trabajador_id = filters.trabajador_id;
   
-  // Soporte a rango de fechas
+  // Soporte a rango de fechas — usar strings directos, NUNCA new Date() (introduce desfase UTC)
   if (filters.fecha_inicio || filters.fecha_fin) {
     const { Op } = require('sequelize');
     where.fecha_informe = {};
-    if (filters.fecha_inicio) where.fecha_informe[Op.gte] = new Date(filters.fecha_inicio);
-    if (filters.fecha_fin) where.fecha_informe[Op.lte] = new Date(filters.fecha_fin);
+    if (filters.fecha_inicio) where.fecha_informe[Op.gte] = filters.fecha_inicio;
+    if (filters.fecha_fin) where.fecha_informe[Op.lte] = filters.fecha_fin;
   }
 
   // Búsqueda por descripción o ID
@@ -87,7 +115,7 @@ const getInformes = async (filters = {}, pagination = {}) => {
   const queryOptions = {
     where,
     include: ['Cliente', 'Trabajador'],
-    order: [['fecha_creacion', 'DESC']]
+    order: [['fecha_actualizacion', 'DESC']]
   };
 
   if (pagination.limit) {
@@ -106,7 +134,22 @@ const getInformes = async (filters = {}, pagination = {}) => {
 
 const getInformeById = async (id) => {
   const informe = await Informe.findByPk(id, {
-    include: ['Cliente', 'Trabajador', 'FirmaTecnico', 'FirmaCliente']
+    include: [
+      'Cliente', 
+      'Trabajador', 
+      'FirmaTecnico', 
+      'FirmaCliente',
+      {
+        model: OrdenTrabajo,
+        include: [
+          {
+            model: require('../models').DetalleOrden,
+            as: 'detalles',
+            include: [require('../models').TareaMaestra]
+          }
+        ]
+      }
+    ]
   });
   if (!informe) throw new Error('INFORME_NOT_FOUND');
   return informe;
@@ -137,6 +180,57 @@ const updateInforme = async (id, data) => {
       data.firma_cliente_id = firmaC.firma_id;
     }
     delete data.firma_cliente;
+  }
+
+  // Actualizar detalles del checklist si vienen en el payload
+  if (data.detalles) {
+    console.log(`[updateInforme] Procesando ${data.detalles.length} detalles para informe ${id}, orden ${informe.orden_id}`);
+    const { DetalleOrden } = require('../models');
+    
+    // Si no tiene orden_id (reporte antiguo o manual sin orden), crearla ahora
+    if (!informe.orden_id && data.tipo_informe === 'Mantenimiento') {
+      console.log('[updateInforme] No se encontró orden_id, creando una nueva...');
+      const nuevaOrden = await OrdenTrabajo.create({
+        cliente_id: data.cliente_id || informe.cliente_id,
+        ascensor_id: data.ascensor_id || informe.ascensor_id,
+        trabajador_id: data.trabajador_id || informe.trabajador_id,
+        tipo_trabajo: 'Mantenimiento',
+        estado: 'completado',
+        fecha_programada: data.fecha_informe || informe.fecha_informe || new Date()
+      });
+
+      console.log(`[updateInforme] Nueva orden creada: ${nuevaOrden.orden_id}. Insertando tareas...`);
+      const detailsToCreate = data.detalles.map(item => ({
+        orden_id: nuevaOrden.orden_id,
+        tarea_maestra_id: item.tarea_maestra_id || item.tarea_id,
+        realizado: item.realizado || false,
+        observaciones: item.observaciones || ''
+      }));
+      await DetalleOrden.bulkCreate(detailsToCreate);
+      data.orden_id = nuevaOrden.orden_id;
+    } else if (informe.orden_id) {
+      // Caso normal: Actualizar existentes
+      console.log(`[updateInforme] Actualizando tareas para orden ${informe.orden_id}...`);
+      const upsertPromises = data.detalles.map(async (item) => {
+        const tId = item.tarea_maestra_id || item.tarea_id;
+        const [updatedRows] = await DetalleOrden.update(
+          { realizado: !!item.realizado, observaciones: item.observaciones || '' },
+          { where: { orden_id: informe.orden_id, tarea_maestra_id: tId } }
+        );
+        
+        if (updatedRows === 0) {
+            await DetalleOrden.create({
+              orden_id: informe.orden_id,
+              tarea_maestra_id: tId,
+              realizado: !!item.realizado,
+              observaciones: item.observaciones || ''
+            });
+            console.log(`[updateInforme] Detalle creado para tarea ${tId} en orden ${informe.orden_id}`);
+        }
+      });
+      await Promise.all(upsertPromises);
+    }
+    delete data.detalles;
   }
   
   await informe.update(data);

@@ -234,12 +234,27 @@ const createProgramacion = async (req, res, next) => {
     });
 
     // Crear la Orden de Trabajo automáticamente vinculada a esta programación
-    await OrdenTrabajo.create({
+    const nuevaOrden = await OrdenTrabajo.create({
         programacion_id: nueva.programacion_id,
         cliente_id: nueva.cliente_id,
         ascensor_id: nueva.ascensor_id,
         estado: 'en_progreso'
     });
+
+    // Si es mantenimiento, poblar el checklist predeterminado
+    if ((tipo_trabajo || 'mantenimiento').toLowerCase() === 'mantenimiento') {
+        const { TareaMaestra, DetalleOrden } = require('../models');
+        const tareas = await TareaMaestra.findAll({ where: { activa: true, tipo_equipo: 'Ascensor' } });
+        
+        if (tareas.length > 0) {
+            const detalles = tareas.map(t => ({
+                orden_id: nuevaOrden.orden_id,
+                tarea_maestra_id: t.tarea_maestra_id,
+                realizado: false
+            }));
+            await DetalleOrden.bulkCreate(detalles);
+        }
+    }
 
     // Recargar con includes para devolver datos completos
     const conTecnicos = await Programacion.findByPk(nueva.programacion_id, {

@@ -3,128 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Informe JMG</title>
-    <!-- Incluir Tailwind CSS vía CDN para diseño estático -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Informe JMG Ascensores</title>
     <style>
-        body { font-family: 'Helvetica', 'Arial', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        .page-break { page-break-before: always; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 9px;
+            color: #1e293b;
+            background: #fff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
         @page { size: A4; margin: 0; }
-        .jmg-primary { color: #003B73; }
-        .jmg-bg-primary { background-color: #003B73; }
-        .jmg-success { color: #10B981; }
-        .jmg-border-success { border-bottom-color: #10B981; }
+
+        /* ── Layout ──────────────────────────────── */
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 8mm 10mm 8mm 10mm;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        /* ── Header ─────────────────────────────── */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            background: #003B73;
+            color: #fff;
+            border-radius: 4px 4px 0 0;
+            overflow: hidden;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            padding: 6px 12px;
+            gap: 10px;
+        }
+        .header-logo { height: 44px; background: #fff; padding: 3px 6px; border-radius: 3px; }
+        .header-brand { font-size: 15px; font-weight: 900; letter-spacing: 0.04em; }
+        .header-brand small { display: block; font-size: 7px; font-weight: 400; opacity: 0.8; letter-spacing: 0.12em; text-transform: uppercase; }
+        .header-right {
+            background: #002a54;
+            padding: 6px 14px;
+            text-align: right;
+            font-size: 7.5px;
+            line-height: 1.7;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* ── Título Documento ──────────────────── */
+        .doc-title-bar {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 3px;
+            padding: 5px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .doc-title {
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #003B73;
+        }
+        .doc-title.technical { color: #059669; }
+        .doc-meta { font-size: 7.5px; color: #64748b; text-align: right; line-height: 1.7; }
+        .doc-meta strong { color: #1e293b; }
+
+        /* ── Secciones ───────────────────────────── */
+        .section { border: 1px solid #e2e8f0; border-radius: 3px; overflow: hidden; }
+        .section-header {
+            background: #003B73;
+            color: #fff;
+            padding: 3px 10px;
+            font-size: 7.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .section-header.green { background: #059669; }
+        .section-body { padding: 6px 10px; }
+
+        /* ── Grid Info ───────────────────────────── */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; }
+        .info-grid.triple { grid-template-columns: 1fr 1fr 1fr; }
+        .info-item label { display: block; font-size: 6.5px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 1px; }
+        .info-item span  { font-size: 9px; font-weight: 600; color: #1e293b; }
+        .info-item.full  { grid-column: 1 / -1; }
+
+        /* ── Descripción ─────────────────────────── */
+        .work-desc {
+            font-size: 9px;
+            color: #334155;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            min-height: 60px;
+        }
+
+        /* ── Observaciones ───────────────────────── */
+        .obs-box {
+            background: #fff7ed;
+            border-left: 3px solid #f97316;
+            padding: 5px 10px;
+            font-size: 8.5px;
+            color: #7c2d12;
+            line-height: 1.5;
+            border-radius: 0 3px 3px 0;
+        }
+
+        /* ── Firmas ──────────────────────────────── */
+        .signatures {
+            display: flex;
+            justify-content: space-around;
+            margin-top: auto;
+            padding-top: 6px;
+        }
+        .sig-block { text-align: center; width: 120px; }
+        .sig-block img { height: 40px; object-fit: contain; display: block; margin: 0 auto 3px; }
+        .sig-line {
+            border-top: 1.5px solid #94a3b8;
+            padding-top: 3px;
+            font-size: 7px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        /* ── Footer ──────────────────────────────── */
+        .footer {
+            text-align: center;
+            font-size: 6.5px;
+            color: #94a3b8;
+            padding-top: 4px;
+            border-top: 1px solid #f1f5f9;
+        }
     </style>
 </head>
-<body class="bg-white min-h-screen text-slate-800 p-8 w-full">
+<body>
+<div class="page">
 
-    <!-- Header Corporativo -->
-    <div class="jmg-bg-primary rounded-t-xl text-white p-4 flex justify-between items-center shadow-md">
-        <div class="flex items-center gap-4">
-            <!-- Logo si existe se pasará en base64 u omitirá si no, usamos texto fallback elegante -->
+    <!-- ① HEADER CORPORATIVO -->
+    <div class="header">
+        <div class="header-left">
             {{#if logoBase64}}
-            <img src="{{logoBase64}}" alt="JMG Logo" class="h-16 bg-white p-1 rounded">
+            <img class="header-logo" src="{{logoBase64}}" alt="JMG Logo">
             {{else}}
-            <h1 class="text-3xl font-extrabold tracking-tight">JMG ASCENSORES</h1>
+            <div class="header-brand">JMG ASCENSORES<small>Mantenimiento &amp; Ascensores</small></div>
             {{/if}}
         </div>
-        <div class="text-right text-xs opacity-90 leading-relaxed font-medium">
-            <p>RUC: 20421037648</p>
-            <p>Villa el Salvador - Lima, Perú</p>
-            <p>jmgascensores@gmail.com</p>
-            <p>Tel: +51 999 999 999</p>
+        <div class="header-right">
+            <span>RUC: 20421037648</span>
+            <span>Villa el Salvador — Lima, Perú</span>
+            <span>jmgascensores@gmail.com</span>
+            <span>Tel: +51 999 999 999</span>
         </div>
     </div>
 
-    <!-- Título Documento -->
-    <div class="mt-4 text-center mb-6">
-        <h2 class="text-2xl font-black uppercase tracking-widest {{titleColorClass}} border-b-2 inline-block pb-2 {{borderColorClass}}">
-            {{reportTitle}}
-        </h2>
-        <div class="mt-2 text-slate-500 font-semibold text-sm flex justify-center gap-6">
-            <span><i class="opacity-75">N° Informe:</i> {{reportId}}</span>
-            <span><i class="opacity-75">Emisión:</i> {{fechaEmision}}</span>
-        </div>
-    </div>
-
-    <!-- Contenido Principal -->
-    <div class="space-y-4 px-4">
-        
-        <!-- Bloque Cliente -->
-        <section>
-            <div class="bg-slate-100 px-4 py-2 rounded-t-lg border-l-4 jmg-bg-primary">
-                <h3 class="jmg-primary font-bold text-sm tracking-widest">📋 DATOS DEL CLIENTE</h3>
-            </div>
-            <div class="border border-slate-200 rounded-b-lg p-5 grid grid-cols-2 gap-y-4 text-sm">
-                <div>
-                    <p class="text-slate-400 text-xs font-bold uppercase mb-1">Nombre Comercial</p>
-                    <p class="font-semibold text-slate-800">{{clientName}}</p>
-                </div>
-                <div>
-                    <p class="text-slate-400 text-xs font-bold uppercase mb-1">Contacto Registrado</p>
-                    <p class="font-medium text-slate-700">{{contactName}}</p>
-                </div>
-                <div class="col-span-2">
-                    <p class="text-slate-400 text-xs font-bold uppercase mb-1">Dirección / Ubicación</p>
-                    <p class="font-medium text-slate-700">{{clientAddress}}</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Bloque Técnico -->
-        <section>
-            <div class="bg-slate-100 px-4 py-2 rounded-t-lg border-l-4 jmg-bg-primary">
-                <h3 class="jmg-primary font-bold text-sm tracking-widest">👷‍♂️ PERSONAL ASIGNADO</h3>
-            </div>
-            <div class="border border-slate-200 rounded-b-lg p-5">
-                <p class="text-slate-400 text-xs font-bold uppercase mb-1">Técnico Responsable</p>
-                <p class="font-semibold text-slate-800">{{techName}}</p>
-            </div>
-        </section>
-
-        <!-- Bloque Descripción -->
-        <section>
-            <div class="bg-slate-100 px-4 py-2 rounded-t-lg border-l-4 jmg-bg-primary">
-                <h3 class="jmg-primary font-bold text-sm tracking-widest">🔧 DESCRIPCIÓN DEL TRABAJO REALIZADO</h3>
-            </div>
-            <div class="border border-slate-200 rounded-b-lg p-6 bg-slate-50 relative min-h-[200px]">
-                <p class="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{{workDescription}}</p>
-            </div>
-        </section>
-
-        <!-- Observaciones -->
-        {{#if techObservations}}
-        <section class="mt-6">
-            <div class="bg-red-50 border border-red-200 rounded-lg p-5 border-l-4 border-l-red-500">
-                <h3 class="text-red-700 font-bold text-sm uppercase mb-2">⚠️ Observaciones del Técnico</h3>
-                <p class="text-red-900 text-sm italic">{{techObservations}}</p>
-            </div>
-        </section>
+    <!-- ② TÍTULO DOCUMENTO -->
+    <div class="doc-title-bar">
+        {{#if isMaintenance}}
+        <div class="doc-title">📋 Informe de Mantenimiento Preventivo</div>
         {{/if}}
-
-    </div>
-
-    <div class="break-inside-avoid">
-        <!-- Firmas Footer -->
-        <div class="mt-8 w-full flex justify-between px-16 text-center text-sm font-semibold text-slate-500">
-            <div class="w-48 flex flex-col items-center">
-                {{#if firmaTecnico}}
-                <img src="{{firmaTecnico}}" alt="Firma Técnico" class="h-20 mb-1 object-contain">
-                {{/if}}
-                <div class="border-t-2 border-slate-300 pt-3 w-full">Firma del Técnico</div>
-            </div>
-            <div class="w-48 flex flex-col items-center">
-                {{#if firmaCliente}}
-                <img src="{{firmaCliente}}" alt="Firma Cliente" class="h-20 mb-1 object-contain">
-                {{/if}}
-                <div class="border-t-2 border-slate-300 pt-3 w-full">Firma del Cliente</div>
-            </div>
-        </div>
-
-        <div class="text-center text-xs text-slate-400 mt-6 pb-2">
-            Documento generado digitalmente por Plataforma JMG Ascensores
+        {{#if isTechnical}}
+        <div class="doc-title technical">🔧 Informe Técnico de Servicio</div>
+        {{/if}}
+        <div class="doc-meta">
+            <span>N° Informe: <strong>{{reportId}}</strong></span><br>
+            <span>Fecha: <strong>{{fechaEmision}}</strong></span>
         </div>
     </div>
 
+    <!-- ③ DATOS CLIENTE + TÉCNICO (en una fila) -->
+    <div style="display:grid; grid-template-columns:1.6fr 1fr; gap:5px;">
+        <div class="section">
+            <div class="section-header">📋 Datos del Cliente</div>
+            <div class="section-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Nombre Comercial</label>
+                        <span>{{clientName}}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Contacto</label>
+                        <span>{{contactName}}</span>
+                    </div>
+                    <div class="info-item full">
+                        <label>Dirección / Ubicación</label>
+                        <span>{{clientAddress}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <div class="section-header">👷 Personal Asignado</div>
+            <div class="section-body">
+                <div class="info-item">
+                    <label>Técnico Responsable</label>
+                    <span>{{techName}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ④ A. DESCRIPCIÓN (solo informes técnicos) -->
+    {{#if isTechnical}}
+    <div class="section">
+        <div class="section-header green">🔧 Descripción del Trabajo Realizado</div>
+        <div class="section-body">
+            <div class="work-desc">{{workDescription}}</div>
+        </div>
+    </div>
+    {{/if}}
+
+    <!-- ④ B. CHECKLIST (solo mantenimientos) -->
+    {{#if isMaintenance}}
+    <div class="section" style="flex:1;">
+        <div class="section-header">Descripción del Trabajo</div>
+        <div class="section-body" style="padding:5px 8px;">
+            {{{maintenanceChecklist}}}
+        </div>
+    </div>
+    {{/if}}
+
+    <!-- ⑤ OBSERVACIONES (ambos tipos) -->
+    {{#if techObservations}}
+    <div class="obs-box">⚠️ <strong>Observaciones del Técnico: </strong>{{techObservations}}</div>
+    {{/if}}
+
+    <!-- ⑥ FIRMAS -->
+    <div class="signatures">
+        <div class="sig-block">
+            {{#if firmaTecnico}}
+            <img src="{{firmaTecnico}}" alt="Firma Técnico">
+            {{/if}}
+            <div class="sig-line">Firma del Técnico</div>
+        </div>
+        <div class="sig-block">
+            {{#if firmaCliente}}
+            <img src="{{firmaCliente}}" alt="Firma Cliente">
+            {{/if}}
+            <div class="sig-line">Firma del Cliente</div>
+        </div>
+    </div>
+
+    <!-- ⑦ FOOTER -->
+    <div class="footer">
+        Documento generado digitalmente por Plataforma JMG Ascensores &nbsp;|&nbsp; {{fechaEmision}}
+    </div>
+
+</div>
 </body>
 </html>
