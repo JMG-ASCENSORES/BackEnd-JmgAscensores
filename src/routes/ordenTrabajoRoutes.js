@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const ordenesTrabajoController = require('../controllers/ordenesTrabajo.controller');
 const authenticate = require('../middlewares/auth.middleware');
+const validate = require('../middlewares/validate.middleware');
+const { patchOrdenEstadoSchema } = require('../validators/ordenesTrabajo.validator');
 
 router.use(authenticate);
 
@@ -29,6 +31,7 @@ router.post('/', ordenesTrabajoController.createOrdenTrabajo);
 
 router.get('/:id', ordenesTrabajoController.getOrdenTrabajoById);
 router.put('/:id', ordenesTrabajoController.updateOrdenTrabajo);
+router.patch('/:id/estado', validate(patchOrdenEstadoSchema), ordenesTrabajoController.patchOrdenEstado);
 router.delete('/:id', ordenesTrabajoController.deleteOrdenTrabajo);
 
 module.exports = router;

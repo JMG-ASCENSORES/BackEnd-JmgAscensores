@@ -43,6 +43,18 @@ const updateOrdenTrabajo = async (req, res, next) => {
   }
 };
 
+const patchOrdenEstado = async (req, res, next) => {
+  try {
+    const orden = await ordenesTrabajoService.updateOrdenTrabajo(req.params.id, { estado: req.body.estado });
+    res.status(200).json(successResponse(orden, `Estado de orden actualizado a '${req.body.estado}'`));
+  } catch (error) {
+    if (error.message === 'ORDEN_NOT_FOUND') {
+      return res.status(404).json(errorResponse('Orden no encontrada', 'NOT_FOUND'));
+    }
+    next(error);
+  }
+};
+
 const deleteOrdenTrabajo = async (req, res, next) => {
   try {
     await ordenesTrabajoService.deleteOrdenTrabajo(req.params.id);
@@ -60,5 +72,6 @@ module.exports = {
   getOrdenesTrabajo,
   getOrdenTrabajoById,
   updateOrdenTrabajo,
+  patchOrdenEstado,
   deleteOrdenTrabajo
 };

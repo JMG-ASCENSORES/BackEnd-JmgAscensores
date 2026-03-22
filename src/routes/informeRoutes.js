@@ -3,7 +3,7 @@ const router = express.Router();
 const informesController = require('../controllers/informes.controller');
 const authenticate = require('../middlewares/auth.middleware');
 const validate = require('../middlewares/validate.middleware');
-const { createInformeSchema, updateInformeSchema } = require('../validators/informes.validator');
+const { createInformeSchema, updateInformeSchema, patchInformeSchema } = require('../validators/informes.validator');
 
 router.use(authenticate);
 
@@ -108,6 +108,7 @@ router.get('/', informesController.getInformes);
 router.get('/:id/pdf', informesController.getInformePdf);
 router.get('/:id', informesController.getInformeById);
 router.put('/:id', validate(updateInformeSchema), informesController.updateInforme);
+router.patch('/:id', validate(patchInformeSchema), informesController.updateInforme);
 router.delete('/:id', informesController.deleteInforme);
 
 module.exports = router;

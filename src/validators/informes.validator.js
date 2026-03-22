@@ -52,7 +52,33 @@ const updateInformeSchema = Joi.object({
   })).optional()
 });
 
+const patchInformeSchema = Joi.object({
+  descripcion_trabajo: Joi.string().allow('', null).optional(),
+  tipo_informe: Joi.string().optional(),
+  fecha_informe: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}(T.*)?$/).optional(),
+  hora_informe: Joi.string().optional(),
+  observaciones: Joi.string().allow('', null).optional(),
+  cliente_id: Joi.number().optional(),
+  ascensor_id: Joi.number().optional(),
+  trabajador_id: Joi.number().optional(),
+  orden_id: Joi.number().optional(),
+  estado_informe: Joi.string().valid('borrador', 'enviado', 'aprobado').optional(),
+  firma_tecnico_id: Joi.number().integer().optional().allow(null),
+  firma_cliente_id: Joi.number().integer().optional().allow(null),
+  firma_tecnico: Joi.string().allow('', null).optional(),
+  firma_cliente: Joi.string().allow('', null).optional(),
+  detalles: Joi.array().items(Joi.object({
+    tarea_maestra_id: Joi.number().optional(),
+    tarea_id: Joi.number().optional(),
+    realizado: Joi.boolean().required(),
+    observaciones: Joi.string().allow('', null).optional(),
+    categoria: Joi.string().allow('', null).optional(),
+    TareaMaestra: Joi.any().optional()
+  })).optional()
+});
+
 module.exports = {
   createInformeSchema,
-  updateInformeSchema
+  updateInformeSchema,
+  patchInformeSchema
 };

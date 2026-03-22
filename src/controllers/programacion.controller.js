@@ -361,4 +361,22 @@ const deleteProgramacion = async (req, res, next) => {
   }
 };
 
-module.exports = { getProgramaciones, getProgramacionById, createProgramacion, updateProgramacion, deleteProgramacion };
+// ─── PATCH /api/programaciones/:id/estado ─────────────────────────────────────
+const patchEstado = async (req, res, next) => {
+  try {
+    const prog = await Programacion.findByPk(req.params.id);
+    if (!prog) {
+      return res.status(404).json(errorResponse('Programación no encontrada', 'NOT_FOUND'));
+    }
+    await prog.update({ estado: req.body.estado });
+    return res.status(200).json(successResponse(
+      { programacion_id: prog.programacion_id, estado: prog.estado },
+      `Estado de programación actualizado a '${req.body.estado}'`
+    ));
+  } catch (error) {
+    console.error('Error en patchEstado:', error);
+    next(error);
+  }
+};
+
+module.exports = { getProgramaciones, getProgramacionById, createProgramacion, updateProgramacion, patchEstado, deleteProgramacion };
