@@ -52,7 +52,7 @@ const seedData = async () => {
         correo: 'carlos.mendoza@jmg.com',
         telefono: '987654321',
         contrasena_hash: hashedPassword,
-        especialidad: 'Mantenimiento Preventivo',
+        especialidad: 'Técnico de Mantenimiento',
         estado_activo: true
       },
       {
@@ -63,7 +63,7 @@ const seedData = async () => {
         correo: 'luis.quispe@jmg.com',
         telefono: '912345678',
         contrasena_hash: hashedPassword,
-        especialidad: 'Reparaciones Electrónicas',
+        especialidad: 'Técnico de Reparaciones',
         estado_activo: true
       }
     ];
@@ -187,7 +187,7 @@ const seedData = async () => {
       trabajador_id: tecnicos[0].trabajador_id,
       cliente_id: clientes[0].cliente_id,
       ascensor_id: ascensores[0].ascensor_id,
-      tipo_informe: 'preventivo',
+      tipo_informe: 'Mantenimiento',
       descripcion_trabajo: 'Mantenimiento completo',
       fecha_informe: haceSemana.toISOString().split('T')[0],
       hora_informe: '11:00:00'

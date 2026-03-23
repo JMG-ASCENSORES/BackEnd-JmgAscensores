@@ -36,7 +36,7 @@ const Trabajador = sequelize.define('Trabajador', {
     allowNull: false
   },
   especialidad: {
-    type: DataTypes.STRING(100)
+    type: DataTypes.ENUM('Técnico General', 'Técnico de Mantenimiento', 'Supervisor Técnico', 'Técnico de Reparaciones')
   },
   foto_perfil: {
     type: DataTypes.STRING(255)

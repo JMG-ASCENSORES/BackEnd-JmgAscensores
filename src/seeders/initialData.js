@@ -32,7 +32,7 @@ const seedDatabase = async () => {
       apellido: 'Perez',
       correo: 'juan.perez@jmg.com',
       contrasena_hash: passwordHash,
-      especialidad: 'Mantenimiento preventivo',
+      especialidad: 'Técnico de Mantenimiento',
       estado_activo: true
     });
 
