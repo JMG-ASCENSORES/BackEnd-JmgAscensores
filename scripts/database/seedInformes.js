@@ -1,4 +1,4 @@
-const { sequelize, Informe, Evidencia, Trabajador, Cliente, Ascensor } = require('./src/models');
+const { sequelize, Informe, Evidencia, Trabajador, Cliente, Ascensor } = require('../../src/models');
 
 // ── Descripciones de trabajo por tipo ────────────────────────────────────────
 

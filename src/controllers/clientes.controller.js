@@ -12,14 +12,19 @@ const createClient = async (req, res, next) => {
 
 const getClients = async (req, res, next) => {
   try {
-    const { page, limit, search } = req.query;
+    const { page, limit, search, tipo_cliente } = req.query;
     
     // Si mandan page o limit, pasamos a paginación
-    if (page || limit || search) {
+    if (page || limit || search || tipo_cliente) {
       const pageNum = parseInt(page, 10) || 1;
       const limitNum = parseInt(limit, 10) || 10;
       
-      const result = await clientesService.getClientsPaginated({ page: pageNum, limit: limitNum, search });
+      const result = await clientesService.getClientsPaginated({ 
+        page: pageNum, 
+        limit: limitNum, 
+        search, 
+        tipo_cliente 
+      });
       
       const meta = {
         totalItems: result.count,
@@ -36,7 +41,7 @@ const getClients = async (req, res, next) => {
     if (req.query.estado_activo !== undefined) {
        activeFilter = req.query.estado_activo === 'false' || req.query.estado_activo === '0' ? false : true;
     }
-    const clients = await clientesService.getClients(activeFilter);
+    const clients = await clientesService.getClients({ activeFilter, tipo_cliente });
     res.status(200).json(successResponse(clients, 'Clientes obtenidos exitosamente'));
   } catch (error) {
     next(error);

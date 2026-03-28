@@ -1,4 +1,4 @@
-const { sequelize, Cliente, Ascensor, Programacion } = require('./src/models');
+const { sequelize, Cliente, Ascensor, Programacion } = require('../../src/models');
 
 // ── Datos auxiliares para generación realista ───────────────────────────────
 
@@ -24,6 +24,17 @@ const distritos = [
   { nombre: 'Independencia',     lat: -11.9890, lng: -77.0510 },
   { nombre: 'Comas',             lat: -11.9360, lng: -77.0490 },
   { nombre: 'Ate',               lat: -12.0250, lng: -76.9190 },
+  { nombre: 'San Martín de Porres', lat: -12.0160, lng: -77.0600 },
+  { nombre: 'Villa El Salvador', lat: -12.2120, lng: -76.9380 },
+  { nombre: 'Villa María del Triunfo', lat: -12.1610, lng: -76.9380 },
+  { nombre: 'San Juan de Miraflores', lat: -12.1550, lng: -76.9670 },
+  { nombre: 'La Victoria',       lat: -12.0640, lng: -77.0180 },
+  { nombre: 'Callao',            lat: -12.0560, lng: -77.1180 },
+  { nombre: 'Bellavista',        lat: -12.0630, lng: -77.1060 },
+  { nombre: 'Pachacámac',        lat: -12.2280, lng: -76.8550 },
+  { nombre: 'Lurín',             lat: -12.2730, lng: -76.8710 },
+  { nombre: 'Carabayllo',        lat: -11.8540, lng: -76.9920 },
+  { nombre: 'Puente Piedra',     lat: -11.8680, lng: -77.0750 },
 ];
 
 // Calles ficticias comunes en Lima
@@ -107,10 +118,10 @@ const genRuc = () => {
 };
 
 /** Añade variación a coordenadas para que no sean exactamente iguales. */
-const jitter = (base, range = 0.012) => +(base + (Math.random() - 0.5) * range * 2).toFixed(6);
+const jitter = (base, range = 0.035) => +(base + (Math.random() - 0.5) * range * 2).toFixed(6);
 
 /** Genera un número de teléfono peruano. */
-const genTelefono = () => `9${randBetween(10000000, 99999999)}`;
+const genTelefono = () => `9${randBetween(20000000, 99999999)}`;
 
 /** Genera un correo basado en nombre. */
 const genCorreo = (nombre, apellido) => {

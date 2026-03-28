@@ -25,12 +25,18 @@ const createClient = async (data) => {
 /**
  * Get all clients (Legacy list)
  */
-const getClients = async (activeFilter) => {
+const getClients = async (data = {}) => {
+  const { activeFilter, tipo_cliente } = data;
   const where = {};
+  
   if (activeFilter !== undefined) {
      where.estado_activo = activeFilter;
   } else {
-     where.estado_activo = true; // Keep legacy default isolated
+     where.estado_activo = true; 
+  }
+
+  if (tipo_cliente) {
+    where.tipo_cliente = tipo_cliente;
   }
   
   return await Cliente.findAll({
@@ -42,9 +48,13 @@ const getClients = async (activeFilter) => {
 /**
  * Get clients paginated and/or searched
  */
-const getClientsPaginated = async ({ page, limit, search }) => {
+const getClientsPaginated = async ({ page, limit, search, tipo_cliente }) => {
   const offset = (page - 1) * limit;
   const whereClause = { estado_activo: true };
+
+  if (tipo_cliente) {
+    whereClause.tipo_cliente = tipo_cliente;
+  }
 
   if (search) {
     const searchCondition = { [Op.iLike]: `%${search}%` };

@@ -1,4 +1,4 @@
-const { sequelize, Cliente, Ascensor } = require('./src/models');
+const { sequelize, Cliente, Ascensor } = require('../../src/models');
 
 // ── Marcas y modelos REALES de ascensores ────────────────────────────────────
 const ascensores = [

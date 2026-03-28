@@ -1,4 +1,4 @@
-const { sequelize, Programacion, Trabajador, Cliente, Ascensor } = require('./src/models');
+const { sequelize, Programacion, Trabajador, Cliente, Ascensor } = require('../../src/models');
 
 const generateRandomSchedule = async () => {
     try {
