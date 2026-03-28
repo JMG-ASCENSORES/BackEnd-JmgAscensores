@@ -96,8 +96,15 @@ const startServer = async () => {
   try {
     await connectDB();
     
-    // Sync models — alter:true adds missing columns without dropping data
-    await sequelize.sync({ force: false, alter: true }); 
+    // Sync models — only if DB_SYNC=true is set
+    // alter:true adds missing columns without dropping data
+    if (process.env.DB_SYNC === 'true') {
+      console.log('🔄 Synchronizing database models (alter: true)...');
+      await sequelize.sync({ force: false, alter: true });
+      console.log('✅ Database synchronized.');
+    } else {
+      console.log('ℹ️ Skipping database synchronization (DB_SYNC != true)');
+    }
 
     // Seed initial data (Manual run recommended via init-db script)
     // const seedDatabase = require('./seeders/initialData');

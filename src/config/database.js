@@ -10,6 +10,12 @@ const sequelize = new Sequelize(
     dialect: process.env.DB_DIALECT || 'postgres',
     port: process.env.DB_PORT || 5432,
     logging: false, // Set to console.log to see SQL queries
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    },
     dialectOptions: (() => {
       const isSSL = process.env.DB_SSL === 'true';
       const isLocal = process.env.DB_HOST === 'localhost';
@@ -19,7 +25,8 @@ const sequelize = new Sequelize(
         ssl: {
           require: true,
           rejectUnauthorized: false
-        }
+        },
+        connect_timeout: 10000 // 10 seconds timeout for initial connection
       } : {};
     })()
   }

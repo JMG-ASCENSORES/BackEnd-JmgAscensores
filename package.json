@@ -10,7 +10,8 @@
     "backup": "node src/scripts/backup-database.js",
     "restore": "node src/scripts/restore-database.js",
     "verify": "node src/scripts/verify-migration.js",
-    "check-tables": "node src/scripts/check-tables.js"
+    "check-tables": "node src/scripts/check-tables.js",
+    "db:sync": "node src/scripts/db-sync.js"
   },
   "keywords": [],
   "author": "",
