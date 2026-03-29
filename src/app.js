@@ -43,6 +43,7 @@ const informeRoutes = require('./routes/informeRoutes');
 const evidenciaRoutes = require('./routes/evidenciaRoutes');
 const rutaRoutes = require('./routes/rutaRoutes');
 const programacionRoutes = require('./routes/programacion.routes');
+const mantenimientoFijoRoutes = require('./routes/mantenimientoFijo.routes');
 
 // Register routes
 app.use('/api/auth', authRoutes);
@@ -56,6 +57,7 @@ app.use('/api/informes', informeRoutes);
 app.use('/api/evidencias', evidenciaRoutes);
 app.use('/api/rutas', rutaRoutes);
 app.use('/api/programaciones', programacionRoutes);
+app.use('/api/mantenimientos-fijos', mantenimientoFijoRoutes);
 
 
 // Swagger Documentation

@@ -80,6 +80,14 @@ const Programacion = sequelize.define('Programacion', {
   descripcion: {
     type: DataTypes.TEXT,
     allowNull: true
+  },
+  mantenimiento_fijo_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'MantenimientosFijos',
+      key: 'mantenimiento_fijo_id'
+    }
   }
 }, {
   tableName: 'Programaciones',

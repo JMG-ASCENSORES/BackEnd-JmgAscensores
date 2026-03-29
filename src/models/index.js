@@ -20,6 +20,7 @@ const TareaMaestra = require('./TareaMaestra');
 const OrdenTrabajo = require('./OrdenTrabajo');
 const DetalleOrden = require('./DetalleOrden');
 const Firma = require('./Firma');
+const MantenimientoFijo = require('./MantenimientoFijo');
 
 // ============================================
 // ASSOCIATIONS
@@ -131,6 +132,16 @@ Cliente.hasMany(Programacion, { foreignKey: 'cliente_id' });
 Programacion.belongsTo(Ascensor, { foreignKey: 'ascensor_id' });
 Ascensor.hasMany(Programacion, { foreignKey: 'ascensor_id' });
 
+// 15. Mantenimientos Fijos
+MantenimientoFijo.belongsTo(Ascensor, { foreignKey: 'ascensor_id' });
+Ascensor.hasOne(MantenimientoFijo, { foreignKey: 'ascensor_id' });
+
+MantenimientoFijo.belongsTo(Trabajador, { foreignKey: 'trabajador_id' });
+Trabajador.hasMany(MantenimientoFijo, { foreignKey: 'trabajador_id' });
+
+Programacion.belongsTo(MantenimientoFijo, { foreignKey: 'mantenimiento_fijo_id' });
+MantenimientoFijo.hasMany(Programacion, { foreignKey: 'mantenimiento_fijo_id' });
+
 module.exports = {
   sequelize,
   Administrador,
@@ -149,5 +160,6 @@ module.exports = {
   TareaMaestra,
   OrdenTrabajo,
   DetalleOrden,
-  Firma
+  Firma,
+  MantenimientoFijo
 };
