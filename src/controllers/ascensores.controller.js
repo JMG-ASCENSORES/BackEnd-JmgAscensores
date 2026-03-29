@@ -18,6 +18,33 @@ const createAscensor = async (req, res, next) => {
 
 const getAscensores = async (req, res, next) => {
   try {
+    const { page, limit, search, cliente_id, tipo_equipo, estado } = req.query;
+    
+    // Si mandan page o limit, pasamos a paginación
+    if (page || limit || search) {
+      const pageNum = parseInt(page, 10) || 1;
+      const limitNum = parseInt(limit, 10) || 10;
+      
+      const result = await ascensoresService.getAscensoresPaginated({ 
+        page: pageNum, 
+        limit: limitNum, 
+        search, 
+        cliente_id,
+        tipo_equipo,
+        estado
+      });
+      
+      const meta = {
+        totalItems: result.count,
+        itemsPerPage: limitNum,
+        currentPage: pageNum,
+        totalPages: Math.ceil(result.count / limitNum)
+      };
+      
+      return res.status(200).json(successResponse(result.rows, 'Ascensores obtenidos exitosamente', meta));
+    }
+
+    // Comportamiento Legacy (sin paginación)
     const ascensores = await ascensoresService.getAscensores(req.query);
     res.status(200).json(successResponse(ascensores, 'Ascensores obtenidos exitosamente'));
   } catch (error) {

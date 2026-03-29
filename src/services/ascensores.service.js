@@ -37,6 +37,38 @@ const getAscensores = async (filters = {}) => {
 };
 
 /**
+ * Get ascensores paginated and/or searched
+ */
+const getAscensoresPaginated = async ({ page, limit, search, cliente_id, tipo_equipo, estado }) => {
+  const offset = (page - 1) * limit;
+  const whereClause = {};
+
+  if (cliente_id) whereClause.cliente_id = cliente_id;
+  if (tipo_equipo) whereClause.tipo_equipo = tipo_equipo;
+  if (estado) whereClause.estado = estado;
+
+  if (search) {
+    const searchCondition = { [Op.iLike]: `%${search}%` };
+    whereClause[Op.or] = [
+      { numero_serie: searchCondition },
+      { marca: searchCondition },
+      { modelo: searchCondition }
+    ];
+  }
+
+  return await Ascensor.findAndCountAll({
+    where: whereClause,
+    limit,
+    offset,
+    include: [{
+      model: Cliente,
+      attributes: ['cliente_id', 'tipo_cliente', 'ubicacion', 'nombre_comercial', 'contacto_nombre', 'contacto_apellido']
+    }],
+    order: [['fecha_creacion', 'DESC']]
+  });
+};
+
+/**
  * Get ascensor by ID
  */
 const getAscensorById = async (id) => {
@@ -81,6 +113,7 @@ const deleteAscensor = async (id) => {
 module.exports = {
   createAscensor,
   getAscensores,
+  getAscensoresPaginated,
   getAscensorById,
   updateAscensor,
   deleteAscensor
