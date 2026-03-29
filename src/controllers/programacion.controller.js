@@ -109,7 +109,7 @@ const getProgramaciones = async (req, res, next) => {
     if (detailed === 'true') {
       queryOptions.include = [
         ...tecnicoIncludes,
-        { model: Cliente,  attributes: ['cliente_id', 'contacto_nombre', 'contacto_apellido', 'nombre_comercial'], required: false },
+        { model: Cliente,  attributes: ['cliente_id', 'contacto_nombre', 'contacto_apellido', 'nombre_comercial', 'tipo_cliente', 'telefono', 'contacto_telefono'], required: false },
         { model: Ascensor, attributes: ['ascensor_id', 'tipo_equipo', 'marca', 'modelo', 'numero_serie'], required: false },
         { 
           model: OrdenTrabajo, 

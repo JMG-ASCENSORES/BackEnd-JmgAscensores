@@ -12,7 +12,7 @@ const createClientSchema = Joi.object({
   contacto_correo: Joi.string().email().max(100).optional(),
   contacto_nombre: Joi.string().max(100).optional(),
   contacto_apellido: Joi.string().max(100).optional(),
-  contacto_telefono: Joi.string().max(20).optional(),
+  contacto_telefono: Joi.string().max(20).allow(null, '').optional(),
 });
 
 const updateClientSchema = Joi.object({
@@ -30,7 +30,7 @@ const updateClientSchema = Joi.object({
   contacto_correo: Joi.string().email().max(100).optional(),
   contacto_nombre: Joi.string().max(100).optional(),
   contacto_apellido: Joi.string().max(100).allow(null, '').optional(),
-  contacto_telefono: Joi.string().max(20).optional(),
+  contacto_telefono: Joi.string().max(20).allow(null, '').optional(),
   estado_activo: Joi.boolean().optional()
 });
 
