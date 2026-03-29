@@ -25,10 +25,10 @@ const getTecnicoIds = (p) => [p.trabajador_id, p.tecnico2_id, p.tecnico3_id, p.t
  * Include para los 4 técnicos como aliases distintos
  */
 const tecnicoIncludes = [
-  { model: Trabajador, as: 'Tecnico1', attributes: ['trabajador_id', 'nombre', 'apellido', 'especialidad'], required: false, foreignKey: 'trabajador_id' },
-  { model: Trabajador, as: 'Tecnico2', attributes: ['trabajador_id', 'nombre', 'apellido', 'especialidad'], required: false, foreignKey: 'tecnico2_id'  },
-  { model: Trabajador, as: 'Tecnico3', attributes: ['trabajador_id', 'nombre', 'apellido', 'especialidad'], required: false, foreignKey: 'tecnico3_id'  },
-  { model: Trabajador, as: 'Tecnico4', attributes: ['trabajador_id', 'nombre', 'apellido', 'especialidad'], required: false, foreignKey: 'tecnico4_id'  },
+  { model: Trabajador, as: 'Tecnico1', attributes: ['trabajador_id', 'nombre', 'apellido', 'especialidad', 'telefono'], required: false, foreignKey: 'trabajador_id' },
+  { model: Trabajador, as: 'Tecnico2', attributes: ['trabajador_id', 'nombre', 'apellido', 'especialidad', 'telefono'], required: false, foreignKey: 'tecnico2_id'  },
+  { model: Trabajador, as: 'Tecnico3', attributes: ['trabajador_id', 'nombre', 'apellido', 'especialidad', 'telefono'], required: false, foreignKey: 'tecnico3_id'  },
+  { model: Trabajador, as: 'Tecnico4', attributes: ['trabajador_id', 'nombre', 'apellido', 'especialidad', 'telefono'], required: false, foreignKey: 'tecnico4_id'  },
 ];
 
 /**
