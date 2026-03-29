@@ -157,6 +157,33 @@ const getClientAscensores = async (id) => {
   });
 };
 
+/**
+ * Get global stats for the clients dashboard (called once)
+ */
+const getClientStats = async () => {
+  const [results] = await sequelize.query(`
+    SELECT 
+      (SELECT COUNT(*) FROM "Clientes" WHERE "estado_activo" = true) AS total_clientes,
+      (SELECT COUNT(*) FROM "Ascensores" AS "A" 
+       INNER JOIN "Clientes" AS "C" ON "A"."cliente_id" = "C"."cliente_id"
+       WHERE "C"."estado_activo" = true AND LOWER("A"."tipo_equipo") LIKE '%ascensor%') AS total_ascensores,
+      (SELECT COUNT(*) FROM "Ascensores" AS "A" 
+       INNER JOIN "Clientes" AS "C" ON "A"."cliente_id" = "C"."cliente_id"
+       WHERE "C"."estado_activo" = true AND LOWER("A"."tipo_equipo") LIKE '%montacarga%') AS total_montacargas,
+      (SELECT COUNT(*) FROM "Ascensores" AS "A" 
+       INNER JOIN "Clientes" AS "C" ON "A"."cliente_id" = "C"."cliente_id"
+       WHERE "C"."estado_activo" = true AND LOWER("A"."tipo_equipo") LIKE '%plataforma%') AS total_plataformas
+  `);
+  
+  const stats = results[0];
+  return {
+    total_clientes: Number(stats.total_clientes),
+    total_ascensores: Number(stats.total_ascensores),
+    total_montacargas: Number(stats.total_montacargas),
+    total_plataformas: Number(stats.total_plataformas)
+  };
+};
+
 module.exports = {
   createClient,
   getClients,
@@ -164,5 +191,6 @@ module.exports = {
   getClientById,
   updateClient,
   deleteClient,
-  getClientAscensores
+  getClientAscensores,
+  getClientStats
 };

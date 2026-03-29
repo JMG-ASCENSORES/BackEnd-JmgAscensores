@@ -73,6 +73,7 @@ router.use(authenticate);
 
 router.post('/', validate(createClientSchema), clientesController.createClient);
 router.get('/', clientesController.getClients);
+router.get('/stats', clientesController.getClientStats);
 router.get('/:id', clientesController.getClientById);
 router.put('/:id', validate(updateClientSchema), clientesController.updateClient);
 router.delete('/:id', clientesController.deleteClient);

@@ -96,11 +96,21 @@ const getClientAscensores = async (req, res, next) => {
   }
 };
 
+const getClientStats = async (req, res, next) => {
+  try {
+    const stats = await clientesService.getClientStats();
+    res.status(200).json(successResponse(stats, 'Estadísticas obtenidas exitosamente'));
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createClient,
   getClients,
   getClientById,
   updateClient,
   deleteClient,
-  getClientAscensores
+  getClientAscensores,
+  getClientStats
 };
