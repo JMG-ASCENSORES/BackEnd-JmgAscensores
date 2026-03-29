@@ -1,7 +1,44 @@
-const { Cliente, Ascensor } = require('../models');
+const { Cliente, Ascensor, sequelize } = require('../models');
 const { generateClientCode } = require('../utils/codeGenerator.util');
 const { hashPassword } = require('../utils/password.util');
 const { Op } = require('sequelize');
+
+/**
+ * Common attributes for client lists, including equipment counts
+ */
+const getClientListAttributes = () => {
+  return {
+    include: [
+      [
+        sequelize.literal(`(
+          SELECT COUNT(*)
+          FROM "Ascensores" AS "A"
+          WHERE "A"."cliente_id" = "Cliente"."cliente_id"
+          AND LOWER("A"."tipo_equipo") LIKE '%ascensor%'
+        )`),
+        'ascensores_count'
+      ],
+      [
+        sequelize.literal(`(
+          SELECT COUNT(*)
+          FROM "Ascensores" AS "A"
+          WHERE "A"."cliente_id" = "Cliente"."cliente_id"
+          AND LOWER("A"."tipo_equipo") LIKE '%montacarga%'
+        )`),
+        'montacargas_count'
+      ],
+      [
+        sequelize.literal(`(
+          SELECT COUNT(*)
+          FROM "Ascensores" AS "A"
+          WHERE "A"."cliente_id" = "Cliente"."cliente_id"
+          AND LOWER("A"."tipo_equipo") LIKE '%plataforma%'
+        )`),
+        'plataforma_count'
+      ]
+    ]
+  };
+};
 
 /**
  * Create a new client
@@ -41,6 +78,7 @@ const getClients = async (data = {}) => {
   
   return await Cliente.findAll({
     where,
+    attributes: getClientListAttributes(),
     order: [['fecha_creacion', 'DESC']]
   });
 };
@@ -69,6 +107,7 @@ const getClientsPaginated = async ({ page, limit, search, tipo_cliente }) => {
 
   return await Cliente.findAndCountAll({
     where: whereClause,
+    attributes: getClientListAttributes(),
     limit,
     offset,
     order: [['fecha_creacion', 'DESC']]
