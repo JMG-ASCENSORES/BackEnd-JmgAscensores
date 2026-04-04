@@ -1,0 +1,123 @@
+[
+  {
+    "sesion_id": 164,
+    "admin_id": 7,
+    "trabajador_id": null,
+    "cliente_id": null,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywidGlwbyI6ImFkbWluaXN0cmFkb3IiLCJpYXQiOjE3NzQ4MTAxODksImV4cCI6MTc3NTQxNDk4OX0.0ZDDqu-DWpM0UBSOQGEB_AAMi-S-QtWK7-4akc5aTbw",
+    "ip_address": "::1",
+    "user_agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Mobile Safari/537.36",
+    "expira_en": "2026-03-29T19:49:49.053Z",
+    "fecha_creacion": "2026-03-29T18:49:49.053Z"
+  },
+  {
+    "sesion_id": 165,
+    "admin_id": 7,
+    "trabajador_id": null,
+    "cliente_id": null,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywidGlwbyI6ImFkbWluaXN0cmFkb3IiLCJpYXQiOjE3NzQ4MTQwNzgsImV4cCI6MTc3NTQxODg3OH0.E0MH9b9-BsTgZG38pE2n2-QRr1MNJUKCliFpF0_zpAQ",
+    "ip_address": "::1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+    "expira_en": "2026-03-29T20:54:38.151Z",
+    "fecha_creacion": "2026-03-29T19:54:38.151Z"
+  },
+  {
+    "sesion_id": 166,
+    "admin_id": 7,
+    "trabajador_id": null,
+    "cliente_id": null,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywidGlwbyI6ImFkbWluaXN0cmFkb3IiLCJpYXQiOjE3NzQ4MTQzMDUsImV4cCI6MTc3NTQxOTEwNX0.AgBziSKiFuv9gNzxiVxkJNHNdsyGCFZ5aOSwvIDVE1A",
+    "ip_address": "::1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+    "expira_en": "2026-03-29T20:58:25.519Z",
+    "fecha_creacion": "2026-03-29T19:58:25.519Z"
+  },
+  {
+    "sesion_id": 167,
+    "admin_id": 7,
+    "trabajador_id": null,
+    "cliente_id": null,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywidGlwbyI6ImFkbWluaXN0cmFkb3IiLCJpYXQiOjE3NzQ4MjM0ODEsImV4cCI6MTc3NTQyODI4MX0.aArP5y9oIMP55d_ZHrMbcOroNC2C0gD3T85Sk_dxBDg",
+    "ip_address": "::1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+    "expira_en": "2026-03-29T23:31:21.293Z",
+    "fecha_creacion": "2026-03-29T22:31:21.293Z"
+  },
+  {
+    "sesion_id": 168,
+    "admin_id": 7,
+    "trabajador_id": null,
+    "cliente_id": null,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywidGlwbyI6ImFkbWluaXN0cmFkb3IiLCJpYXQiOjE3NzQ4MjM5NjcsImV4cCI6MTc3NTQyODc2N30.ifW3F-aXBDbT-gwx7kz1tdy9uS5MqKniuL5xjUvuvaw",
+    "ip_address": "::1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+    "expira_en": "2026-03-29T23:39:27.267Z",
+    "fecha_creacion": "2026-03-29T22:39:27.267Z"
+  },
+  {
+    "sesion_id": 169,
+    "admin_id": 7,
+    "trabajador_id": null,
+    "cliente_id": null,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywidGlwbyI6ImFkbWluaXN0cmFkb3IiLCJpYXQiOjE3NzQ4MjQ2NTgsImV4cCI6MTc3NTQyOTQ1OH0.-2Uss3uItE4ZA9Sv48fDQKAOZVs5LDFAcktBhniy7Ys",
+    "ip_address": "::1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+    "expira_en": "2026-03-29T23:50:58.845Z",
+    "fecha_creacion": "2026-03-29T22:50:58.845Z"
+  },
+  {
+    "sesion_id": 170,
+    "admin_id": 7,
+    "trabajador_id": null,
+    "cliente_id": null,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywidGlwbyI6ImFkbWluaXN0cmFkb3IiLCJpYXQiOjE3NzUyMTkzNTUsImV4cCI6MTc3NTgyNDE1NX0.xBePZiIDfs7Pel3h2CBMS_KlK1CbA7lAkznu_rYtx6o",
+    "ip_address": "::1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+    "expira_en": "2026-04-03T13:29:15.935Z",
+    "fecha_creacion": "2026-04-03T12:29:15.936Z"
+  },
+  {
+    "sesion_id": 173,
+    "admin_id": 7,
+    "trabajador_id": null,
+    "cliente_id": null,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywidGlwbyI6ImFkbWluaXN0cmFkb3IiLCJpYXQiOjE3NzUzMjE3MzEsImV4cCI6MTc3NTkyNjUzMX0.dpk7nacoxT0xR9xLQXvH1FOiQ0j8Us21mS1LwnjEhLE",
+    "ip_address": "::1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 OPR/129.0.0.0 (Edition std-2)",
+    "expira_en": "2026-04-04T17:55:31.993Z",
+    "fecha_creacion": "2026-04-04T16:55:31.993Z"
+  },
+  {
+    "sesion_id": 158,
+    "admin_id": 7,
+    "trabajador_id": null,
+    "cliente_id": null,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywidGlwbyI6ImFkbWluaXN0cmFkb3IiLCJpYXQiOjE3NzQ3MTM3MzAsImV4cCI6MTc3NTMxODUzMH0.q3BH2P-UeKatEMxfYqNoCSoGd1dwq8S4gmIaXz0pfrk",
+    "ip_address": "::1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+    "expira_en": "2026-03-28T17:02:10.354Z",
+    "fecha_creacion": "2026-03-28T16:02:10.355Z"
+  },
+  {
+    "sesion_id": 159,
+    "admin_id": 7,
+    "trabajador_id": null,
+    "cliente_id": null,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywidGlwbyI6ImFkbWluaXN0cmFkb3IiLCJpYXQiOjE3NzQ3NDYyMjQsImV4cCI6MTc3NTM1MTAyNH0.7fqudsaSq5k1g_OMGsA-fmqP6h2EmvSIbTROQo_uOW4",
+    "ip_address": "::1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+    "expira_en": "2026-03-29T02:03:44.720Z",
+    "fecha_creacion": "2026-03-29T01:03:44.720Z"
+  },
+  {
+    "sesion_id": 160,
+    "admin_id": 7,
+    "trabajador_id": null,
+    "cliente_id": null,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywidGlwbyI6ImFkbWluaXN0cmFkb3IiLCJpYXQiOjE3NzQ3NTAwMzgsImV4cCI6MTc3NTM1NDgzOH0.NLvBD7GP8A2xBS4AYp9NgWmXJS4k4NOMeoh3To9M-pk",
+    "ip_address": "::1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+    "expira_en": "2026-03-29T03:07:18.549Z",
+    "fecha_creacion": "2026-03-29T02:07:18.550Z"
+  }
+]

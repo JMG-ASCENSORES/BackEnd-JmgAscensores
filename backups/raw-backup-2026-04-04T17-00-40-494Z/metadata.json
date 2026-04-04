@@ -1,0 +1,94 @@
+{
+  "timestamp": "2026-04-04T17-00-40-494Z",
+  "database": "jmg_ascensores3",
+  "tables": {
+    "Administradores": {
+      "filename": "Administradores.json",
+      "recordCount": 1
+    },
+    "Clientes": {
+      "filename": "Clientes.json",
+      "recordCount": 100
+    },
+    "Asignaciones": {
+      "filename": "Asignaciones.json",
+      "recordCount": 0
+    },
+    "Ascensores": {
+      "filename": "Ascensores.json",
+      "recordCount": 229
+    },
+    "Tareas": {
+      "filename": "Tareas.json",
+      "recordCount": 0
+    },
+    "Trabajadores": {
+      "filename": "Trabajadores.json",
+      "recordCount": 18
+    },
+    "Informes": {
+      "filename": "Informes.json",
+      "recordCount": 201
+    },
+    "Evidencias": {
+      "filename": "Evidencias.json",
+      "recordCount": 0
+    },
+    "RutasDiarias": {
+      "filename": "RutasDiarias.json",
+      "recordCount": 0
+    },
+    "DetalleRuta": {
+      "filename": "DetalleRuta.json",
+      "recordCount": 0
+    },
+    "Notificaciones": {
+      "filename": "Notificaciones.json",
+      "recordCount": 0
+    },
+    "Auditoria": {
+      "filename": "Auditoria.json",
+      "recordCount": 0
+    },
+    "Sesiones": {
+      "filename": "Sesiones.json",
+      "recordCount": 11
+    },
+    "HistorialEstadoMantenimiento": {
+      "filename": "HistorialEstadoMantenimiento.json",
+      "recordCount": 0
+    },
+    "Configuracion": {
+      "filename": "Configuracion.json",
+      "recordCount": 0
+    },
+    "OrdenesTrabajo": {
+      "filename": "OrdenesTrabajo.json",
+      "recordCount": 12
+    },
+    "DetallesOrden": {
+      "filename": "DetallesOrden.json",
+      "recordCount": 24
+    },
+    "TareasMaestras": {
+      "filename": "TareasMaestras.json",
+      "recordCount": 2
+    },
+    "Programaciones": {
+      "filename": "Programaciones.json",
+      "recordCount": 212
+    },
+    "test_connection_speeds": {
+      "filename": "test_connection_speeds.json",
+      "recordCount": 0
+    },
+    "Firmas": {
+      "filename": "Firmas.json",
+      "recordCount": 5
+    },
+    "MantenimientosFijos": {
+      "filename": "MantenimientosFijos.json",
+      "recordCount": 1
+    }
+  }
+}

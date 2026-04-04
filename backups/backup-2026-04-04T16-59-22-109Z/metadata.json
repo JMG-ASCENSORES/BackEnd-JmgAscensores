@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-04-04T16-59-22-109Z",
+  "database": "jmg_ascensores3",
+  "host": "dpg-d6krkof5r7bs73e6o28g-a.oregon-postgres.render.com",
+  "tables": {
+    "Administrador": {
+      "filename": "Administrador.json",
+      "recordCount": 1
+    },
+    "Trabajador": {
+      "filename": "Trabajador.json",
+      "recordCount": 18
+    },
+    "Cliente": {
+      "filename": "Cliente.json",
+      "recordCount": 100
+    },
+    "Ascensor": {
+      "filename": "Ascensor.json",
+      "recordCount": 229
+    },
+    "Informe": {
+      "filename": "Informe.json",
+      "recordCount": 201
+    },
+    "Evidencia": {
+      "filename": "Evidencia.json",
+      "recordCount": 0
+    },
+    "RutaDiaria": {
+      "filename": "RutaDiaria.json",
+      "recordCount": 0
+    },
+    "DetalleRuta": {
+      "filename": "DetalleRuta.json",
+      "recordCount": 0
+    },
+    "Notificacion": {
+      "filename": "Notificacion.json",
+      "recordCount": 0
+    },
+    "Auditoria": {
+      "filename": "Auditoria.json",
+      "recordCount": 0
+    },
+    "Sesion": {
+      "filename": "Sesion.json",
+      "recordCount": 11
+    },
+    "Configuracion": {
+      "filename": "Configuracion.json",
+      "recordCount": 0
+    },
+    "Programacion": {
+      "error": "column \"mantenimiento_fijo_id\" does not exist"
+    }
+  }
+}

@@ -1,0 +1,170 @@
+[
+  {
+    "detalle_id": 6988,
+    "orden_id": 392,
+    "tarea_maestra_id": 56,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 6989,
+    "orden_id": 392,
+    "tarea_maestra_id": 57,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 6990,
+    "orden_id": 393,
+    "tarea_maestra_id": 56,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 6991,
+    "orden_id": 393,
+    "tarea_maestra_id": 57,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 6992,
+    "orden_id": 394,
+    "tarea_maestra_id": 56,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 6993,
+    "orden_id": 394,
+    "tarea_maestra_id": 57,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 6994,
+    "orden_id": 395,
+    "tarea_maestra_id": 56,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 6995,
+    "orden_id": 395,
+    "tarea_maestra_id": 57,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 6996,
+    "orden_id": 396,
+    "tarea_maestra_id": 56,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 6997,
+    "orden_id": 396,
+    "tarea_maestra_id": 57,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 6998,
+    "orden_id": 397,
+    "tarea_maestra_id": 56,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 6999,
+    "orden_id": 397,
+    "tarea_maestra_id": 57,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 7000,
+    "orden_id": 398,
+    "tarea_maestra_id": 56,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 7001,
+    "orden_id": 398,
+    "tarea_maestra_id": 57,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 7002,
+    "orden_id": 399,
+    "tarea_maestra_id": 56,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 7003,
+    "orden_id": 399,
+    "tarea_maestra_id": 57,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 7004,
+    "orden_id": 400,
+    "tarea_maestra_id": 56,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 7005,
+    "orden_id": 400,
+    "tarea_maestra_id": 57,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 7006,
+    "orden_id": 401,
+    "tarea_maestra_id": 56,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 7007,
+    "orden_id": 401,
+    "tarea_maestra_id": 57,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 7008,
+    "orden_id": 402,
+    "tarea_maestra_id": 56,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 7009,
+    "orden_id": 402,
+    "tarea_maestra_id": 57,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 7010,
+    "orden_id": 403,
+    "tarea_maestra_id": 56,
+    "realizado": false,
+    "accion_realizada": null
+  },
+  {
+    "detalle_id": 7011,
+    "orden_id": 403,
+    "tarea_maestra_id": 57,
+    "realizado": false,
+    "accion_realizada": null
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "tarea_maestra_id": 56,
+    "tipo_equipo": "Ascensor",
+    "descripcion_tarea": "Limpieza de rieles y lubricación",
+    "categoria": "Foso",
+    "activa": true,
+    "fecha_creacion": "2026-03-27T00:29:59.475Z",
+    "fecha_actualizacion": "2026-03-27T00:29:59.475Z"
+  },
+  {
+    "tarea_maestra_id": 57,
+    "tipo_equipo": "Ascensor",
+    "descripcion_tarea": "Ajuste de frenos y nivelación",
+    "categoria": "Sala de Máquinas",
+    "activa": true,
+    "fecha_creacion": "2026-03-27T00:29:59.475Z",
+    "fecha_actualizacion": "2026-03-27T00:29:59.475Z"
+  }
+]

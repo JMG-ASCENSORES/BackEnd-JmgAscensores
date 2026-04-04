@@ -3,16 +3,12 @@ const models = require('../models');
 
 const fixAllSequences = async () => {
   try {
-    console.log('🔄 Iniciando sincronización de secuencias...');
+    console.log('🔄 Iniciando sincronización de TODAS las secuencias...');
     await sequelize.authenticate();
     console.log('✅ Base de datos conectada.');
 
-    const modelNames = [
-      'Administrador', 'Trabajador', 'Cliente', 'Ascensor', 'Tarea', 
-      'Asignacion', 'Informe', 'Evidencia', 'RutaDiaria', 'DetalleRuta', 
-      'Notificacion', 'Auditoria', 'Sesion', 'HistorialEstadoMantenimiento', 
-      'Configuracion', 'Programacion'
-    ];
+    // Remove the 'sequelize' key leaving only the models
+    const modelNames = Object.keys(models).filter(key => key !== 'sequelize');
 
     for (const modelName of modelNames) {
       const model = models[modelName];
@@ -20,7 +16,6 @@ const fixAllSequences = async () => {
 
       const tableName = model.tableName;
       
-      // Get primary key field name (assuming single PK)
       const pkField = Object.keys(model.primaryKeys)[0];
       if (!pkField) continue;
 
@@ -28,7 +23,6 @@ const fixAllSequences = async () => {
         const maxIdResult = await model.max(pkField);
         const maxId = maxIdResult || 0;
         
-        // Use COALESCE in case sequence doesn't exist, to avoid breaking the loop
         const query = `
           DO $$
           DECLARE
