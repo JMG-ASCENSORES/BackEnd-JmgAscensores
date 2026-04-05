@@ -123,6 +123,19 @@ const updateUser = async (id, updateData) => {
     }
   }
 
+  // If updating DNI, check uniqueness
+  if (updateData.dni && updateData.dni !== user.dni) {
+    const existingDNI = await Trabajador.findOne({
+      where: {
+        dni: updateData.dni,
+        trabajador_id: { [Op.ne]: id }
+      }
+    });
+    if (existingDNI) {
+      throw new Error('DNI_EXISTS');
+    }
+  }
+
   // If updating password, hash it
   if (updateData.contrasena) {
     updateData.contrasena_hash = await hashPassword(updateData.contrasena);
@@ -130,6 +143,7 @@ const updateUser = async (id, updateData) => {
   }
 
   await user.update(updateData);
+  await user.reload();
 
   const userResponse = user.toJSON();
   delete userResponse.contrasena_hash;

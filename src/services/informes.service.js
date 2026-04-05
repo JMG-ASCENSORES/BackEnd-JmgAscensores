@@ -184,12 +184,10 @@ const updateInforme = async (id, data) => {
 
   // Actualizar detalles del checklist si vienen en el payload
   if (data.detalles) {
-    console.log(`[updateInforme] Procesando ${data.detalles.length} detalles para informe ${id}, orden ${informe.orden_id}`);
     const { DetalleOrden } = require('../models');
     
     // Si no tiene orden_id (reporte antiguo o manual sin orden), crearla ahora
     if (!informe.orden_id && data.tipo_informe === 'Mantenimiento') {
-      console.log('[updateInforme] No se encontró orden_id, creando una nueva...');
       const nuevaOrden = await OrdenTrabajo.create({
         cliente_id: data.cliente_id || informe.cliente_id,
         ascensor_id: data.ascensor_id || informe.ascensor_id,
@@ -199,7 +197,6 @@ const updateInforme = async (id, data) => {
         fecha_programada: data.fecha_informe || informe.fecha_informe || new Date()
       });
 
-      console.log(`[updateInforme] Nueva orden creada: ${nuevaOrden.orden_id}. Insertando tareas...`);
       const detailsToCreate = data.detalles.map(item => ({
         orden_id: nuevaOrden.orden_id,
         tarea_maestra_id: item.tarea_maestra_id || item.tarea_id,
@@ -210,7 +207,6 @@ const updateInforme = async (id, data) => {
       data.orden_id = nuevaOrden.orden_id;
     } else if (informe.orden_id) {
       // Caso normal: Actualizar existentes
-      console.log(`[updateInforme] Actualizando tareas para orden ${informe.orden_id}...`);
       const upsertPromises = data.detalles.map(async (item) => {
         const tId = item.tarea_maestra_id || item.tarea_id;
         const [updatedRows] = await DetalleOrden.update(
@@ -225,7 +221,6 @@ const updateInforme = async (id, data) => {
               realizado: !!item.realizado,
               observaciones: item.observaciones || ''
             });
-            console.log(`[updateInforme] Detalle creado para tarea ${tId} en orden ${informe.orden_id}`);
         }
       });
       await Promise.all(upsertPromises);

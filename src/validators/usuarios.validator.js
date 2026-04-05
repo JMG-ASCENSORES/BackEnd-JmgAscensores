@@ -35,6 +35,11 @@ const createUserSchema = Joi.object({
 });
 
 const updateUserSchema = Joi.object({
+  dni: Joi.string().length(8).pattern(/^[0-9]+$/).optional()
+    .messages({
+      'string.length': 'El DNI debe tener 8 dígitos',
+      'string.pattern.base': 'El DNI solo debe contener números'
+    }),
   nombre: Joi.string().max(50).optional(),
   apellido: Joi.string().max(50).optional(),
   edad: Joi.number().integer().min(18).max(100).optional(),
