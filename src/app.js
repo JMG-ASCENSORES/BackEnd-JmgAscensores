@@ -21,7 +21,23 @@ const allowedOrigins = process.env.CORS_ORIGIN
   : ['http://localhost:4200', 'http://localhost:4201', 'http://localhost:4202'];
 
 const corsOptions = {
-  origin: ['http://localhost:4200', 'http://localhost:4201', 'http://localhost:4202'],
+  origin: function (origin, callback) {
+    // Definimos qué URLs pueden acceder al Backend
+    const allowedOrigins = [
+      'http://localhost:4200',
+      'http://localhost:4201',
+      'http://localhost:4202',
+      'https://jmgascensores.onrender.com', // <--- Añadido explícitamente para Render
+      process.env.FRONTEND_URL
+    ];
+
+    // Permitimos llamadas sin origin (postman, etc) o las que estén en la lista
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 };
