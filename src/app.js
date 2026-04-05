@@ -17,7 +17,22 @@ if (!fs.existsSync(uploadsDir)) {
 
 // CORS Configuration
 const corsOptions = {
-  origin: ['http://localhost:4200', 'http://localhost:4201', 'http://localhost:4202'],
+  origin: function (origin, callback) {
+    // Definimos qué URLs pueden acceder al Backend
+    const allowedOrigins = [
+      'http://localhost:4200',
+      'http://localhost:4201',
+      'http://localhost:4202',
+      process.env.FRONTEND_URL // <--- URL que obtendrás cuando subas el Frontend a Render
+    ];
+
+    // Permitimos llamadas sin origin (postman, etc) o las que estén en la lista
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('No permitido por regla de CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 };
