@@ -57,6 +57,19 @@ const updateProfile = async (userId, userType, updateData) => {
     }
   }
 
+  // Check DNI uniqueness if changed
+  if (updateData.dni && updateData.dni !== user.dni) {
+    const existingDNI = await Model.findOne({
+      where: {
+        dni: updateData.dni,
+        [idField]: { [Op.ne]: userId }
+      }
+    });
+    if (existingDNI) {
+      throw new Error('DNI_EXISTS');
+    }
+  }
+
   // Handle signature if it's a worker
   if (userType === 'trabajador' && updateData.firma_defecto_base64) {
     const { Firma } = require('../models');
@@ -73,6 +86,7 @@ const updateProfile = async (userId, userType, updateData) => {
   }
 
   await user.update(updateData);
+  await user.reload();
 
   const result = user.toJSON();
   delete result.contrasena_hash;

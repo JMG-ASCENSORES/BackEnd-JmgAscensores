@@ -19,7 +19,6 @@ const sequelize = new Sequelize(
     dialectOptions: (() => {
       const isSSL = process.env.DB_SSL === 'true';
       const isLocal = process.env.DB_HOST === 'localhost';
-      console.log(`🔌 Database Config: HOST=${process.env.DB_HOST}, SSL=${isSSL}`);
       
       return isSSL && !isLocal ? {
         ssl: {

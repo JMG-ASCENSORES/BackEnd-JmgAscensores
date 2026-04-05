@@ -28,7 +28,7 @@ const getProfile = async (req, res, next) => {
 const updateProfile = async (req, res, next) => {
   try {
     // Basic fields that can be updated
-    const allowedFields = ['nombre', 'apellido', 'correo', 'telefono', 'contrasena', 'firma_defecto_base64'];
+    const allowedFields = ['dni', 'nombre', 'apellido', 'correo', 'telefono', 'contrasena', 'firma_defecto_base64'];
     const updateData = {};
     for (const key of allowedFields) {
       if (req.body[key] !== undefined) updateData[key] = req.body[key];
@@ -47,6 +47,11 @@ const updateProfile = async (req, res, next) => {
     if (error.message === 'EMAIL_EXISTS') {
       return res.status(409).json(
         errorResponse('El correo ya está registrado', 'EMAIL_EXISTS')
+      );
+    }
+    if (error.message === 'DNI_EXISTS') {
+      return res.status(409).json(
+        errorResponse('El DNI ya está registrado', 'DNI_EXISTS')
       );
     }
     next(error);
