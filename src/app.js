@@ -16,8 +16,12 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // CORS Configuration
+const allowedOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',') 
+  : ['http://localhost:4200', 'http://localhost:4201', 'http://localhost:4202'];
+
 const corsOptions = {
-  origin: ['http://localhost:4200', 'http://localhost:4201', 'http://localhost:4202'],
+  origin: allowedOrigins,
   credentials: true,
   optionsSuccessStatus: 200
 };
