@@ -1,6 +1,9 @@
 const puppeteer = require('puppeteer');
+const chromium = require('@sparticuz/chromium');
 const path = require('path');
 const fs = require('fs');
+
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 const generateReportPDF = async (report, res) => {
     try {
@@ -153,12 +156,14 @@ const generateReportPDF = async (report, res) => {
 
         // Iniciar Puppeteer
         const browser = await puppeteer.launch({
-            headless: "new",
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: IS_PRODUCTION ? chromium.args : ['--no-sandbox', '--disable-setuid-sandbox'],
+            defaultViewport: chromium.defaultViewport,
+            executablePath: IS_PRODUCTION ? await chromium.executablePath() : undefined,
+            headless: IS_PRODUCTION ? chromium.headless : true,
         });
         
         const page = await browser.newPage();
-        await page.setContent(html, { waitUntil: 'networkidle0' });
+        await page.setContent(html, { waitUntil: 'domcontentloaded' });
         
         const pdfBuffer = await page.pdf({ 
             format: 'A4', 
