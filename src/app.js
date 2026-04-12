@@ -27,6 +27,8 @@ const corsOptions = {
       'http://localhost:4200',
       'http://localhost:4201',
       'http://localhost:4202',
+      'http://localhost:8080',
+      'http://127.0.0.1:8080',
       'https://jmgascensores.onrender.com', // <--- Añadido explícitamente para Render
       process.env.FRONTEND_URL
     ];
@@ -115,35 +117,5 @@ app.use((req, res) => {
 const errorHandler = require('./middlewares/errorHandler.middleware');
 app.use(errorHandler);
 
-// Database Connection and Server Startup
-const startServer = async () => {
-  try {
-    await connectDB();
-    
-    // Sync models — only if DB_SYNC=true is set
-    // alter:true adds missing columns without dropping data
-    if (process.env.DB_SYNC === 'true') {
-      console.log('🔄 Synchronizing database models (alter: true)...');
-      await sequelize.sync({ force: false, alter: true });
-      console.log('✅ Database synchronized.');
-    } else {
-      console.log('ℹ️ Skipping database synchronization (DB_SYNC != true)');
-    }
-
-    // Seed initial data (Manual run recommended via init-db script)
-    // const seedDatabase = require('./seeders/initialData');
-    // await seedDatabase();
-
-    app.listen(PORT, () => {
-      console.log(`✅ Server is running on port ${PORT}`);
-      console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
-      console.log(`🌍 CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:4200'}`);
-    });
-  } catch (error) {
-    console.error('❌ Failed to start server:', error);
-    process.exit(1);
-  }
-};
-
-startServer();
+module.exports = app;
 
