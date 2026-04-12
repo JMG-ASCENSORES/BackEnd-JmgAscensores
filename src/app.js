@@ -117,5 +117,19 @@ app.use((req, res) => {
 const errorHandler = require('./middlewares/errorHandler.middleware');
 app.use(errorHandler);
 
-module.exports = app;
+// Solución para Render: Si Render ejecuta directamente 'node src/app.js', encendemos el servidor.
+if (require.main === module) {
+  (async () => {
+    try {
+      await connectDB();
+      app.listen(PORT, () => {
+        console.log(`✅ Server is running on port ${PORT} (Iniciado desde app.js para Render)`);
+      });
+    } catch (error) {
+      console.error('❌ Failed to start server:', error);
+      process.exit(1);
+    }
+  })();
+}
 
+module.exports = app;
