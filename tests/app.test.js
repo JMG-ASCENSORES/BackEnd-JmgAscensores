@@ -15,7 +15,7 @@ describe('API Health Check and Base Routes', () => {
     const response = await request(app).get('/api/non-existent-route');
     
     expect(response.statusCode).toBe(404);
-    expect(response.body).toHaveProperty('error', 'NOT_FOUND');
+    expect(response.body).toHaveProperty('error', 'API_NOT_FOUND');
   });
 
 });
