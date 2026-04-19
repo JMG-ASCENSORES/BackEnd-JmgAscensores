@@ -20,6 +20,8 @@ services:
     startCommand: npm start
     healthCheckPath: /
     envVars:
+      - key: TZ
+        value: America/Lima
       - key: NODE_ENV
         value: production
       - key: DB_DIALECT
