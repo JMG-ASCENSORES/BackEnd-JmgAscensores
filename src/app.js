@@ -67,6 +67,7 @@ const rutaRoutes = require('./routes/rutaRoutes');
 const programacionRoutes = require('./routes/programacion.routes');
 const mantenimientoFijoRoutes = require('./routes/mantenimientoFijo.routes');
 const configuracionRoutes = require('./routes/configuracion.routes');
+const healthRoutes = require('./routes/health.routes');
 
 // Register routes
 app.use('/api/auth', authRoutes);
@@ -82,6 +83,7 @@ app.use('/api/rutas', rutaRoutes);
 app.use('/api/programaciones', programacionRoutes);
 app.use('/api/mantenimientos-fijos', mantenimientoFijoRoutes);
 app.use('/api/configuracion', configuracionRoutes);
+app.use('/api/health', healthRoutes);
 
 
 // Swagger Documentation
@@ -103,11 +105,22 @@ app.get('/', (req, res) => {
   });
 });
 
-// 404 Handler
+// 404 Handler for API
+app.use('/api/*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Ruta de API no encontrada',
+    error: 'API_NOT_FOUND',
+    path: req.originalUrl,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Fallback for any other route (non-API)
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: 'Endpoint no encontrado',
+    message: 'Recurso no encontrado. Si estás intentando acceder al sitio web, asegúrate de configurar las reglas de redirección en Render.',
     error: 'NOT_FOUND',
     timestamp: new Date().toISOString()
   });

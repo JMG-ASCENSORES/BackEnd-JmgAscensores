@@ -8,102 +8,17 @@ const { createInformeSchema, updateInformeSchema, patchInformeSchema } = require
 router.use(authenticate);
 
 /**
- * @swagger
- * components:
- *   schemas:
- *     Informe:
- *       type: object
- *       required:
- *         - descripcion
- *       properties:
- *         informe_id:
- *           type: integer
- *         tipo_informe:
- *           type: string
- *           enum: [Técnico, Mantenimiento]
- *         descripcion:
- *           type: string
- *         fecha_informe:
- *           type: string
- *           format: date
- *         estado_informe:
- *           type: string
- * */
+ * @name Informes
+ */
 
 /**
- * @swagger
- * /api/informes:
- *   get:
- *     summary: Listar informes
- *     tags: [Informes]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Lista de informes
- *   post:
- *     summary: Crear informe
- *     tags: [Informes]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Informe'
- *     responses:
- *       201:
- *         description: Informe creado
+ * @name GET /api/informes
  */
 router.post('/', validate(createInformeSchema), informesController.createInforme);
 router.get('/', informesController.getInformes);
 
 /**
- * @swagger
- * /api/informes/{id}:
- *   get:
- *     summary: Obtener informe por ID
- *     tags: [Informes]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Detalle del informe
- *   put:
- *     summary: Actualizar informe
- *     tags: [Informes]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Informe actualizado
- *   delete:
- *     summary: Eliminar informe
- *     tags: [Informes]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Informe eliminado
+ * @name GET /api/informes/{id}
  */
 router.get('/:id/pdf', informesController.getInformePdf);
 router.get('/:id', informesController.getInformeById);
