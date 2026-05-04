@@ -1,3 +1,4 @@
+require('dotenv').config({ path: 'c:\\Users\\RODRIGO\\Desktop\\JMG ASCENSORES\\Back---JMG\\.env' });
 const { sequelize } = require('../config/database');
 const models = require('../models');
 

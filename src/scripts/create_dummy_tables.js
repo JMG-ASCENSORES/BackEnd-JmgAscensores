@@ -1,19 +1,18 @@
+require('dotenv').config({ path: 'c:\\Users\\RODRIGO\\Desktop\\JMG ASCENSORES\\Back---JMG\\.env' });
 const { Client } = require('pg');
 
 async function createMissingTables() {
-  const targetString = 'postgresql://jmg_ascensores4_user:zfUU5rGlHLSkc47pKMMA6gqb0VVR38oE@dpg-d78k8h15pdvs73b3o4o0-a.oregon-postgres.render.com/jmg_ascensores4';
+  const connectionString = `postgresql://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
 
-  const client = new Client({ connectionString: targetString, ssl: { rejectUnauthorized: false } });
+  const client = new Client({ connectionString, ssl: { rejectUnauthorized: false } });
 
   try {
     await client.connect();
-    console.log('✅ Conectado a jmg_ascensores4.');
+    console.log(`✅ Conectado a ${process.env.DB_NAME}.`);
 
     const missingTables = ['Asignaciones', 'Tareas', 'HistorialEstadoMantenimiento', 'test_connection_speeds'];
 
     for (const table of missingTables) {
-      // Create a basic shell table so pgAdmin/DBeaver shows them and table count hits 22.
-      // Since models are deleted, they are never queried by the backend anyway.
       const createSql = `
         CREATE TABLE IF NOT EXISTS "${table}" (
           id SERIAL PRIMARY KEY,
@@ -30,7 +29,7 @@ async function createMissingTables() {
       }
     }
 
-    console.log('\n🎉 Finalizado el copiado. Ahora hay 22 tablas en la base de datos.');
+    console.log('\n🎉 Finalizado. Ahora hay 22 tablas en la base de datos.');
 
   } catch (err) {
     console.error('❌ Error fatal:', err);

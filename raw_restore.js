@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: 'c:\\Users\\RODRIGO\\Desktop\\JMG ASCENSORES\\Back---JMG\\.env' });
 const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
