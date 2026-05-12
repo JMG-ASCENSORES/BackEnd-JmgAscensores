@@ -1,0 +1,17 @@
+const express = require('express');
+const router = express.Router();
+const authenticate = require('../middlewares/auth.middleware');
+const authorize = require('../middlewares/authorize.middleware');
+const controller = require('../controllers/ia-scheduler.controller');
+
+// Todos los endpoints requieren autenticación + rol Administrador
+router.use(authenticate);
+router.use(authorize('Administrador'));
+
+router.get('/demand', controller.getDemand);
+router.get('/tecnicos', controller.getTecnicos);
+router.post('/generar', controller.generar);
+router.get('/configuracion', controller.getConfiguracion);
+router.put('/configuracion', controller.updateConfiguracion);
+
+module.exports = router;

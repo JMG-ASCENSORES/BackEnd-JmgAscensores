@@ -69,6 +69,7 @@ const programacionRoutes = require('./routes/programacion.routes');
 const mantenimientoFijoRoutes = require('./routes/mantenimientoFijo.routes');
 const configuracionRoutes = require('./routes/configuracion.routes');
 const healthRoutes = require('./routes/health.routes');
+const iaSchedulerRoutes = require('./routes/ia-scheduler.routes');
 
 // Register routes
 app.use('/api/auth', authRoutes);
@@ -85,7 +86,7 @@ app.use('/api/programaciones', programacionRoutes);
 app.use('/api/mantenimientos-fijos', mantenimientoFijoRoutes);
 app.use('/api/configuracion', configuracionRoutes);
 app.use('/api/health', healthRoutes);
-
+app.use('/api/ia-scheduler', iaSchedulerRoutes);
 
 // Swagger Documentation
 const swaggerUi = require('swagger-ui-express');

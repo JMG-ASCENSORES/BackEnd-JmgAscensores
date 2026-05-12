@@ -12,27 +12,27 @@ Ref: `docs/programador-ia/09-database-migrations.md`.
 
 ### Migración de schema
 
-- [ ] 0.1 Crear archivo `scripts/migrations/001-detalle-ruta-programacion-id.sql` con `ALTER TABLE DetalleRuta ADD COLUMN programacion_id` + `ADD COLUMN orden_parada` + índices
-- [ ] 0.2 Crear archivo `scripts/migrations/002-configuracion-ia.sql` con `CREATE TABLE ConfiguracionIA`
-- [ ] 0.3 Crear archivo `scripts/migrations/003-tabla-distritos-lima.sql` con `CREATE TABLE TablaDistritosLima`
-- [ ] 0.4 Ejecutar las 3 migraciones en BD de desarrollo
-- [ ] 0.5 Verificar con `DESCRIBE` que el schema es el esperado
+- [x] 0.1 Crear archivo `scripts/migrations/001-detalle-ruta-programacion-id.sql` con `ALTER TABLE DetalleRuta ADD COLUMN programacion_id` + `ADD COLUMN orden_parada` + índices
+- [x] 0.2 Crear archivo `scripts/migrations/002-configuracion-ia.sql` con `CREATE TABLE ConfiguracionIA`
+- [x] 0.3 Crear archivo `scripts/migrations/003-tabla-distritos-lima.sql` con `CREATE TABLE TablaDistritosLima`
+- [x] 0.4 Ejecutar las 3 migraciones en BD de desarrollo
+- [x] 0.5 Verificar con `DESCRIBE` que el schema es el esperado
 
 ### Seeds
 
-- [ ] 0.6 Crear `scripts/seeds/seed-configuracion-ia.sql` con las 4 filas iniciales (emergencia=90, reparacion=120, inspeccion=45, mantenimiento=60)
-- [ ] 0.7 Crear `scripts/seeds/seed-tabla-distritos-lima.sql` con los ~420 pares de distritos (matriz 20×20 simétrica completa) — usar los valores de `docs/programador-ia/06-district-time-matrix.md`
-- [ ] 0.8 Ejecutar los seeds en dev
-- [ ] 0.9 Verificar `SELECT COUNT(*) FROM TablaDistritosLima` ≥ 420 y `SELECT COUNT(*) FROM ConfiguracionIA` = 4
+- [x] 0.6 Crear `scripts/seeds/seed-configuracion-ia.sql` con las 4 filas iniciales (emergencia=90, reparacion=120, inspeccion=45, mantenimiento=60)
+- [x] 0.7 Crear `scripts/seeds/seed-tabla-distritos-lima.sql` con los ~420 pares de distritos (matriz 20×20 simétrica completa) — usar los valores de `docs/programador-ia/06-district-time-matrix.md`
+- [x] 0.8 Ejecutar los seeds en dev
+- [x] 0.9 Verificar `SELECT COUNT(*) FROM TablaDistritosLima` ≥ 420 y `SELECT COUNT(*) FROM ConfiguracionIA` = 4
 
 ### Modelos Sequelize
 
-- [ ] 0.10 Crear `src/models/ConfiguracionIA.js`
-- [ ] 0.11 Crear `src/models/TablaDistritoLima.js`
-- [ ] 0.12 Editar `src/models/index.js`: importar los 2 modelos nuevos
-- [ ] 0.13 Editar `src/models/index.js`: agregar `DetalleRuta.belongsTo(Programacion, { foreignKey: 'programacion_id', as: 'programacion' })`
-- [ ] 0.14 Editar `src/models/index.js`: agregar `Programacion.hasMany(DetalleRuta, { foreignKey: 'programacion_id', as: 'detallesRuta' })`
-- [ ] 0.15 Smoke test: `node -e "require('./src/models')"` no debe lanzar error
+- [x] 0.10 Crear `src/models/ConfiguracionIA.js`
+- [x] 0.11 Crear `src/models/TablaDistritoLima.js`
+- [x] 0.12 Editar `src/models/index.js`: importar los 2 modelos nuevos
+- [x] 0.13 Editar `src/models/index.js`: agregar `DetalleRuta.belongsTo(Programacion, { foreignKey: 'programacion_id', as: 'programacion' })`
+- [x] 0.14 Editar `src/models/index.js`: agregar `Programacion.hasMany(DetalleRuta, { foreignKey: 'programacion_id', as: 'detallesRuta' })`
+- [x] 0.15 Smoke test: `node -e "require('./src/models')"` no debe lanzar error
 
 ---
 
@@ -42,59 +42,59 @@ Ref: `docs/programador-ia/04-deterministic-engine.md`, `03-demand-sources.md`.
 
 ### Servicios auxiliares
 
-- [ ] 1.1 Crear `src/services/ia-scheduler/district-times.service.js`
-- [ ] 1.2 En `district-times.service.js`: cargar `TablaDistritosLima` en Map al iniciar
-- [ ] 1.3 Exponer método `getTiempo(origen, destino)` con fallback 90 y mínimo 15 para mismo distrito
-- [ ] 1.4 Test unitario: `district-times.service.test.js` con casos: par existente, par inexistente, mismo distrito
+- [x] 1.1 Crear `src/services/ia-scheduler/district-times.service.js`
+- [x] 1.2 En `district-times.service.js`: cargar `TablaDistritosLima` en Map al iniciar
+- [x] 1.3 Exponer método `getTiempo(origen, destino)` con fallback 90 y mínimo 15 para mismo distrito
+- [x] 1.4 Test unitario: `district-times.service.test.js` con casos: par existente, par inexistente, mismo distrito
 
 ### Servicio de demanda
 
-- [ ] 1.5 Crear `src/services/ia-scheduler/demand.service.js`
-- [ ] 1.6 Implementar `obtenerFuenteA(fechaObjetivo)` con la query SQL de MantenimientoFijo vencidos
-- [ ] 1.7 Implementar `obtenerFuenteB(fechaObjetivo)` con la query SQL de Programaciones pendientes
-- [ ] 1.8 Implementar `deduplicar(A, B)` que excluya de A los ascensores ya presentes en B
-- [ ] 1.9 Implementar `enriquecerConConfiguracion(items)` que agrega `duracion_min`, `tecnicos_requeridos`, `prioridad` de `ConfiguracionIA`
-- [ ] 1.10 Implementar `obtenerPool(fechaObjetivo)` que orquesta los 4 pasos anteriores
-- [ ] 1.11 Test de integración con BD real seedeada: verificar que la dedup y la frecuencia funcionan
+- [x] 1.5 Crear `src/services/ia-scheduler/demand.service.js`
+- [x] 1.6 Implementar `obtenerFuenteA(fechaObjetivo)` con la query SQL de MantenimientoFijo vencidos
+- [x] 1.7 Implementar `obtenerFuenteB(fechaObjetivo)` con la query SQL de Programaciones pendientes
+- [x] 1.8 Implementar `deduplicar(A, B)` que excluya de A los ascensores ya presentes en B
+- [x] 1.9 Implementar `enriquecerConConfiguracion(items)` que agrega `duracion_min`, `tecnicos_requeridos`, `prioridad` de `ConfiguracionIA`
+- [x] 1.10 Implementar `obtenerPool(fechaObjetivo)` que orquesta los 4 pasos anteriores
+- [x] 1.11 Test de integración con BD real seedeada: verificar que la dedup y la frecuencia funcionan
 
 ### Servicio de técnicos
 
-- [ ] 1.12 Crear `src/services/ia-scheduler/worker.service.js`
-- [ ] 1.13 Implementar `obtenerTecnicos(ids, fecha)` con join + query de carga preexistente
-- [ ] 1.14 Test: técnico con 2 Programaciones confirmadas reporta 120 min de carga
+- [x] 1.12 Crear `src/services/ia-scheduler/worker.service.js`
+- [x] 1.13 Implementar `obtenerTecnicos(ids, fecha)` con join + query de carga preexistente
+- [x] 1.14 Test: técnico con 2 Programaciones confirmadas reporta 120 min de carga
 
 ### Motor
 
-- [ ] 1.15 Crear `src/services/ia-scheduler/motor.service.js`
-- [ ] 1.16 Definir constante `ELEGIBILIDAD` (matriz tipo_trabajo → especialidades permitidas)
-- [ ] 1.17 Implementar `validarInputs(workItems, tecnicos)` con throws apropiados
-- [ ] 1.18 Implementar `ordenarPorPrioridad(workItems)`
-- [ ] 1.19 Implementar `candidatosElegibles(workItem, tecnicos)`
-- [ ] 1.20 Implementar `elegirTecnico(workItem, candidatos, asignaciones)` con preferencia + greedy + clustering
-- [ ] 1.21 Implementar `asignarTecnicos(workItems, tecnicos)` que devuelve `{ asignaciones, sinElegible }`
-- [ ] 1.22 Implementar `nearestNeighbor(trabajos, districtTimes)`
-- [ ] 1.23 Implementar `secuenciarParadas(trabajosDelTecnico, districtTimes)` con manejo de fijos vs libres
-- [ ] 1.24 Implementar `calcularHorarios(secuencia, cargaPreexistente, config)` con ventana 08:30-18:30
-- [ ] 1.25 Implementar `procesarOverflow(tecnicosConParadas)`
-- [ ] 1.26 Implementar `generarPropuesta(workItems, tecnicos, fechaObjetivo)` que orquesta todos los pasos y devuelve estructura `PropuestaMotor`
+- [x] 1.15 Crear `src/services/ia-scheduler/motor.service.js`
+- [x] 1.16 Definir constante `ELEGIBILIDAD` (matriz tipo_trabajo → especialidades permitidas)
+- [x] 1.17 Implementar `validarInputs(workItems, tecnicos)` con throws apropiados
+- [x] 1.18 Implementar `ordenarPorPrioridad(workItems)`
+- [x] 1.19 Implementar `candidatosElegibles(workItem, tecnicos)`
+- [x] 1.20 Implementar `elegirTecnico(workItem, candidatos, asignaciones)` con preferencia + greedy + clustering
+- [x] 1.21 Implementar `asignarTecnicos(workItems, tecnicos)` que devuelve `{ asignaciones, sinElegible }`
+- [x] 1.22 Implementar `nearestNeighbor(trabajos, districtTimes)`
+- [x] 1.23 Implementar `secuenciarParadas(trabajosDelTecnico, districtTimes)` con manejo de fijos vs libres
+- [x] 1.24 Implementar `calcularHorarios(secuencia, cargaPreexistente, config)` con ventana 08:30-18:30
+- [x] 1.25 Implementar `procesarOverflow(tecnicosConParadas)`
+- [x] 1.26 Implementar `generarPropuesta(workItems, tecnicos, fechaObjetivo)` que orquesta todos los pasos y devuelve estructura `PropuestaMotor`
 
 ### Tests del motor
 
-- [ ] 1.27 Test: respeta elegibilidad (no asigna reparación a Técnico de Mantenimiento)
-- [ ] 1.28 Test: ordena emergencias primero
-- [ ] 1.29 Test: respeta ventana 08:30-18:30 (detecta overflow correctamente)
-- [ ] 1.30 Test: clusterea por distrito cuando hay múltiples técnicos
-- [ ] 1.31 Test: respeta preferencia de técnico del MantenimientoFijo si tiene capacidad
-- [ ] 1.32 Test: maneja caso sin técnico elegible (sinElegible no vacío)
-- [ ] 1.33 Test: calcula tiempos de traslado acumulados correctamente
+- [x] 1.27 Test: respeta elegibilidad (no asigna reparación a Técnico de Mantenimiento)
+- [x] 1.28 Test: ordena emergencias primero
+- [x] 1.29 Test: respeta ventana 08:30-18:30 (detecta overflow correctamente)
+- [x] 1.30 Test: clusterea por distrito cuando hay múltiples técnicos
+- [x] 1.31 Test: respeta preferencia de técnico del MantenimientoFijo si tiene capacidad
+- [x] 1.32 Test: maneja caso sin técnico elegible (sinElegible no vacío)
+- [x] 1.33 Test: calcula tiempos de traslado acumulados correctamente
 
 ### Endpoints (sin LLM aún)
 
-- [ ] 1.34 Crear `src/controllers/ia-scheduler.controller.js` con métodos: `getDemand`, `getTecnicos`, `generar`, `getConfiguracion`, `updateConfiguracion`
-- [ ] 1.35 En `generar`: por ahora devolver `propuesta_motor` directa (sin LLM)
-- [ ] 1.36 Crear `src/routes/ia-scheduler.routes.js` con middleware `authMiddleware` + `requireRole('admin')`
-- [ ] 1.37 Montar la ruta en `src/app.js`: `app.use('/api/ia-scheduler', iaSchedulerRoutes)`
-- [ ] 1.38 Smoke test con curl/Postman: `GET /demand`, `GET /tecnicos`, `POST /generar` devuelven respuesta válida con `origen='motor'`
+- [x] 1.34 Crear `src/controllers/ia-scheduler.controller.js` con métodos: `getDemand`, `getTecnicos`, `generar`, `getConfiguracion`, `updateConfiguracion`
+- [x] 1.35 En `generar`: por ahora devolver `propuesta_motor` directa (sin LLM)
+- [x] 1.36 Crear `src/routes/ia-scheduler.routes.js` con middleware `authMiddleware` + `requireRole('admin')`
+- [x] 1.37 Montar la ruta en `src/app.js`: `app.use('/api/ia-scheduler', iaSchedulerRoutes)`
+- [x] 1.38 Smoke test con curl/Postman: `GET /demand`, `GET /tecnicos`, `POST /generar` devuelven respuesta válida con `origen='motor'`
 
 ---
 
