@@ -22,6 +22,10 @@ const DetalleOrden = require('./DetalleOrden');
 const Firma = require('./Firma');
 const MantenimientoFijo = require('./MantenimientoFijo');
 
+// Modelos Programador IA
+const ConfiguracionIA = require('./ConfiguracionIA');
+const TablaDistritoLima = require('./TablaDistritoLima');
+
 // ============================================
 // ASSOCIATIONS
 // ============================================
@@ -92,6 +96,10 @@ RutaDiaria.belongsTo(Trabajador, { foreignKey: 'trabajador_id' });
 RutaDiaria.hasMany(DetalleRuta, { foreignKey: 'ruta_id' });
 DetalleRuta.belongsTo(RutaDiaria, { foreignKey: 'ruta_id' });
 
+// DetalleRuta <-> Programacion (nuevo)
+DetalleRuta.belongsTo(Programacion, { foreignKey: 'programacion_id', as: 'programacion' });
+Programacion.hasMany(DetalleRuta, { foreignKey: 'programacion_id', as: 'detallesRuta' });
+
 Cliente.hasMany(DetalleRuta, { foreignKey: 'cliente_id' });
 DetalleRuta.belongsTo(Cliente, { foreignKey: 'cliente_id' });
 
@@ -161,5 +169,7 @@ module.exports = {
   OrdenTrabajo,
   DetalleOrden,
   Firma,
-  MantenimientoFijo
+  MantenimientoFijo,
+  ConfiguracionIA,
+  TablaDistritoLima
 };

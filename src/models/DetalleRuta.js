@@ -22,6 +22,18 @@ const DetalleRuta = sequelize.define('DetalleRuta', {
   },
   ubicacion_gps_salida: {
     type: DataTypes.STRING(100)
+  },
+  programacion_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Programaciones',
+      key: 'programacion_id'
+    }
+  },
+  orden_parada: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   }
 }, {
   tableName: 'DetalleRuta',
