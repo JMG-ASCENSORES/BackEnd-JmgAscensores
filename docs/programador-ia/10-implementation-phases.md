@@ -199,6 +199,13 @@ SELECT dr.* FROM DetalleRuta dr JOIN RutasDiarias rd ON rd.ruta_id = dr.ruta_id
   WHERE rd.fecha_ruta = '2026-05-13' ORDER BY rd.trabajador_id, dr.orden_parada;
 ```
 
+### ✅ Completado — 2026-05-11
+
+- **Handler `confirmar`**: 140 líneas con transacción Sequelize atómica. INSERT Programacion para MantenimientoFijo, UPDATE para pendientes, optimistic locking (409 si `trabajador_id !== null`), findOrCreate + update para RutaDiaria, DELETE + INSERT para DetalleRuta con `programacion_id` y `orden_parada`.
+- **Optimistic locking**: verifica `trabajador_id !== null` en la Programacion existente antes del UPDATE. Si ya fue asignada por otro admin, retorna 409 con mensaje descriptivo.
+- **10 tests de integración**: INSERT nuevas, UPDATE existentes, conflicto 409, rollback ante error, UPSERT RutaDiaria, reemplazo DetalleRuta, estructura de respuesta, fechas con timezone.
+- **Endpoint**: `POST /api/ia-scheduler/confirmar` montado en rutas con auth + rol admin. Response: `{ ok, programaciones_creadas, programaciones_actualizadas, rutas_generadas }`.
+
 ---
 
 ## Fase 4 — Frontend: componente base + selector
@@ -303,7 +310,7 @@ Fase 0 (migraciones) ✅
    └── Fase 1 (motor) ✅
           ├── Fase 2 (LLM cascade)
           │      └── Fase 6 (chat frontend)
-          ├── Fase 3 (confirmar)
+          ├── Fase 3 (confirmar) ✅
           │      └── Fase 5 (timeline + confirmar frontend)
           │             └── Fase 6
           └── Fase 4 (frontend base)
@@ -321,12 +328,12 @@ Fase 0 (migraciones) ✅
 | 0 — Migraciones | 2–4h | Todo | ✅ Completada |
 | 1 — Motor | 1–2 días | Fases 2, 3, 4 | ✅ Completada |
 | 2 — LLM | 1 día | Fase 6 | 🔲 Pendiente |
-| 3 — Confirmar | 4–8h | Fase 5 | 🔲 Pendiente |
+| 3 — Confirmar | 4–8h | Fase 5 | ✅ Completada |
 | 4 — Frontend base | 1 día | Fase 5 | 🔲 Pendiente |
 | 5 — Timeline | 1–2 días | Fase 6 | 🔲 Pendiente |
 | 6 — Chat | 4–6h | Fase 7 | 🔲 Pendiente |
 | 7 — Testing | 2–5 días | — | 🔲 Pendiente |
-| **Total completado** | **~3–4 días** | | **53/161 tasks (33%)** |
+| **Total completado** | **~4–5 días** | | **65/173 tasks (38%)** |
 | **Total restante** | **~5–9 días** | | **108 tasks pendientes** |
 
 ---

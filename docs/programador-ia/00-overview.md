@@ -122,7 +122,7 @@ Ver detalle completo en `03-demand-sources.md`. Resumen:
 - [x] Fase 0: Migraciones de base de datos — 15/15 tasks, PostgreSQL en Render
 - [x] Fase 1: Motor determinista (backend) — 38/38 tasks, 71 tests, 4 servicios
 - [ ] Fase 2: Integración LLM (cascada)
-- [ ] Fase 3: Endpoints API REST
+- [x] Fase 3: Endpoint /confirmar — 12/12 tasks, INSERT/UPDATE transaccionales, optimistic locking
 - [ ] Fase 4: Frontend — componente base + selector
 - [ ] Fase 5: Frontend — timeline view
 - [ ] Fase 6: Frontend — chat de ajustes
