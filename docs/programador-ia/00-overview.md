@@ -119,14 +119,25 @@ Ver detalle completo en `03-demand-sources.md`. Resumen:
 
 ## Estado de la implementación
 
-- [ ] Fase 0: Migraciones de base de datos
-- [ ] Fase 1: Motor determinista (backend)
+- [x] Fase 0: Migraciones de base de datos — 15/15 tasks, PostgreSQL en Render
+- [x] Fase 1: Motor determinista (backend) — 38/38 tasks, 71 tests, 4 servicios
 - [ ] Fase 2: Integración LLM (cascada)
 - [ ] Fase 3: Endpoints API REST
 - [ ] Fase 4: Frontend — componente base + selector
 - [ ] Fase 5: Frontend — timeline view
 - [ ] Fase 6: Frontend — chat de ajustes
 - [ ] Fase 7: Testing y ajuste de prompts
+
+### Implementación completada
+
+| Componente | Archivos | Descripción |
+|---|---|---|
+| Modelos | `ConfiguracionIA.js`, `TablaDistritoLima.js` | 2 tablas nuevas + seeds |
+| Schema | `DetalleRuta.js` (+2 cols), `models/index.js` | FK a Programaciones |
+| Servicios | `demand`, `worker`, `district-times`, `motor` | Pool de demanda + algoritmo |
+| API | `ia-scheduler.controller.js`, `routes` | 5 endpoints protegidos |
+| Tests | 5 suites, 71 tests | Unitarios + integración + smoke |
+| Migraciones | `scripts/migrations/`, `scripts/seeds/` | PostgreSQL adaptado |
 
 Ver plan completo en `10-implementation-phases.md`.
 

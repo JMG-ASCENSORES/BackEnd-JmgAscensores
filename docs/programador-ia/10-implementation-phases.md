@@ -40,6 +40,13 @@ SELECT COUNT(*) FROM ConfiguracionIA;  -- debe ser 4
 SELECT COUNT(*) FROM TablaDistritosLima; -- debe ser 420 (20×20 + diagonales)
 ```
 
+### ✅ Completado — 2026-05-11
+
+- **Adaptación PostgreSQL**: migraciones usan `SERIAL` (no `AUTO_INCREMENT`), `TIMESTAMP WITH TIME ZONE`, sin `ENGINE`. Aplicadas vía `sequelize.sync({ alter: true })` además de los archivos SQL para trazabilidad.
+- **Seed**: 4 filas en `ConfiguracionIA`, 400 pares en `TablaDistritosLima` (matriz 20×20 completa).
+- **Modelos Sequelize**: `ConfiguracionIA.js`, `TablaDistritoLima.js`, asociaciones `DetalleRuta ↔ Programacion`.
+- **Smoke test**: 20 modelos cargan sin errores.
+
 ---
 
 ## Fase 1 — Motor determinista (backend puro)
@@ -104,8 +111,16 @@ GET /api/ia-scheduler/demand?fecha=2026-05-13
 GET /api/ia-scheduler/tecnicos?fecha=2026-05-13
 POST /api/ia-scheduler/generar
   body: { "fecha": "2026-05-13", "tecnico_ids": [1,2,3] }
-  → debe devolver propuesta con origen: "motor"
+   → debe devolver propuesta con origen: "motor"
 ```
+
+### ✅ Completado — 2026-05-11
+
+- **4 servicios**: `demand.service.js` (pool de 2 fuentes + dedup), `worker.service.js` (técnicos + carga preexistente), `district-times.service.js` (400 pares en Map), `motor.service.js` (466 líneas, 7 pasos del algoritmo).
+- **5 endpoints**: `GET /demand`, `GET /tecnicos`, `POST /generar`, `GET /configuracion`, `PUT /configuracion`. Todos con `authenticate` + `authorize('Administrador')`.
+- **71 tests**: 23 motor unitarios, 12 district-times, 17 demand (integración BD), 7 worker (integración BD), 12 smoke (supertest).
+- **Bugs corregidos**: ventana horaria ahora lee `ConfiguracionIA` de BD (no hardcodeada), `tecnico_preferido_respetado` se setea correctamente, overflow se propaga a trabajos subsiguientes, `getTecnicos` usa instancia lazy.
+- **Review**: `REVIEW-fase-0-1.md` documenta hallazgos y correcciones. Validado con `npx jest` (71/71 ✅).
 
 ---
 
@@ -284,34 +299,35 @@ SELECT dr.* FROM DetalleRuta dr JOIN RutasDiarias rd ON rd.ruta_id = dr.ruta_id
 ## Resumen de dependencias entre fases
 
 ```
-Fase 0 (migraciones)
-   └── Fase 1 (motor)
-         ├── Fase 2 (LLM cascade)
-         │      └── Fase 6 (chat frontend)
-         ├── Fase 3 (confirmar)
-         │      └── Fase 5 (timeline + confirmar frontend)
-         │             └── Fase 6
-         └── Fase 4 (frontend base)
-                └── Fase 5
-                       └── Fase 6
-                              └── Fase 7 (testing)
+Fase 0 (migraciones) ✅
+   └── Fase 1 (motor) ✅
+          ├── Fase 2 (LLM cascade)
+          │      └── Fase 6 (chat frontend)
+          ├── Fase 3 (confirmar)
+          │      └── Fase 5 (timeline + confirmar frontend)
+          │             └── Fase 6
+          └── Fase 4 (frontend base)
+                 └── Fase 5
+                        └── Fase 6
+                               └── Fase 7 (testing)
 ```
 
 ---
 
 ## Estimación total
 
-| Fase | Duración estimada | Bloqueante para |
-|---|---|---|
-| 0 — Migraciones | 2–4h | Todo |
-| 1 — Motor | 1–2 días | Fases 2, 3, 4 |
-| 2 — LLM | 1 día | Fase 6 |
-| 3 — Confirmar | 4–8h | Fase 5 |
-| 4 — Frontend base | 1 día | Fase 5 |
-| 5 — Timeline | 1–2 días | Fase 6 |
-| 6 — Chat | 4–6h | Fase 7 |
-| 7 — Testing | 2–5 días | — |
-| **Total** | **~8–13 días laborales** | |
+| Fase | Duración estimada | Bloqueante para | Estado |
+|---|---|---|---|
+| 0 — Migraciones | 2–4h | Todo | ✅ Completada |
+| 1 — Motor | 1–2 días | Fases 2, 3, 4 | ✅ Completada |
+| 2 — LLM | 1 día | Fase 6 | 🔲 Pendiente |
+| 3 — Confirmar | 4–8h | Fase 5 | 🔲 Pendiente |
+| 4 — Frontend base | 1 día | Fase 5 | 🔲 Pendiente |
+| 5 — Timeline | 1–2 días | Fase 6 | 🔲 Pendiente |
+| 6 — Chat | 4–6h | Fase 7 | 🔲 Pendiente |
+| 7 — Testing | 2–5 días | — | 🔲 Pendiente |
+| **Total completado** | **~3–4 días** | | **53/161 tasks (33%)** |
+| **Total restante** | **~5–9 días** | | **108 tasks pendientes** |
 
 ---
 
