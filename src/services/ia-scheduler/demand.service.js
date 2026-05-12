@@ -163,7 +163,8 @@ class DemandService {
       longitud: p.Cliente?.longitud,
       ubicacion: p.Cliente?.ubicacion,
       tipo_trabajo: p.tipo_trabajo,
-      fuente: 'programacion_pendiente'
+      fuente: 'programacion_pendiente',
+      fecha_actualizacion: p.fecha_actualizacion
     }));
   }
 

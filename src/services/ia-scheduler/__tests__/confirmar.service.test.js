@@ -30,8 +30,8 @@ async function ejecutarConfirmar(fecha, propuesta) {
         if (trabajo.programacion_id === null) {
           const nueva = await Programacion.create({
             titulo: `Mantenimiento - ${trabajo.nombre_cliente}`,
-            fecha_inicio: `${fecha}T${trabajo.hora_inicio}:00`,
-            fecha_fin: `${fecha}T${trabajo.hora_fin}:00`,
+            fecha_inicio: `${fecha}T${trabajo.hora_inicio}:00-05:00`,
+            fecha_fin: `${fecha}T${trabajo.hora_fin}:00-05:00`,
             trabajador_id: tecnico.trabajador_id,
             cliente_id: trabajo.cliente_id,
             ascensor_id: trabajo.ascensor_id || null,
@@ -49,17 +49,21 @@ async function ejecutarConfirmar(fecha, propuesta) {
             throw { status: 404, message: `La Programacion ${trabajo.programacion_id} no existe.` };
           }
 
-          if (existente.trabajador_id !== null) {
+          const tsExistente = existente.fecha_actualizacion?.getTime();
+          const tsRecibido = trabajo.fecha_actualizacion
+            ? new Date(trabajo.fecha_actualizacion).getTime()
+            : null;
+          if (tsRecibido === null || tsExistente !== tsRecibido) {
             throw {
               status: 409,
-              message: `La Programacion ${trabajo.programacion_id} fue modificada por otro usuario mientras revisabas la propuesta. Regenerá la propuesta.`
+              message: `La Programacion ${trabajo.programacion_id} fue modificada mientras revisabas la propuesta. Regenerá la propuesta.`
             };
           }
 
           await Programacion.update({
             trabajador_id: tecnico.trabajador_id,
-            fecha_inicio: `${fecha}T${trabajo.hora_inicio}:00`,
-            fecha_fin: `${fecha}T${trabajo.hora_fin}:00`,
+            fecha_inicio: `${fecha}T${trabajo.hora_inicio}:00-05:00`,
+            fecha_fin: `${fecha}T${trabajo.hora_fin}:00-05:00`,
             descripcion: trabajo.justificacion || null
           }, {
             where: { programacion_id: trabajo.programacion_id },
@@ -101,7 +105,9 @@ async function ejecutarConfirmar(fecha, propuesta) {
           programacion_id: trabajo._programacion_id_resuelto,
           orden_parada: i + 1,
           hora_llegada: trabajo.hora_inicio,
-          hora_salida: trabajo.hora_fin
+          hora_salida: trabajo.hora_fin,
+          cliente_id: trabajo.cliente_id   || null,
+          ascensor_id: trabajo.ascensor_id || null
         }, { transaction });
       }
     }
@@ -154,7 +160,14 @@ describe('POST /confirmar — persistencia transaccional (Fase 3)', () => {
 
     afterEach(async () => {
       // Limpiar solo lo creado por este test
-      await DetalleRuta.destroy({ where: {} });
+      const rutas = await RutaDiaria.findAll({
+        where: { trabajador_id: tecnicoId, fecha_ruta: FECHA },
+        attributes: ['ruta_id']
+      });
+      const rutaIds = rutas.map(r => r.ruta_id);
+      if (rutaIds.length > 0) {
+        await DetalleRuta.destroy({ where: { ruta_id: rutaIds } });
+      }
       await RutaDiaria.destroy({
         where: { trabajador_id: tecnicoId, fecha_ruta: FECHA }
       });
@@ -220,6 +233,7 @@ describe('POST /confirmar — persistencia transaccional (Fase 3)', () => {
 
   describe('3.4: UPDATE Programacion existente (programacion_id !== null)', () => {
     let programaPreviaId;
+    let programaPreviaFechaAct;
     const TAG = 'confirmar-test-update-' + Date.now();
 
     beforeAll(async () => {
@@ -236,11 +250,19 @@ describe('POST /confirmar — persistencia transaccional (Fase 3)', () => {
         descripcion: TAG
       });
       programaPreviaId = prog.programacion_id;
+      programaPreviaFechaAct = prog.fecha_actualizacion.toISOString();
     });
 
     afterAll(async () => {
       // Limpiar
-      await DetalleRuta.destroy({ where: {} });
+      const rutas = await RutaDiaria.findAll({
+        where: { trabajador_id: tecnicoId, fecha_ruta: FECHA },
+        attributes: ['ruta_id']
+      });
+      const rutaIds = rutas.map(r => r.ruta_id);
+      if (rutaIds.length > 0) {
+        await DetalleRuta.destroy({ where: { ruta_id: rutaIds } });
+      }
       await RutaDiaria.destroy({
         where: { trabajador_id: tecnicoId, fecha_ruta: FECHA }
       });
@@ -254,6 +276,7 @@ describe('POST /confirmar — persistencia transaccional (Fase 3)', () => {
           trabajador_id: tecnicoId,
           trabajos: [{
             programacion_id: programaPreviaId,
+            fecha_actualizacion: programaPreviaFechaAct,
             nombre_cliente: 'Test Update',
             cliente_id: clienteId,
             ascensor_id: null,
@@ -290,37 +313,43 @@ describe('POST /confirmar — persistencia transaccional (Fase 3)', () => {
 
   // ── 3.10: Optimistic locking — conflicto 409 ──────────────────────────────
 
-  describe('3.10: Optimistic locking (conflicto 409)', () => {
-    let programaAsignadaId;
+  describe('3.10: Optimistic locking (conflicto 409 — fecha_actualizacion mismatch)', () => {
+    let programaId;
+    let fechaActReal;
     const TAG = 'confirmar-test-409-' + Date.now();
 
     beforeAll(async () => {
-      // Crear una Programacion que YA tiene trabajador_id asignado
+      // Crear una Programacion pendiente sin técnico
       const prog = await Programacion.create({
-        titulo: 'Mantenimiento Ya Asignado',
+        titulo: 'Mantenimiento Locking Test',
         fecha_inicio: `${FECHA}T08:00:00`,
         fecha_fin: `${FECHA}T09:00:00`,
-        trabajador_id: 90, // Ya tiene técnico asignado (usar ID real)
+        trabajador_id: null,
         cliente_id: clienteId,
         ascensor_id: null,
         tipo_trabajo: 'mantenimiento',
         estado: 'pendiente',
         descripcion: TAG
       });
-      programaAsignadaId = prog.programacion_id;
+      programaId = prog.programacion_id;
+      fechaActReal = prog.fecha_actualizacion.toISOString();
     });
 
     afterAll(async () => {
-      const p = await Programacion.findByPk(programaAsignadaId);
+      const p = await Programacion.findByPk(programaId);
       if (p) await p.destroy({ force: true });
     });
 
-    it('retorna 409 si la Programacion ya tiene trabajador_id asignado', async () => {
+    it('retorna 409 si fecha_actualizacion no coincide (propuesta desactualizada)', async () => {
+      // Simular que el admin tiene una propuesta con timestamp viejo
+      const fechaActDesactualizada = new Date(0).toISOString();
+
       const propuesta = {
         tecnicos: [{
           trabajador_id: tecnicoId,
           trabajos: [{
-            programacion_id: programaAsignadaId,
+            programacion_id: programaId,
+            fecha_actualizacion: fechaActDesactualizada,
             nombre_cliente: 'Test Conflicto',
             cliente_id: clienteId,
             ascensor_id: null,
@@ -341,11 +370,84 @@ describe('POST /confirmar — persistencia transaccional (Fase 3)', () => {
 
       expect(error).not.toBeNull();
       expect(error.status).toBe(409);
-      expect(error.message).toContain(`La Programacion ${programaAsignadaId} fue modificada por otro usuario`);
+      expect(error.message).toContain(`La Programacion ${programaId} fue modificada mientras revisabas la propuesta`);
 
-      // Verificar que la Programacion NO fue modificada (se mantiene con trabajador_id=90)
-      const prog = await Programacion.findByPk(programaAsignadaId);
-      expect(prog.trabajador_id).toBe(90);
+      // Verificar rollback — la Programacion sigue sin técnico asignado
+      const prog = await Programacion.findByPk(programaId);
+      expect(prog.trabajador_id).toBeNull();
+    });
+
+    it('también retorna 409 si fecha_actualizacion viene ausente en la propuesta', async () => {
+      const propuesta = {
+        tecnicos: [{
+          trabajador_id: tecnicoId,
+          trabajos: [{
+            programacion_id: programaId,
+            // sin fecha_actualizacion
+            nombre_cliente: 'Test Sin Timestamp',
+            cliente_id: clienteId,
+            ascensor_id: null,
+            tipo_trabajo: 'mantenimiento',
+            hora_inicio: '08:30',
+            hora_fin: '09:30',
+            justificacion: null
+          }]
+        }]
+      };
+
+      let error = null;
+      try {
+        await ejecutarConfirmar(FECHA, propuesta);
+      } catch (e) {
+        error = e;
+      }
+
+      expect(error).not.toBeNull();
+      expect(error.status).toBe(409);
+    });
+
+    it('acepta la confirmación cuando fecha_actualizacion coincide exactamente', async () => {
+      const rutas = await RutaDiaria.findAll({
+        where: { trabajador_id: tecnicoId, fecha_ruta: FECHA },
+        attributes: ['ruta_id']
+      });
+      const rutaIds = rutas.map(r => r.ruta_id);
+      if (rutaIds.length > 0) {
+        await DetalleRuta.destroy({ where: { ruta_id: rutaIds } });
+      }
+      await RutaDiaria.destroy({ where: { trabajador_id: tecnicoId, fecha_ruta: FECHA } });
+
+      const propuesta = {
+        tecnicos: [{
+          trabajador_id: tecnicoId,
+          trabajos: [{
+            programacion_id: programaId,
+            fecha_actualizacion: fechaActReal, // timestamp correcto
+            nombre_cliente: 'Test Locking OK',
+            cliente_id: clienteId,
+            ascensor_id: null,
+            tipo_trabajo: 'mantenimiento',
+            hora_inicio: '08:30',
+            hora_fin: '09:30',
+            justificacion: null
+          }]
+        }]
+      };
+
+      const result = await ejecutarConfirmar(FECHA, propuesta);
+      expect(result.ok).toBe(true);
+      expect(result.programaciones_actualizadas).toBe(1);
+
+      // Cleanup
+      const rutasPost = await RutaDiaria.findAll({
+        where: { trabajador_id: tecnicoId, fecha_ruta: FECHA },
+        attributes: ['ruta_id']
+      });
+      const rutaIdsPost = rutasPost.map(r => r.ruta_id);
+      if (rutaIdsPost.length > 0) {
+        await DetalleRuta.destroy({ where: { ruta_id: rutaIdsPost } });
+      }
+      await RutaDiaria.destroy({ where: { trabajador_id: tecnicoId, fecha_ruta: FECHA } });
     });
   });
 
@@ -368,6 +470,7 @@ describe('POST /confirmar — persistencia transaccional (Fase 3)', () => {
         descripcion: TAG
       });
       const programacionIdValida = progValida.programacion_id;
+      const programacionValidaFechaAct = progValida.fecha_actualizacion.toISOString();
 
       // Contar cuántas Programaciones había antes
       const progsAntes = await Programacion.count();
@@ -378,6 +481,7 @@ describe('POST /confirmar — persistencia transaccional (Fase 3)', () => {
           trabajos: [
             {
               programacion_id: programacionIdValida,
+              fecha_actualizacion: programacionValidaFechaAct,
               nombre_cliente: 'Test Rollback 1',
               cliente_id: clienteId,
               ascensor_id: null,
@@ -430,7 +534,14 @@ describe('POST /confirmar — persistencia transaccional (Fase 3)', () => {
 
     beforeAll(async () => {
       // Limpiar cualquier RutaDiaria previa para este test
-      await DetalleRuta.destroy({ where: {} });
+      const rutasPrevias = await RutaDiaria.findAll({
+        where: { trabajador_id: tecnicoId, fecha_ruta: FECHA },
+        attributes: ['ruta_id']
+      });
+      const rutaIdsPrevios = rutasPrevias.map(r => r.ruta_id);
+      if (rutaIdsPrevios.length > 0) {
+        await DetalleRuta.destroy({ where: { ruta_id: rutaIdsPrevios } });
+      }
       await RutaDiaria.destroy({
         where: { trabajador_id: tecnicoId, fecha_ruta: FECHA }
       });
@@ -446,7 +557,14 @@ describe('POST /confirmar — persistencia transaccional (Fase 3)', () => {
     });
 
     afterAll(async () => {
-      await DetalleRuta.destroy({ where: {} });
+      const rutas = await RutaDiaria.findAll({
+        where: { trabajador_id: tecnicoId, fecha_ruta: FECHA },
+        attributes: ['ruta_id']
+      });
+      const rutaIds = rutas.map(r => r.ruta_id);
+      if (rutaIds.length > 0) {
+        await DetalleRuta.destroy({ where: { ruta_id: rutaIds } });
+      }
       await RutaDiaria.destroy({
         where: { trabajador_id: tecnicoId, fecha_ruta: FECHA }
       });
@@ -492,11 +610,19 @@ describe('POST /confirmar — persistencia transaccional (Fase 3)', () => {
   describe('3.6-3.7: Borra DetalleRuta anteriores y crea nuevos', () => {
     let rutaId;
     let programacionPreviaId;
+    let programacionPreviaFechaAct;
     const TAG = 'confirmar-test-detalle-' + Date.now();
 
     beforeAll(async () => {
       // Limpiar estado previo
-      await DetalleRuta.destroy({ where: {} });
+      const rutasPrevias = await RutaDiaria.findAll({
+        where: { trabajador_id: tecnicoId, fecha_ruta: FECHA },
+        attributes: ['ruta_id']
+      });
+      const rutaIdsPrevios = rutasPrevias.map(r => r.ruta_id);
+      if (rutaIdsPrevios.length > 0) {
+        await DetalleRuta.destroy({ where: { ruta_id: rutaIdsPrevios } });
+      }
       await RutaDiaria.destroy({
         where: { trabajador_id: tecnicoId, fecha_ruta: FECHA }
       });
@@ -517,6 +643,7 @@ describe('POST /confirmar — persistencia transaccional (Fase 3)', () => {
         descripcion: TAG + '-old'
       });
       programacionPreviaId = prog.programacion_id;
+      programacionPreviaFechaAct = prog.fecha_actualizacion.toISOString();
 
       // Crear una RutaDiaria con DetalleRuta viejo
       const ruta = await RutaDiaria.create({
@@ -539,7 +666,9 @@ describe('POST /confirmar — persistencia transaccional (Fase 3)', () => {
     });
 
     afterAll(async () => {
-      await DetalleRuta.destroy({ where: {} });
+      if (rutaId) {
+        await DetalleRuta.destroy({ where: { ruta_id: rutaId } });
+      }
       await RutaDiaria.destroy({ where: { ruta_id: rutaId } });
       const p = await Programacion.findByPk(programacionPreviaId);
       if (p) await p.destroy({ force: true });
@@ -557,6 +686,7 @@ describe('POST /confirmar — persistencia transaccional (Fase 3)', () => {
           trabajos: [
             {
               programacion_id: programacionPreviaId,
+              fecha_actualizacion: programacionPreviaFechaAct,
               nombre_cliente: 'Test Replace 1',
               cliente_id: clienteId,
               ascensor_id: null,

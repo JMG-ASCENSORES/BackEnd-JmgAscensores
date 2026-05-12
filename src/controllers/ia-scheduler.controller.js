@@ -281,8 +281,8 @@ const confirmar = async (req, res, next) => {
             // Viene de MantenimientoFijo → crear Programacion nueva
             const nueva = await Programacion.create({
               titulo:                `Mantenimiento - ${trabajo.nombre_cliente}`,
-              fecha_inicio:          `${fecha}T${trabajo.hora_inicio}:00`,
-              fecha_fin:             `${fecha}T${trabajo.hora_fin}:00`,
+              fecha_inicio:          `${fecha}T${trabajo.hora_inicio}:00-05:00`,
+              fecha_fin:             `${fecha}T${trabajo.hora_fin}:00-05:00`,
               trabajador_id:         tecnico.trabajador_id,
               cliente_id:            trabajo.cliente_id,
               ascensor_id:           trabajo.ascensor_id,
@@ -301,18 +301,22 @@ const confirmar = async (req, res, next) => {
               throw { status: 404, message: `La Programacion ${trabajo.programacion_id} no existe.` };
             }
 
-            // 3.10: Optimistic locking — si ya fue asignada, conflicto
-            if (existente.trabajador_id !== null) {
+            // 3.10: Optimistic locking — detectar cualquier modificación via timestamp
+            const tsExistente = existente.fecha_actualizacion?.getTime();
+            const tsRecibido = trabajo.fecha_actualizacion
+              ? new Date(trabajo.fecha_actualizacion).getTime()
+              : null;
+            if (tsRecibido === null || tsExistente !== tsRecibido) {
               throw {
                 status: 409,
-                message: `La Programacion ${trabajo.programacion_id} fue modificada por otro usuario mientras revisabas la propuesta. Regenerá la propuesta.`
+                message: `La Programacion ${trabajo.programacion_id} fue modificada mientras revisabas la propuesta. Regenerá la propuesta.`
               };
             }
 
             await Programacion.update({
               trabajador_id: tecnico.trabajador_id,
-              fecha_inicio:  `${fecha}T${trabajo.hora_inicio}:00`,
-              fecha_fin:     `${fecha}T${trabajo.hora_fin}:00`,
+              fecha_inicio:  `${fecha}T${trabajo.hora_inicio}:00-05:00`,
+              fecha_fin:     `${fecha}T${trabajo.hora_fin}:00-05:00`,
               descripcion:   trabajo.justificacion || null
             }, {
               where: { programacion_id: trabajo.programacion_id },
@@ -364,7 +368,9 @@ const confirmar = async (req, res, next) => {
             programacion_id:  trabajo._programacion_id_resuelto,
             orden_parada:     i + 1,
             hora_llegada:     trabajo.hora_inicio,
-            hora_salida:      trabajo.hora_fin
+            hora_salida:      trabajo.hora_fin,
+            cliente_id:       trabajo.cliente_id   || null,
+            ascensor_id:      trabajo.ascensor_id  || null
           }, { transaction });
         }
       }

@@ -464,6 +464,7 @@ class MotorService {
       overflow: w.overflow || false,
       tecnico_preferido_respetado: w.tecnico_preferido_respetado || false,
       justificacion: w.justificacion || null,
+      fecha_actualizacion: w.fecha_actualizacion ?? null,
       ...(w.trabajador_id_propuesto ? { trabajador_id_propuesto: w.trabajador_id_propuesto } : {}),
       ...(w.razon_overflow ? { razon_overflow: w.razon_overflow } : {}),
       ...(w.razon_sin_tecnico ? { razon_sin_tecnico: w.razon_sin_tecnico } : {})

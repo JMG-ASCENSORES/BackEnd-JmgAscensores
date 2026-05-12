@@ -152,6 +152,7 @@ Ref: `docs/programador-ia/07-api-contracts.md` (sección `/confirmar`).
 - [x] 3.8 `transaction.commit()` y respuesta `{ ok: true, programaciones_creadas, programaciones_actualizadas, rutas_generadas }`
 - [x] 3.9 Catch: `transaction.rollback()` + log + respuesta 500
 - [x] 3.10 Implementar optimistic locking: comparar `fecha_actualizacion` de Programaciones al UPDATE; si difiere, responder 409
+  - ✅ Corregido 2026-05-12: comparación real de `fecha_actualizacion` implementada. `demand.service.js` lo incluye en Fuente B, `motor.service.js` lo propaga en `_toTrabajoEnRuta`, `confirmar` handler compara timestamps. 2 tests adicionales cubriendo mismatch y campo ausente.
 - [x] 3.11 Test de integración: confirmar propuesta y verificar BD con queries SELECT (Programaciones, RutasDiarias, DetalleRuta con `programacion_id` correcto)
 - [x] 3.12 Test: rollback si una Programacion tiene FK inválida (debe NO persistir nada)
 
