@@ -142,18 +142,18 @@ Ref: `docs/programador-ia/05-llm-integration.md`.
 
 Ref: `docs/programador-ia/07-api-contracts.md` (sección `/confirmar`).
 
-- [ ] 3.1 Implementar handler `confirmar` en `ia-scheduler.controller.js`
-- [ ] 3.2 Abrir `sequelize.transaction()` con try/catch
-- [ ] 3.3 Por cada técnico × trabajo: si `programacion_id === null`, INSERT Programacion (con `mantenimiento_fijo_id` poblado y `descripcion = justificacion`)
-- [ ] 3.4 Si `programacion_id !== null`: UPDATE Programacion (trabajador_id, fecha_inicio, fecha_fin)
-- [ ] 3.5 UPSERT RutaDiaria por técnico (hora_inicio = primera parada, hora_fin = última parada)
-- [ ] 3.6 DELETE DetalleRuta anteriores de esa RutaDiaria
-- [ ] 3.7 INSERT nuevos DetalleRuta con `programacion_id` y `orden_parada` correctos
-- [ ] 3.8 `transaction.commit()` y respuesta `{ ok: true, programaciones_creadas, programaciones_actualizadas, rutas_generadas }`
-- [ ] 3.9 Catch: `transaction.rollback()` + log + respuesta 500
-- [ ] 3.10 Implementar optimistic locking: comparar `fecha_actualizacion` de Programaciones al UPDATE; si difiere, responder 409
-- [ ] 3.11 Test de integración: confirmar propuesta y verificar BD con queries SELECT (Programaciones, RutasDiarias, DetalleRuta con `programacion_id` correcto)
-- [ ] 3.12 Test: rollback si una Programacion tiene FK inválida (debe NO persistir nada)
+- [x] 3.1 Implementar handler `confirmar` en `ia-scheduler.controller.js`
+- [x] 3.2 Abrir `sequelize.transaction()` con try/catch
+- [x] 3.3 Por cada técnico × trabajo: si `programacion_id === null`, INSERT Programacion (con `mantenimiento_fijo_id` poblado y `descripcion = justificacion`)
+- [x] 3.4 Si `programacion_id !== null`: UPDATE Programacion (trabajador_id, fecha_inicio, fecha_fin)
+- [x] 3.5 UPSERT RutaDiaria por técnico (hora_inicio = primera parada, hora_fin = última parada)
+- [x] 3.6 DELETE DetalleRuta anteriores de esa RutaDiaria
+- [x] 3.7 INSERT nuevos DetalleRuta con `programacion_id` y `orden_parada` correctos
+- [x] 3.8 `transaction.commit()` y respuesta `{ ok: true, programaciones_creadas, programaciones_actualizadas, rutas_generadas }`
+- [x] 3.9 Catch: `transaction.rollback()` + log + respuesta 500
+- [x] 3.10 Implementar optimistic locking: comparar `fecha_actualizacion` de Programaciones al UPDATE; si difiere, responder 409
+- [x] 3.11 Test de integración: confirmar propuesta y verificar BD con queries SELECT (Programaciones, RutasDiarias, DetalleRuta con `programacion_id` correcto)
+- [x] 3.12 Test: rollback si una Programacion tiene FK inválida (debe NO persistir nada)
 
 ---
 

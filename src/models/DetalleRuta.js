@@ -34,6 +34,22 @@ const DetalleRuta = sequelize.define('DetalleRuta', {
   orden_parada: {
     type: DataTypes.INTEGER,
     allowNull: true
+  },
+  cliente_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Clientes',
+      key: 'cliente_id'
+    }
+  },
+  ascensor_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Ascensores',
+      key: 'ascensor_id'
+    }
   }
 }, {
   tableName: 'DetalleRuta',

@@ -2,7 +2,8 @@ const { DemandService } = require('../services/ia-scheduler/demand.service');
 const { WorkerService } = require('../services/ia-scheduler/worker.service');
 const { MotorService } = require('../services/ia-scheduler/motor.service');
 const { DistrictTimesService } = require('../services/ia-scheduler/district-times.service');
-const { ConfiguracionIA, Trabajador } = require('../models');
+const { sequelize } = require('../config/database');
+const { ConfiguracionIA, Trabajador, Programacion, RutaDiaria, DetalleRuta } = require('../models');
 
 // ─── Inicialización lazy — servicios se cargan al primer uso ──────────────────
 let _districtTimes = null;
@@ -251,10 +252,154 @@ const updateConfiguracion = async (req, res, next) => {
   }
 };
 
+// ─── POST /api/ia-scheduler/confirmar ──────────────────────────────────────────
+
+const confirmar = async (req, res, next) => {
+  try {
+    const { fecha, propuesta } = req.body;
+
+    if (!fecha || !propuesta || !propuesta.tecnicos) {
+      return res.status(400).json({ error: 'Body inválido: fecha y propuesta son obligatorios.' });
+    }
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      return res.status(400).json({ error: 'Formato de fecha inválido. Use YYYY-MM-DD.' });
+    }
+
+    // Abrir transacción
+    const transaction = await sequelize.transaction();
+    let programacionesCreadas = 0;
+    let programacionesActualizadas = 0;
+
+    try {
+      for (const tecnico of propuesta.tecnicos) {
+        // 3.3-3.4: Por cada trabajo, INSERT o UPDATE Programacion
+        for (const trabajo of tecnico.trabajos) {
+          let programacionId;
+
+          if (trabajo.programacion_id === null) {
+            // Viene de MantenimientoFijo → crear Programacion nueva
+            const nueva = await Programacion.create({
+              titulo:                `Mantenimiento - ${trabajo.nombre_cliente}`,
+              fecha_inicio:          `${fecha}T${trabajo.hora_inicio}:00`,
+              fecha_fin:             `${fecha}T${trabajo.hora_fin}:00`,
+              trabajador_id:         tecnico.trabajador_id,
+              cliente_id:            trabajo.cliente_id,
+              ascensor_id:           trabajo.ascensor_id,
+              tipo_trabajo:          trabajo.tipo_trabajo,
+              estado:                'pendiente',
+              mantenimiento_fijo_id: trabajo.mantenimiento_fijo_id,
+              descripcion:           trabajo.justificacion || null
+            }, { transaction });
+            programacionId = nueva.programacion_id;
+            programacionesCreadas++;
+          } else {
+            // Programacion existente → optimistic locking + UPDATE
+            const existente = await Programacion.findByPk(trabajo.programacion_id, { transaction });
+
+            if (!existente) {
+              throw { status: 404, message: `La Programacion ${trabajo.programacion_id} no existe.` };
+            }
+
+            // 3.10: Optimistic locking — si ya fue asignada, conflicto
+            if (existente.trabajador_id !== null) {
+              throw {
+                status: 409,
+                message: `La Programacion ${trabajo.programacion_id} fue modificada por otro usuario mientras revisabas la propuesta. Regenerá la propuesta.`
+              };
+            }
+
+            await Programacion.update({
+              trabajador_id: tecnico.trabajador_id,
+              fecha_inicio:  `${fecha}T${trabajo.hora_inicio}:00`,
+              fecha_fin:     `${fecha}T${trabajo.hora_fin}:00`,
+              descripcion:   trabajo.justificacion || null
+            }, {
+              where: { programacion_id: trabajo.programacion_id },
+              transaction
+            });
+            programacionId = trabajo.programacion_id;
+            programacionesActualizadas++;
+          }
+
+          // Guardar programacion_id resuelto para DetalleRuta
+          trabajo._programacion_id_resuelto = programacionId;
+        }
+
+        // 3.5: UPSERT RutaDiaria por técnico
+        const [ruta, created] = await RutaDiaria.findOrCreate({
+          where: {
+            trabajador_id: tecnico.trabajador_id,
+            fecha_ruta: fecha
+          },
+          defaults: {
+            numero_paradas: tecnico.trabajos.length,
+            hora_inicio: tecnico.trabajos[0]?.hora_inicio || null,
+            hora_fin: tecnico.trabajos[tecnico.trabajos.length - 1]?.hora_fin || null,
+            estado_ruta: 'planificada'
+          },
+          transaction
+        });
+
+        // Si ya existía, actualizar
+        if (!created) {
+          await ruta.update({
+            numero_paradas: tecnico.trabajos.length,
+            hora_inicio: tecnico.trabajos[0]?.hora_inicio || null,
+            hora_fin: tecnico.trabajos[tecnico.trabajos.length - 1]?.hora_fin || null,
+            estado_ruta: 'planificada'
+          }, { transaction });
+        }
+
+        // 3.6-3.7: DELETE old DetalleRuta + INSERT new ones
+        await DetalleRuta.destroy({
+          where: { ruta_id: ruta.ruta_id },
+          transaction
+        });
+
+        for (let i = 0; i < tecnico.trabajos.length; i++) {
+          const trabajo = tecnico.trabajos[i];
+          await DetalleRuta.create({
+            ruta_id:          ruta.ruta_id,
+            programacion_id:  trabajo._programacion_id_resuelto,
+            orden_parada:     i + 1,
+            hora_llegada:     trabajo.hora_inicio,
+            hora_salida:      trabajo.hora_fin
+          }, { transaction });
+        }
+      }
+
+      // 3.8: Commit
+      await transaction.commit();
+
+      return res.status(200).json({
+        ok: true,
+        programaciones_creadas: programacionesCreadas,
+        programaciones_actualizadas: programacionesActualizadas,
+        rutas_generadas: propuesta.tecnicos.length
+      });
+    } catch (err) {
+      // 3.9: Rollback
+      await transaction.rollback();
+
+      // Si es un error con status personalizado (409, 404), devolverlo
+      if (err.status) {
+        return res.status(err.status).json({ error: err.message });
+      }
+
+      throw err;
+    }
+  } catch (error) {
+    console.error('[IA-Scheduler] Error en confirmar:', error.message);
+    return res.status(500).json({ error: 'Error al confirmar propuesta: ' + error.message });
+  }
+};
+
 module.exports = {
   getDemand,
   getTecnicos,
   generar,
+  confirmar,
   getConfiguracion,
   updateConfiguracion
 };
