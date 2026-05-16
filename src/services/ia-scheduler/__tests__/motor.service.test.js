@@ -12,6 +12,7 @@ function createMockDistrictTimes() {
   map.set('Cercado de Lima::Miraflores', 45);
   map.set('Cercado de Lima::San Isidro', 40);
   map.set('Cercado de Lima::Surco', 50);
+  map.set('Cercado de Lima::La Molina', 55);
   map.set('Miraflores::La Molina', 55);
   map.set('La Molina::Miraflores', 55);
   map.set('Surco::La Molina', 35);
@@ -545,6 +546,248 @@ describe('MotorService', () => {
       expect(trabajo).toHaveProperty('traslado_desde_anterior');
       expect(trabajo).toHaveProperty('overflow');
       expect(trabajo).toHaveProperty('duracion_min');
+    });
+  });
+
+  // ─── calcularSlot: búsqueda de huecos en agenda ────────────────────────
+
+  describe('calcularSlot — búsqueda de huecos en agenda del técnico', () => {
+    it('1. técnico libre → slot a las 08:30 + traslado desde Cercado de Lima', () => {
+      const workItem = createWorkItem({ distrito: 'Miraflores', duracion_min: 60 });
+      const tecnico = createTecnico({ trabajos_del_dia: [] });
+
+      const slot = motor.calcularSlot(workItem, tecnico);
+
+      expect(slot).not.toBeNull();
+      // Cercado de Lima → Miraflores = 45 min. Inicio = 08:30 (510) + 45 = 09:15 (555)
+      expect(slot.hora_inicio).toBe('09:15');
+      expect(slot.hora_fin).toBe('10:15');
+      expect(slot.traslado_min).toBe(45);
+    });
+
+    it('2. técnico con trabajos previos → slot entre trabajos existentes', () => {
+      const workItem = createWorkItem({ distrito: 'Miraflores', duracion_min: 60 });
+      const tecnico = createTecnico({
+        trabajos_del_dia: [
+          { hora_inicio: '09:00', hora_fin: '10:30', distrito: 'San Isidro' },
+          { hora_inicio: '13:00', hora_fin: '14:00', distrito: 'Surco' }
+        ]
+      });
+
+      const slot = motor.calcularSlot(workItem, tecnico);
+
+      expect(slot).not.toBeNull();
+      // San Isidro(10:30) + traslado(25→Miraflores) = 10:55 inicio
+      // Miraflores + traslado(35→Surco) deja libre hasta 12:25 → cabe
+      expect(slot.hora_inicio).toBe('10:55');
+      expect(slot.hora_fin).toBe('11:55');
+      expect(slot.traslado_min).toBe(25);
+    });
+
+    it('3. respeta hora_preferida cuando cabe en el hueco disponible', () => {
+      const workItem = createWorkItem({
+        distrito: 'San Isidro',
+        duracion_min: 90,
+        hora_preferida: '11:00'
+      });
+      const tecnico = createTecnico({ trabajos_del_dia: [] });
+
+      const slot = motor.calcularSlot(workItem, tecnico);
+
+      expect(slot).not.toBeNull();
+      // El técnico llega a San Isidro a las 09:10, pero la preferencia es 11:00 → respetada
+      expect(slot.hora_inicio).toBe('11:00');
+      expect(slot.hora_fin).toBe('12:30');
+      expect(slot.traslado_min).toBe(40);
+    });
+
+    it('4. hora_preferida no alcanzable → usa el slot más temprano', () => {
+      const workItem = createWorkItem({
+        distrito: 'La Molina',
+        duracion_min: 60,
+        hora_preferida: '08:00'
+      });
+      const tecnico = createTecnico({ trabajos_del_dia: [] });
+
+      const slot = motor.calcularSlot(workItem, tecnico);
+
+      expect(slot).not.toBeNull();
+      // Cercado de Lima → La Molina = 55 min. El técnico no puede llegar antes de 09:25.
+      // La preferencia 08:00 es demasiado temprana → se usa el primer hueco disponible.
+      expect(slot.hora_inicio).toBe('09:25');
+      expect(slot.hora_fin).toBe('10:25');
+      expect(slot.traslado_min).toBe(55);
+      // Verificar que NO se usó la hora preferida (es anterior al inicio posible)
+      expect(slot.hora_inicio).not.toBe('08:00');
+    });
+
+    it('5. día completo sin hueco → retorna null', () => {
+      const workItem = createWorkItem({ distrito: 'San Isidro', duracion_min: 30 });
+      const tecnico = createTecnico({
+        trabajos_del_dia: [
+          { hora_inicio: '08:30', hora_fin: '18:00', distrito: 'Miraflores' }
+        ]
+      });
+
+      const slot = motor.calcularSlot(workItem, tecnico);
+
+      // Después de Miraflores(18:00) + traslado(25→San Isidro) = 18:25,
+      // solo quedan 5 min hasta las 18:30 → no cabe un trabajo de 30 min
+      expect(slot).toBeNull();
+    });
+
+    it('6. traslado entre distritos consume todo el hueco → retorna null', () => {
+      const workItem = createWorkItem({ distrito: 'La Molina', duracion_min: 60 });
+      const tecnico = createTecnico({
+        trabajos_del_dia: [
+          { hora_inicio: '08:30', hora_fin: '10:00', distrito: 'Miraflores' },
+          { hora_inicio: '11:00', hora_fin: '18:30', distrito: 'Surco' }
+        ]
+      });
+
+      const slot = motor.calcularSlot(workItem, tecnico);
+
+      // Entre Miraflores(10:00) y Surco(11:00):
+      //   Miraflores→La Molina = 55 min → inicio posible = 10:55
+      //   La Molina→Surco = 35 min → hay que salir antes de 10:25
+      //   El hueco es negativo → no entra.
+      // Después de Surco(18:30) ya no hay jornada.
+      expect(slot).toBeNull();
+    });
+
+    it('7. múltiples huecos disponibles → elige el más temprano', () => {
+      const workItem = createWorkItem({ distrito: 'Miraflores', duracion_min: 30 });
+      const tecnico = createTecnico({
+        trabajos_del_dia: [
+          { hora_inicio: '10:00', hora_fin: '11:00', distrito: 'San Isidro' },
+          { hora_inicio: '15:00', hora_fin: '16:00', distrito: 'La Molina' }
+        ]
+      });
+
+      const slot = motor.calcularSlot(workItem, tecnico);
+
+      expect(slot).not.toBeNull();
+      // Hueco 1 (antes del primero): 09:15→09:35 (20 min) → no cabe (necesita 30)
+      // Hueco 2 (entre trabajos): 11:25→14:05 (160 min) → el más temprano que cabe
+      // Hueco 3 (después del último): 16:55→18:30 (95 min)
+      // Debe elegir el hueco 2 por ser el más temprano viable.
+      expect(slot.hora_inicio).toBe('11:25');
+      expect(slot.hora_fin).toBe('11:55');
+      expect(slot.traslado_min).toBe(25);
+    });
+
+    it('8. slot después del último trabajo del día', () => {
+      const workItem = createWorkItem({ distrito: 'San Isidro', duracion_min: 45 });
+      const tecnico = createTecnico({
+        trabajos_del_dia: [
+          { hora_inicio: '08:30', hora_fin: '10:30', distrito: 'Miraflores' }
+        ]
+      });
+
+      const slot = motor.calcularSlot(workItem, tecnico);
+
+      expect(slot).not.toBeNull();
+      // Después de Miraflores(10:30) + traslado(25→San Isidro) = 10:55
+      expect(slot.hora_inicio).toBe('10:55');
+      expect(slot.hora_fin).toBe('11:40');
+      expect(slot.traslado_min).toBe(25);
+    });
+  });
+
+  // ─── evaluarTecnicos: evaluación individual de técnicos ────────────────
+
+  describe('evaluarTecnicos — evaluación individual de técnicos para un trabajo', () => {
+    it('9. un solo técnico elegible → es la sugerencia sin alternativas', () => {
+      const workItem = createWorkItem({ tipo_trabajo: 'mantenimiento', prioridad: 4 });
+      const tecnicos = [
+        createTecnico({ trabajador_id: 1, especialidad: 'Técnico General' })
+      ];
+
+      const resultado = motor.evaluarTecnicos(workItem, tecnicos);
+
+      expect(resultado.sin_elegible).toBe(false);
+      expect(resultado.sugerencia).not.toBeNull();
+      expect(resultado.sugerencia.trabajador_id).toBe(1);
+      expect(resultado.alternativas).toHaveLength(0);
+      expect(resultado.sugerencia._score).toBeUndefined();
+    });
+
+    it('10. múltiples técnicos → el mejor es sugerencia, los demás alternativas ordenadas', () => {
+      const workItem = createWorkItem({ distrito: 'Miraflores', duracion_min: 60, tipo_trabajo: 'mantenimiento', prioridad: 4 });
+      const tecnicos = [
+        createTecnico({
+          trabajador_id: 1,
+          especialidad: 'Técnico General',
+          carga_preexistente: { trabajos_confirmados: 0, minutos_comprometidos: 0, ultima_hora_fin: null }
+        }),
+        createTecnico({
+          trabajador_id: 2,
+          especialidad: 'Técnico General',
+          carga_preexistente: { trabajos_confirmados: 5, minutos_comprometidos: 300, ultima_hora_fin: '12:00' }
+        })
+      ];
+
+      const resultado = motor.evaluarTecnicos(workItem, tecnicos);
+
+      expect(resultado.sin_elegible).toBe(false);
+      // El técnico 1 tiene menos carga → mejor score
+      expect(resultado.sugerencia.trabajador_id).toBe(1);
+      expect(resultado.alternativas).toHaveLength(1);
+      expect(resultado.alternativas[0].trabajador_id).toBe(2);
+      // _score debe estar limpio en la salida
+      expect(resultado.alternativas[0]._score).toBeUndefined();
+      // Verificar campos de la alternativa
+      expect(resultado.alternativas[0].carga_previa_horas).toBe(5.0);
+      expect(resultado.alternativas[0].especialidad).toBe('Técnico General');
+    });
+
+    it('11. ningún técnico elegible por especialidad → sin_elegible=true', () => {
+      const workItem = createWorkItem({ tipo_trabajo: 'reparacion', prioridad: 2 });
+      const tecnicos = [
+        createTecnico({ trabajador_id: 1, especialidad: 'Técnico de Mantenimiento' }),
+        createTecnico({ trabajador_id: 2, especialidad: 'Técnico de Mantenimiento' })
+      ];
+
+      const resultado = motor.evaluarTecnicos(workItem, tecnicos);
+
+      expect(resultado.sin_elegible).toBe(true);
+      expect(resultado.sugerencia).toBeNull();
+      expect(resultado.alternativas).toHaveLength(0);
+      expect(resultado.razon_sin_elegible).toContain('tipo_trabajo');
+      expect(resultado.razon_sin_elegible).toContain('reparacion');
+    });
+
+    it('12. todos los técnicos elegibles tienen el día completo → sin_elegible=true', () => {
+      const workItem = createWorkItem({
+        distrito: 'San Isidro',
+        duracion_min: 60,
+        tipo_trabajo: 'mantenimiento',
+        prioridad: 4
+      });
+      const tecnicos = [
+        createTecnico({
+          trabajador_id: 1,
+          especialidad: 'Técnico General',
+          trabajos_del_dia: [
+            { hora_inicio: '08:30', hora_fin: '18:30', distrito: 'Miraflores' }
+          ]
+        }),
+        createTecnico({
+          trabajador_id: 2,
+          especialidad: 'Técnico General',
+          trabajos_del_dia: [
+            { hora_inicio: '08:30', hora_fin: '18:30', distrito: 'Surco' }
+          ]
+        })
+      ];
+
+      const resultado = motor.evaluarTecnicos(workItem, tecnicos);
+
+      expect(resultado.sin_elegible).toBe(true);
+      expect(resultado.sugerencia).toBeNull();
+      expect(resultado.alternativas).toHaveLength(0);
+      expect(resultado.razon_sin_elegible).toContain('agenda');
+      expect(resultado.razon_sin_elegible).toContain('técnico');
     });
   });
 });
