@@ -123,7 +123,7 @@ Ver detalle completo en `03-demand-sources.md`. Resumen:
 - [x] Fase 1: Motor determinista (backend) — 38/38 tasks, 71 tests, 4 servicios
 - [ ] Fase 2: Integración LLM (cascada)
 - [x] Fase 3: Endpoint /confirmar — 12/12 tasks, INSERT/UPDATE transaccionales, optimistic locking
-- [ ] Fase 4: Frontend — componente base + selector
+- [x] Fase 4: Frontend — componente base + selector — 12 tasks, Signals, Tailwind
 - [ ] Fase 5: Frontend — timeline view
 - [ ] Fase 6: Frontend — chat de ajustes
 - [ ] Fase 7: Testing y ajuste de prompts

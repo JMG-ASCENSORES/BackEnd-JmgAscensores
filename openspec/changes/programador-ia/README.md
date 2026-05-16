@@ -25,7 +25,7 @@ Regla de uso:
 - [x] Spec definido
 - [x] Design definido
 - [x] Tasks descompuestas
-- [x] Apply iniciado — Fase 0 ✅, Fase 1 ✅, Fase 3 ✅
+- [x] Apply iniciado — Fase 0 ✅, Fase 1 ✅, Fase 3 ✅, Fase 4 ✅
 - [ ] Apply — Fase 2 (LLM)
 - [ ] Apply — Fase 4-6 (Frontend)
 - [ ] Apply — Fase 7 (Testing)
@@ -40,7 +40,7 @@ Regla de uso:
 | 1 — Motor | 38/38 | 71 pasando | ✅ |
 | 2 — LLM | 0/22 | — | 🔲 |
 | 3 — Confirmar | 12/12 | 73 pasando | ✅ |
-| 4 — Frontend base | 0/15 | — | 🔲 |
+| 4 — Frontend base | 12/12 | — | ✅ |
 | 5 — Timeline | 0/16 | — | 🔲 |
 | 6 — Chat | 0/8 | — | 🔲 |
 | 7 — Testing | 0/10 | — | 🔲 |

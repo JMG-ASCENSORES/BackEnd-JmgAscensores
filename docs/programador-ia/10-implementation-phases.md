@@ -231,6 +231,15 @@ SELECT dr.* FROM DetalleRuta dr JOIN RutasDiarias rd ON rd.ruta_id = dr.ruta_id
 - El badge "X trabajos pendientes" refleja la demanda real de mañana.
 - Al seleccionar técnicos y hacer click en "Generar", el spinner aparece (aunque la propuesta no se muestre todavía — en esta fase puede ser un JSON en un `<pre>`).
 
+### ✅ Completado — 2026-05-16
+
+- **Componente raíz**: `AiAssistantComponent` (reemplazo del placeholder) con 8 Signals para estado, fecha, técnicos seleccionados, propuesta y errores.
+- **Header**: `AiSchedulerHeaderComponent` standalone con @Input/@Output, chips toggle de técnicos con carga preexistente, badge de demanda, selector de fecha.
+- **Servicio**: `IaSchedulerService` con 7 métodos REST tipados, `inject(HttpClient)`, y manejo de errores.
+- **Interfaces**: 18 interfaces TypeScript (`Propuesta`, `TecnicoPropuesta`, `TrabajoEnRuta`, `DemandInfo`, `TecnicoConCarga`, etc.) + 3 type aliases.
+- **Lazy load**: `ngOnInit` con `forkJoin` para cargar demanda y técnicos en paralelo desde los endpoints del backend.
+- **Angular 21 standalone components, Signals, Tailwind CSS**. Ruta existente `/admin/ai-assistant` sin cambios.
+
 ---
 
 ## Fase 5 — Frontend: timeline view
@@ -313,7 +322,7 @@ Fase 0 (migraciones) ✅
           ├── Fase 3 (confirmar) ✅
           │      └── Fase 5 (timeline + confirmar frontend)
           │             └── Fase 6
-          └── Fase 4 (frontend base)
+          └── Fase 4 (frontend base) ✅
                  └── Fase 5
                         └── Fase 6
                                └── Fase 7 (testing)
@@ -329,11 +338,11 @@ Fase 0 (migraciones) ✅
 | 1 — Motor | 1–2 días | Fases 2, 3, 4 | ✅ Completada |
 | 2 — LLM | 1 día | Fase 6 | 🔲 Pendiente |
 | 3 — Confirmar | 4–8h | Fase 5 | ✅ Completada |
-| 4 — Frontend base | 1 día | Fase 5 | 🔲 Pendiente |
+| 4 — Frontend base | 1 día | Fase 5 | ✅ Completada |
 | 5 — Timeline | 1–2 días | Fase 6 | 🔲 Pendiente |
 | 6 — Chat | 4–6h | Fase 7 | 🔲 Pendiente |
 | 7 — Testing | 2–5 días | — | 🔲 Pendiente |
-| **Total completado** | **~4–5 días** | | **65/173 tasks (38%)** |
+| **Total completado** | **~5–6 días** | | **79/173 tasks (46%)** |
 | **Total restante** | **~5–9 días** | | **108 tasks pendientes** |
 
 ---
