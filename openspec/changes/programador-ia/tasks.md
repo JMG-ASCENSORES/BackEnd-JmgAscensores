@@ -164,27 +164,27 @@ Ref: `docs/programador-ia/08-frontend-ux.md`.
 
 ### Estructura
 
-- [ ] 4.1 Crear `src/app/features/admin/ai-assistant/components/ai-scheduler.component.ts` (componente raíz)
-- [ ] 4.2 Eliminar contenido placeholder del archivo viejo `ai-assistant.component.ts` (o reemplazarlo)
-- [ ] 4.3 Actualizar `admin.routes.ts` si el path cambia (si se renombra `ai-assistant` → `ai-scheduler`, sino dejar igual)
+- [x] 4.1 Crear `src/app/features/admin/ai-assistant/components/ai-scheduler.component.ts` (componente raíz)
+- [x] 4.2 Eliminar contenido placeholder del archivo viejo `ai-assistant.component.ts` (o reemplazarlo)
+- [x] 4.3 Actualizar `admin.routes.ts` si el path cambia (si se renombra `ai-assistant` → `ai-scheduler`, sino dejar igual)
 
 ### Servicio Angular
 
-- [ ] 4.4 Crear `src/app/core/services/ia-scheduler.service.ts` con `inject(HttpClient)`
-- [ ] 4.5 Implementar métodos: `getDemand(fecha)`, `getTecnicos(fecha)`, `generar(body)`, `ajustar(body)`, `confirmar(body)`, `getConfiguracion()`, `updateConfiguracion(body)`
+- [x] 4.4 Crear `src/app/core/services/ia-scheduler.service.ts` con `inject(HttpClient)`
+- [x] 4.5 Implementar métodos: `getDemand(fecha)`, `getTecnicos(fecha)`, `generar(body)`, `ajustar(body)`, `confirmar(body)`, `getConfiguracion()`, `updateConfiguracion(body)`
 
 ### Interfaces TypeScript
 
-- [ ] 4.6 Crear `src/app/features/admin/models/ia-scheduler.interface.ts`
-- [ ] 4.7 Definir: `Propuesta`, `TecnicoPropuesta`, `TrabajoEnRuta`, `WorkItem`, `DemandInfo`, `TecnicoConCarga`, `ConfiguracionIA`
+- [x] 4.6 Crear `src/app/features/admin/models/ia-scheduler.interface.ts`
+- [x] 4.7 Definir: `Propuesta`, `TecnicoPropuesta`, `TrabajoEnRuta`, `WorkItem`, `DemandInfo`, `TecnicoConCarga`, `ConfiguracionIA`
 
 ### Header (selector de técnicos + fecha)
 
-- [ ] 4.8 Crear `ai-scheduler-header.component.ts` con input fecha, chips de técnicos, botón generar
-- [ ] 4.9 Implementar Signals: `selectedDate`, `selectedTecnicos`, `demandaInfo`, `tecnicosDisponibles`
-- [ ] 4.10 En `ngOnInit` del componente raíz: llamar `getDemand` y `getTecnicos` en paralelo (combineLatest o `Promise.all`)
-- [ ] 4.11 Botón "Generar" deshabilitado si `selectedTecnicos().length === 0`
-- [ ] 4.12 Smoke test visual: el componente renderiza chips de técnicos y badge de demanda
+- [x] 4.8 Crear `ai-scheduler-header.component.ts` con input fecha, chips de técnicos, botón generar
+- [x] 4.9 Implementar Signals: `selectedDate`, `selectedTecnicos`, `demandaInfo`, `tecnicosDisponibles`
+- [x] 4.10 En `ngOnInit` del componente raíz: llamar `getDemand` y `getTecnicos` en paralelo (combineLatest o `Promise.all`)
+- [x] 4.11 Botón "Generar" deshabilitado si `selectedTecnicos().length === 0`
+- [x] 4.12 Smoke test visual: el componente renderiza chips de técnicos y badge de demanda
 
 ---
 
