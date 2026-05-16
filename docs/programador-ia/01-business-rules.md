@@ -112,8 +112,8 @@ Algunos `MantenimientoFijo` tienen un técnico preferido (`trabajador_id`). Esta
 
 ## 7. Qué NO puede hacer el módulo (límites de v1)
 
-- No crea trabajos de la nada. Solo programa demanda preexistente (MantenimientoFijo vencidos o Programaciones pendientes sin técnico).
-- No modifica `Programaciones` ya confirmadas con técnico asignado (estado ≠ 'pendiente' o trabajador_id ≠ null). Solo lee esas para calcular la carga del técnico.
-- No programa emergencias sin fecha (v2).
+- No modifica `Programaciones` ya confirmadas. Solo las lee para calcular la carga del técnico.
+- No programa múltiples trabajos en batch — opera de a uno: el admin define un trabajo, el sistema sugiere el técnico.
 - No resuelve trabajos que requieran más de 1 técnico en v1 (múltiples técnicos en el mismo trabajo se dejan para v2).
 - No envía notificaciones a los técnicos (eso queda para el flujo de Programaciones existente).
+- No detecta automáticamente MantenimientosFijos vencidos como input al motor — los muestra como contexto informativo, pero el admin decide cuáles programar y en qué orden.

@@ -2,9 +2,8 @@
 
 ## Ubicación y ruta
 
-- **Ruta Angular**: `/admin/programador-ia` (o `/admin/ai-assistant` si se mantiene la ruta existente)
-- **Componente raíz**: `src/app/features/admin/ai-assistant/ai-scheduler.component.ts`
-  - El archivo `ai-assistant.component.ts` se reemplaza completamente
+- **Ruta Angular**: `/admin/ai-assistant` (ruta existente sin cambiar)
+- **Componente raíz**: `src/app/features/admin/ai-assistant/ai-assistant.component.ts`
 - **Servicio Angular**: `src/app/core/services/ia-scheduler.service.ts`
 
 ---
@@ -13,9 +12,9 @@
 
 ```typescript
 type SchedulerState =
-  | 'idle'           // pantalla inicial, sin propuesta
-  | 'loading'        // generando propuesta (motor + LLM en curso)
-  | 'propuesta_lista' // propuesta generada, esperando revisión del admin
+  | 'idle'           // formulario vacío, sin sugerencia
+  | 'loading'        // evaluando técnicos (motor + LLM en curso)
+  | 'sugerencia_lista' // sugerencia generada, esperando revisión del admin
   | 'adjusting'      // LLM procesando instrucción del chat
   | 'confirming'     // persistiendo en BD
   | 'confirmado';    // confirmación exitosa
@@ -23,9 +22,13 @@ type SchedulerState =
 // Signals del componente
 state             = signal<SchedulerState>('idle');
 selectedDate      = signal<string>(tomorrow());        // 'YYYY-MM-DD'
-selectedTecnicos  = signal<number[]>([]);              // ids seleccionados
-propuestaActual   = signal<Propuesta | null>(null);
-demandaInfo       = signal<DemandInfo | null>(null);   // para el badge "X trabajos pendientes"
+selectedClienteId = signal<number | null>(null);
+selectedAscensorId = signal<number | null>(null);
+selectedTipo      = signal<TipoTrabajo | null>(null);
+horaPreferida     = signal<string | null>(null);
+sugerenciaActual  = signal<SugerenciaResponse | null>(null);
+demandaContexto   = signal<DemandInfo | null>(null);   // mantenimientos vencidos (info solo)
+tecnicosInfo      = signal<TecnicoConCarga[]>([]);
 chatMessages      = signal<ChatMessage[]>([]);
 errorMessage      = signal<string | null>(null);
 ```
@@ -37,40 +40,41 @@ errorMessage      = signal<string | null>(null);
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  PROGRAMADOR IA                              [?] Ayuda       │
-│                                                              │
-│  Fecha: [2026-05-12 ▾]    8 trabajos pendientes             │
-│                                                              │
-│  Técnicos:                                                   │
-│  [✓ Carlos Ríos]  [✓ Pedro Lima]  [  Ana García]           │
-│  [✓ Juan Torres]  [  Rosa Méndez]                           │
-│                                                              │
-│  [    Generar propuesta    ]                                 │
 ├──────────────────────────────────────────────────────────────┤
-│  [ÁREA DE PROPUESTA — aparece después de generar]            │
+│  NUEVO TRABAJO                                               │
 │                                                              │
-│  Carlos Ríos — Técnico de Mantenimiento — 7.5h              │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │ 08:30 ████ Miraflores (60min) ████░░░░░░░░░░░░░░░░░░  │ │  
-│  │ 09:50 ████ San Isidro (60min) ████░░░░░░░░░░░░░░░░░░  │ │
-│  │ 11:10 ████ San Borja  (120min)████████░░░░░░░░░░░░░░  │ │
-│  └────────────────────────────────────────────────────────┘ │
+│  Fecha:          [2026-05-12 ▾]                             │
+│  Cliente:        [Seleccionar cliente ▾]                    │
+│  Ascensor:       [Seleccionar equipo ▾]  (filtrado)         │
+│  Tipo de trabajo:[▾ Mantenimiento]                          │
+│  Hora preferida: [09:00]  (opcional)                        │
 │                                                              │
-│  Pedro Lima — Supervisor Técnico — 5.0h                      │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │ 08:30 ████ Surco      (45min) ███░░░░░░░░░░░░░░░░░░░  │ │
-│  │ ...                                                     │ │
-│  └────────────────────────────────────────────────────────┘ │
-│                                                              │
-│  ⚠ Overflow (1 trabajo no asignado):                        │
-│  • La Molina — reparación — ver sugerencia IA               │
-│                                                              │
+│  [    Buscar técnico óptimo    ]                             │
 ├──────────────────────────────────────────────────────────────┤
-│  Chat de ajustes                                             │
+│  📋 Mantenimientos vencidos mañana (3)                      │
+│  • Edificio Torres del Sol — Miraflores — hidráulico [+]    │
+│  • Clínica Santa María — San Isidro — eléctrico [+]         │
+│  • Edificio El Golf — Surco — hidráulico [+]                │
+│  (click [+] para prellenar el formulario)                    │
+├──────────────────────────────────────────────────────────────┤
+│  SUGERENCIA IA:                                              │
+│                                                              │
+│  ✓ Carlos Ríos — Técnico de Mantenimiento                   │
+│    09:00 – 10:00  (60min + 15min traslado desde San Isidro) │
+│    "Carlos tiene un trabajo en San Isidro que termina a      │
+│     las 08:45. Miraflores está a 15 min, puede llegar a las │
+│     09:00 respetando la hora preferida del cliente."         │
+│                                                              │
+│  Otras opciones:                                             │
+│  ○ Pedro Lima (Supervisor) — 08:30–09:30 — libre todo el día│
+│  ○ Ana García (Técnico Gral) — 14:00–15:00 — 3 trabajos     │
+│                                                              │
+│  [Confirmar con Carlos Ríos] [Elegir otra opción] [Cancelar]│
+├──────────────────────────────────────────────────────────────┤
+│  Chat de ajustes (opcional)                                  │
 │  ┌────────────────────────────────────────────────────────┐ │
-│  │ Mové el trabajo de Surquillo de Carlos a Pedro         │ │
+│  │ No me des a Carlos, está saturado hoy                  │ │
 │  └─────────────────────────────────────────────────[→]───┘ │
-├──────────────────────────────────────────────────────────────┤
-│                      [  Confirmar y aplicar  ]               │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -78,45 +82,75 @@ errorMessage      = signal<string | null>(null);
 
 ## Sub-componentes
 
-### `ai-scheduler-header`
-Selector de fecha + badge de demanda + chips de técnicos + botón "Generar".
+### `ai-scheduler-form`
+Formulario de definición del trabajo. El campo `ascensor` se filtra por el cliente seleccionado.
 
 ```typescript
 @Component({
-  selector: 'app-ai-scheduler-header',
+  selector: 'app-ai-scheduler-form',
   template: `
-    <div class="flex flex-col gap-4 p-4 border-b border-gray-200">
+    <div class="p-4 border-b border-gray-200 space-y-4">
+      <h2 class="text-base font-semibold text-gray-800">Nuevo trabajo</h2>
+
       <!-- Fecha -->
       <div class="flex items-center gap-3">
-        <label class="text-sm font-medium text-gray-700">Fecha:</label>
+        <label class="text-sm font-medium text-gray-700 w-32">Fecha:</label>
         <input type="date" [value]="fecha()" (change)="onFechaChange($event)"
                [min]="tomorrow()" class="border rounded px-2 py-1 text-sm"/>
-        @if (demanda()) {
-          <span class="text-sm text-gray-500">
-            {{ demanda()!.total }} trabajos pendientes
-          </span>
-        }
       </div>
-      
-      <!-- Técnicos chips -->
-      <div class="flex flex-wrap gap-2">
-        @for (tecnico of tecnicos(); track tecnico.trabajador_id) {
-          <button
-            (click)="toggleTecnico(tecnico.trabajador_id)"
-            [class]="chipClass(tecnico.trabajador_id)">
-            {{ tecnico.nombre }} {{ tecnico.apellido }}
-            <span class="text-xs opacity-60">
-              ({{ tecnico.carga_preexistente.trabajos_confirmados }} ya asignados)
-            </span>
-          </button>
-        }
+
+      <!-- Cliente -->
+      <div class="flex items-center gap-3">
+        <label class="text-sm font-medium text-gray-700 w-32">Cliente:</label>
+        <select (change)="onClienteChange($event)" class="border rounded px-2 py-1 text-sm flex-1">
+          <option value="">Seleccionar cliente</option>
+          @for (c of clientes(); track c.cliente_id) {
+            <option [value]="c.cliente_id">{{ c.nombre_comercial }}</option>
+          }
+        </select>
       </div>
-      
+
+      <!-- Ascensor (filtrado por cliente) -->
+      <div class="flex items-center gap-3">
+        <label class="text-sm font-medium text-gray-700 w-32">Ascensor:</label>
+        <select (change)="onAscensorChange($event)" [disabled]="!clienteId()"
+                class="border rounded px-2 py-1 text-sm flex-1">
+          <option value="">Seleccionar equipo</option>
+          @for (a of ascensoresFiltrados(); track a.ascensor_id) {
+            <option [value]="a.ascensor_id">{{ a.tipo_equipo }} — {{ a.marca }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Tipo de trabajo -->
+      <div class="flex items-center gap-3">
+        <label class="text-sm font-medium text-gray-700 w-32">Tipo:</label>
+        <select (change)="onTipoChange($event)" class="border rounded px-2 py-1 text-sm">
+          <option value="mantenimiento">Mantenimiento</option>
+          <option value="reparacion">Reparación</option>
+          <option value="inspeccion">Inspección</option>
+          <option value="emergencia">Emergencia</option>
+        </select>
+      </div>
+
+      <!-- Hora preferida (opcional) -->
+      <div class="flex items-center gap-3">
+        <label class="text-sm font-medium text-gray-700 w-32">Hora preferida:</label>
+        <input type="time" [value]="horaPreferida()" (change)="onHoraChange($event)"
+               class="border rounded px-2 py-1 text-sm"/>
+        <span class="text-xs text-gray-400">(opcional)</span>
+      </div>
+
       <!-- Botón generar -->
-      <button (click)="onGenerar()" [disabled]="!puedeGenerar()"
-              class="btn-primary self-start">
-        @if (loading()) { <span class="animate-spin mr-2">⟳</span> Generando... }
-        @else { Generar propuesta }
+      <button (click)="onGenerar()" [disabled]="!puedeGenerar() || loading()"
+              class="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600
+                     hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed
+                     transition-colors self-start">
+        @if (loading()) {
+          <span class="animate-spin mr-2">⟳</span> Buscando técnico...
+        } @else {
+          Buscar técnico óptimo
+        }
       </button>
     </div>
   `
@@ -125,123 +159,176 @@ Selector de fecha + badge de demanda + chips de técnicos + botón "Generar".
 
 ---
 
-### `ai-scheduler-timeline`
-Renderiza el timeline horizontal por técnico.
+### `ai-scheduler-demand-context`
+Lista informativa de MantenimientosFijos vencidos. Permite prellenar el formulario con un click.
 
 ```typescript
 @Component({
-  selector: 'app-ai-scheduler-timeline',
+  selector: 'app-ai-scheduler-demand-context',
   template: `
-    <div class="p-4 space-y-6">
-      @for (tecnico of propuesta()!.tecnicos; track tecnico.trabajador_id) {
-        <div class="space-y-2">
-          <!-- Header del técnico -->
-          <div class="flex items-center gap-2">
-            <span class="font-medium">{{ tecnico.nombre }} {{ tecnico.apellido }}</span>
-            <span class="text-sm text-gray-500">{{ tecnico.especialidad }}</span>
-            <span class="text-sm font-medium text-blue-600">
-              {{ tecnico.carga_horas }}h asignadas
-            </span>
-          </div>
-          
-          <!-- Barra de timeline (8:30 a 18:30 = 600 min = 100%) -->
-          <div class="relative h-12 bg-gray-100 rounded overflow-hidden">
-            @for (trabajo of tecnico.trabajos; track trabajo.programacion_id ?? trabajo.mantenimiento_fijo_id) {
-              <div
-                [style.left.%]="minutosToPercent(trabajo.hora_inicio)"
-                [style.width.%]="minutosToPercent(trabajo.hora_fin) - minutosToPercent(trabajo.hora_inicio)"
-                [class]="blockClass(trabajo.tipo_trabajo)"
-                class="absolute h-full flex items-center px-1 overflow-hidden cursor-pointer"
-                (click)="mostrarDetalle(trabajo)">
-                <span class="text-xs text-white truncate">
-                  {{ trabajo.hora_inicio }} {{ trabajo.nombre_cliente }}
-                </span>
-              </div>
-            }
-          </div>
-          
-          <!-- Lista de paradas (expandida) -->
-          <div class="space-y-1">
-            @for (trabajo of tecnico.trabajos; track $index) {
-              <div class="flex items-start gap-3 text-sm p-2 rounded hover:bg-gray-50">
-                <span class="w-10 text-gray-500 font-mono">{{ trabajo.hora_inicio }}</span>
-                <span class="w-3 h-3 rounded-full mt-0.5 flex-shrink-0"
-                      [class]="dotClass(trabajo.tipo_trabajo)"></span>
-                <div class="flex-1">
-                  <span class="font-medium">{{ trabajo.nombre_cliente }}</span>
-                  <span class="text-gray-400 ml-2">{{ trabajo.distrito }}</span>
-                  <span class="text-gray-400 ml-2">{{ trabajo.duracion_min }}min</span>
-                  @if (trabajo.traslado_desde_anterior > 0) {
-                    <span class="text-gray-300 ml-2">
-                      (+{{ trabajo.traslado_desde_anterior }}min traslado)
-                    </span>
-                  }
-                  @if (trabajo.justificacion) {
-                    <p class="text-gray-400 text-xs mt-0.5 italic">{{ trabajo.justificacion }}</p>
-                  }
-                </div>
-                <span class="font-mono text-gray-400">{{ trabajo.hora_fin }}</span>
-              </div>
-            }
-          </div>
-        </div>
-      }
-      
-      <!-- Overflow -->
-      @if (propuesta()!.overflow.length > 0) {
-        <div class="border border-amber-200 bg-amber-50 rounded p-4">
-          <p class="font-medium text-amber-800 mb-2">
-            ⚠ {{ propuesta()!.overflow.length }} trabajo(s) no asignado(s)
-          </p>
-          @for (item of propuesta()!.overflow; track item.programacion_id) {
-            <div class="text-sm text-amber-700">
-              • {{ item.nombre_cliente }} ({{ item.distrito }}) — {{ item.tipo_trabajo }}
-              — {{ item.razon_overflow }}
+    @if (demanda() && demanda()!.total > 0) {
+      <div class="px-4 py-3 border-b border-gray-200 bg-amber-50">
+        <p class="text-sm font-medium text-amber-800 mb-2">
+          📋 {{ demanda()!.total }} mantenimiento(s) vencen esta fecha
+        </p>
+        <div class="space-y-1">
+          @for (item of demanda()!.trabajos; track item.mantenimiento_fijo_id) {
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-amber-700">
+                {{ item.nombre_cliente }} — {{ item.distrito }} — {{ item.tipo_equipo }}
+              </span>
+              <button (click)="onPrellenar(item)"
+                      class="text-xs text-blue-600 underline hover:text-blue-800 ml-3">
+                Programar este
+              </button>
             </div>
           }
-          @if (propuesta()!.notas_overflow) {
-            <p class="text-sm text-amber-600 mt-2 italic">
-              IA sugiere: {{ propuesta()!.notas_overflow }}
-            </p>
+        </div>
+      </div>
+    }
+  `
+})
+```
+
+---
+
+### `ai-scheduler-suggestion`
+Muestra la sugerencia del LLM y las alternativas. El admin puede seleccionar cualquier opción.
+
+```typescript
+@Component({
+  selector: 'app-ai-scheduler-suggestion',
+  template: `
+    <div class="p-4 space-y-4">
+      <!-- Banner de origen -->
+      @if (sugerencia()!.origen === 'motor_fallback') {
+        <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p class="text-sm text-amber-700 font-medium">
+            ⚠ Sugerencia generada sin validación IA — el servicio no está disponible.
+          </p>
+        </div>
+      }
+
+      <!-- Sin técnico elegible -->
+      @if (sugerencia()!.sin_elegible) {
+        <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p class="font-medium text-red-700">
+            🚫 Ningún técnico seleccionado puede realizar este tipo de trabajo
+          </p>
+          @if (sugerencia()!.razon_sin_elegible) {
+            <p class="text-sm text-red-600 mt-1">{{ sugerencia()!.razon_sin_elegible }}</p>
           }
         </div>
       }
+
+      <!-- Sugerencia principal -->
+      @if (sugerencia()!.sugerencia) {
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-green-600 font-bold text-lg">✓</span>
+            <span class="font-semibold text-gray-900">
+              {{ sugerencia()!.sugerencia!.nombre }} {{ sugerencia()!.sugerencia!.apellido }}
+            </span>
+            <span class="text-sm text-gray-500">— {{ sugerencia()!.sugerencia!.especialidad }}</span>
+          </div>
+
+          <div class="flex items-center gap-4 text-sm mb-3">
+            <span class="font-mono font-medium text-gray-800">
+              {{ sugerencia()!.sugerencia!.hora_inicio }} – {{ sugerencia()!.sugerencia!.hora_fin }}
+            </span>
+            <span class="text-gray-500">
+              ({{ sugerencia()!.trabajo.duracion_min }}min
+              @if (sugerencia()!.sugerencia!.traslado_min > 0) {
+                + {{ sugerencia()!.sugerencia!.traslado_min }}min traslado
+              })
+            </span>
+            <span class="text-gray-400">
+              Carga previa: {{ sugerencia()!.sugerencia!.carga_previa_horas.toFixed(1) }}h
+            </span>
+          </div>
+
+          @if (sugerencia()!.sugerencia!.justificacion) {
+            <p class="text-sm text-gray-600 italic border-l-2 border-green-300 pl-3">
+              "{{ sugerencia()!.sugerencia!.justificacion }}"
+            </p>
+          }
+
+          <button
+            (click)="onConfirmar(sugerencia()!.sugerencia!)"
+            [disabled]="confirming()"
+            class="mt-4 px-5 py-2 rounded-lg text-sm font-semibold text-white bg-green-600
+                   hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
+            @if (confirming()) { Aplicando... }
+            @else { Confirmar con {{ sugerencia()!.sugerencia!.nombre }} }
+          </button>
+        </div>
+      }
+
+      <!-- Alternativas -->
+      @if (sugerencia()!.alternativas.length > 0) {
+        <div>
+          <p class="text-sm font-medium text-gray-700 mb-2">Otras opciones:</p>
+          <div class="space-y-2">
+            @for (alt of sugerencia()!.alternativas; track alt.trabajador_id) {
+              <div class="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between">
+                <div>
+                  <span class="font-medium text-gray-800 text-sm">
+                    {{ alt.nombre }} {{ alt.apellido }}
+                  </span>
+                  <span class="text-xs text-gray-500 ml-2">{{ alt.especialidad }}</span>
+                  <div class="text-sm font-mono text-gray-600 mt-0.5">
+                    {{ alt.hora_inicio }} – {{ alt.hora_fin }}
+                    <span class="font-sans text-gray-400 ml-2">
+                      ({{ alt.carga_previa_horas.toFixed(1) }}h previa)
+                    </span>
+                  </div>
+                  @if (alt.justificacion) {
+                    <p class="text-xs text-gray-400 italic mt-0.5 truncate max-w-xs">
+                      {{ alt.justificacion }}
+                    </p>
+                  }
+                </div>
+                <button
+                  (click)="onConfirmar(alt)"
+                  class="ml-4 px-3 py-1.5 rounded text-xs font-medium text-blue-600
+                         border border-blue-200 hover:bg-blue-50 transition-colors flex-shrink-0">
+                  Elegir
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Botón descartar -->
+      <div class="flex justify-start pt-2">
+        <button (click)="onDescartar()"
+                class="text-sm text-gray-500 underline hover:text-gray-700">
+          Cancelar y volver al formulario
+        </button>
+      </div>
     </div>
   `
 })
 ```
 
-**Colores por tipo de trabajo** (clases Tailwind):
-- `emergencia`: `bg-red-500`
-- `reparacion`: `bg-orange-500`
-- `inspeccion`: `bg-yellow-500`
-- `mantenimiento`: `bg-blue-500`
-
-**Cálculo de porcentaje** (para la barra de timeline):
-```typescript
-minutosToPercent(timeStr: string): number {
-  const [h, m] = timeStr.split(':').map(Number);
-  const minutos = h * 60 + m;
-  const INICIO = 8 * 60 + 30;  // 510 min
-  const FIN    = 18 * 60 + 30; // 1110 min
-  return ((minutos - INICIO) / (FIN - INICIO)) * 100;
-}
-```
-
 ---
 
 ### `ai-scheduler-chat`
-Panel de chat para instrucciones de ajuste.
+Panel de chat para ajustes posteriores a la sugerencia. Opcional, aparece después de `sugerencia_lista`.
 
 ```typescript
 @Component({
   selector: 'app-ai-scheduler-chat',
   template: `
     <div class="border-t border-gray-200 p-4">
+      <p class="text-xs text-gray-400 mb-2">
+        Pedile ajustes a la IA en lenguaje natural:
+      </p>
       <div class="max-h-40 overflow-y-auto space-y-2 mb-3">
         @for (msg of messages(); track $index) {
           <div [class]="msg.role === 'user' ? 'text-right' : 'text-left'">
-            <span [class]="msg.role === 'user' 
+            <span [class]="msg.role === 'user'
               ? 'inline-block bg-blue-500 text-white px-3 py-1 rounded-lg text-sm max-w-xs'
               : 'inline-block bg-gray-100 text-gray-700 px-3 py-1 rounded-lg text-sm max-w-xs'">
               {{ msg.content }}
@@ -251,44 +338,25 @@ Panel de chat para instrucciones de ajuste.
         @if (adjusting()) {
           <div class="text-left">
             <span class="inline-block bg-gray-100 text-gray-500 px-3 py-1 rounded-lg text-sm animate-pulse">
-              Ajustando propuesta...
+              Ajustando sugerencia...
             </span>
           </div>
         }
       </div>
-      
+
       <div class="flex gap-2">
-        <input #chatInput
-               [(ngModel)]="chatInput"
-               (keydown.enter)="onEnviar()"
-               placeholder="Ej: priorizá la emergencia de Miraflores..."
-               class="flex-1 border rounded px-3 py-2 text-sm"
-               [disabled]="adjusting()"/>
+        <input
+          [(ngModel)]="chatInput"
+          (keydown.enter)="onEnviar()"
+          placeholder="Ej: no me des a Carlos, está saturado hoy..."
+          class="flex-1 border rounded px-3 py-2 text-sm"
+          [disabled]="adjusting()"/>
         <button (click)="onEnviar()" [disabled]="adjusting() || !chatInput.trim()"
-                class="btn-primary px-4">→</button>
+                class="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700
+                       disabled:bg-gray-300 transition-colors">
+          →
+        </button>
       </div>
-    </div>
-  `
-})
-```
-
----
-
-### `ai-scheduler-footer`
-Botones de confirmación y descarte.
-
-```typescript
-@Component({
-  template: `
-    <div class="sticky bottom-0 border-t border-gray-200 bg-white p-4 flex gap-3 justify-end">
-      <button (click)="onDescartar()" class="btn-secondary">
-        Descartar propuesta
-      </button>
-      <button (click)="onConfirmar()" [disabled]="confirming()"
-              class="btn-primary bg-green-600 hover:bg-green-700">
-        @if (confirming()) { Aplicando... }
-        @else { Confirmar y crear programaciones }
-      </button>
     </div>
   `
 })
@@ -302,25 +370,25 @@ Botones de confirmación y descarte.
 @Injectable({ providedIn: 'root' })
 export class IaSchedulerService {
   private http = inject(HttpClient);
-  private base = '/api/ia-scheduler';
+  private base = `${environment.apiUrl}/ia-scheduler`;
 
-  getDemand(fecha: string) {
+  getDemand(fecha: string): Observable<DemandResponse> {
     return this.http.get<DemandResponse>(`${this.base}/demand`, { params: { fecha } });
   }
 
-  getTecnicos(fecha: string) {
+  getTecnicos(fecha: string): Observable<TecnicosResponse> {
     return this.http.get<TecnicosResponse>(`${this.base}/tecnicos`, { params: { fecha } });
   }
 
-  generar(body: GenerarRequest) {
-    return this.http.post<Propuesta>(`${this.base}/generar`, body);
+  generar(body: GenerarRequest): Observable<SugerenciaResponse> {
+    return this.http.post<SugerenciaResponse>(`${this.base}/generar`, body);
   }
 
-  ajustar(body: AjustarRequest) {
-    return this.http.post<Propuesta>(`${this.base}/ajustar`, body);
+  ajustar(body: AjustarRequest): Observable<SugerenciaResponse> {
+    return this.http.post<SugerenciaResponse>(`${this.base}/ajustar`, body);
   }
 
-  confirmar(body: ConfirmarRequest) {
+  confirmar(body: ConfirmarRequest): Observable<ConfirmarResponse> {
     return this.http.post<ConfirmarResponse>(`${this.base}/confirmar`, body);
   }
 }
@@ -331,42 +399,73 @@ export class IaSchedulerService {
 ## Flujo de interacción completo
 
 ```
-1. Admin abre /admin/programador-ia
+1. Admin abre /admin/ai-assistant
    └── ngOnInit: getDemand(mañana) + getTecnicos(mañana)
-   └── Muestra badge "X trabajos" y lista de técnicos con chips
+   └── Muestra formulario vacío + lista de mantenimientos vencidos (contexto)
 
-2. Admin selecciona técnicos (chips toggle)
+2. Admin llena el formulario
+   └── Selecciona cliente → se filtran los ascensores del cliente
+   └── Selecciona ascensor → se habilita tipo de trabajo
+   └── Selecciona tipo (mantenimiento / reparacion / inspeccion / emergencia)
+   └── Opcionalmente: ingresa hora preferida del cliente
 
-3. Admin hace click en "Generar propuesta"
+   Alternativa: click en [+] en la lista de mantenimientos vencidos
+   └── Prelllena cliente_id, ascensor_id, tipo_trabajo='mantenimiento', hora_preferida
+   └── Admin solo confirma y hace click en "Buscar técnico óptimo"
+
+3. Admin hace click en "Buscar técnico óptimo"
    └── state = 'loading'
-   └── POST /generar { fecha, tecnico_ids, instruccion_admin: null }
-   └── Spinner + "Generando propuesta con IA..."
-   └── Response → propuestaActual.set(data)
-   └── state = 'propuesta_lista'
-   └── Muestra timeline + chat
+   └── POST /generar { fecha, trabajo: {...}, tecnico_ids: [] }
+   └── Spinner + "Buscando técnico óptimo..."
+   └── Response → sugerenciaActual.set(data)
+   └── state = 'sugerencia_lista'
+   └── Muestra panel de sugerencia + alternativas
 
-4. Admin revisa la propuesta
-   └── Puede expandir/contraer paradas por técnico
-   └── Puede hacer click en una parada para ver detalle + justificación
+4. Admin revisa la sugerencia
+   └── Ve el técnico sugerido con su slot calculado y justificación del LLM
+   └── Ve alternativas ordenadas con sus slots
+   └── Puede usar el chat para pedir ajustes (Paso 5b)
 
-5a. Admin acepta la propuesta sin cambios
-    └── Click "Confirmar y crear programaciones"
+5a. Admin confirma la sugerencia (o elige una alternativa)
+    └── Click "Confirmar con [nombre]"
     └── state = 'confirming'
-    └── POST /confirmar { fecha, propuesta: propuestaActual() }
+    └── POST /confirmar { fecha, trabajo: {...con hora_inicio/fin...}, tecnico_id }
     └── Response → state = 'confirmado'
-    └── Toast "X programaciones creadas" → redirigir al calendario
+    └── Toast "Programación creada para [nombre] — [hora_inicio]–[hora_fin]"
+    └── Limpiar formulario para el siguiente trabajo
 
 5b. Admin ajusta por chat
-    └── Escribe instrucción → click → chatMessages.update()
+    └── Escribe instrucción → click →
     └── state = 'adjusting'
-    └── POST /ajustar { propuesta_actual: propuestaActual(), instruccion }
-    └── Response → propuestaActual.set(data) → state = 'propuesta_lista'
-    └── Timeline actualizado con los cambios
+    └── POST /ajustar { sugerencia_actual: sugerenciaActual(), instruccion }
+    └── Response → sugerenciaActual.set(data) → state = 'sugerencia_lista'
+    └── Panel de sugerencia actualizado
 
 5c. Admin descarta
-    └── Click "Descartar" → confirm dialog → propuestaActual.set(null)
+    └── Click "Cancelar y volver al formulario" → sugerenciaActual.set(null)
     └── state = 'idle'
+    └── Formulario vuelve a ser editable
 ```
+
+---
+
+## Prellenado desde MantenimientosFijos
+
+Cuando el admin hace click en [+] junto a un mantenimiento vencido, el formulario se prellena:
+
+```typescript
+onPrellenar(item: MantenimientoItem): void {
+  this.selectedClienteId.set(item.cliente_id);
+  this.selectedAscensorId.set(item.ascensor_id);
+  this.selectedTipo.set('mantenimiento');
+  this.horaPreferida.set(item.hora_preferida);
+  this.mantenimientoFijoIdContexto.set(item.mantenimiento_fijo_id);
+  // El formulario muestra los valores prellenados
+  // El admin puede ajustar y hacer click en "Buscar técnico óptimo"
+}
+```
+
+Al confirmar un trabajo originado en un MantenimientoFijo, se incluye `mantenimiento_fijo_id` en el body del `/confirmar` para mantener la trazabilidad.
 
 ---
 
@@ -374,17 +473,17 @@ export class IaSchedulerService {
 
 | Condición | Banner |
 |---|---|
-| `origen === 'motor_fallback'` | 🟡 "Propuesta generada sin validación IA — el servicio no está disponible." |
+| `origen === 'motor_fallback'` | 🟡 "Sugerencia generada sin validación IA — el servicio no está disponible." |
 | `advertencias.length > 0` | 🟡 "La IA hizo correcciones automáticas. Ver detalles." |
-| `overflow.length > 0` | 🟠 "X trabajos no pudieron ser asignados. Ver overflow." |
-| `sin_elegible.length > 0` | 🔴 "X trabajos no tienen técnico elegible disponible." |
-| Confirmación exitosa | 🟢 "X programaciones creadas y Y actualizadas." |
+| `sin_elegible === true` | 🔴 "Ningún técnico seleccionado puede realizar este tipo de trabajo." |
+| Confirmación exitosa | 🟢 "Programación creada — Carlos Ríos, 09:00–10:00." |
 
 ---
 
-## Consideraciones de accesibilidad y UX
+## Consideraciones de UX
 
-- El botón "Confirmar" debe tener un confirm dialog adicional: "¿Confirmar X programaciones para [fecha]? Esta acción no se puede deshacer desde este módulo."
-- En mobile (< 768px), el timeline se muestra como lista vertical (no barra horizontal).
-- El spinner de "Generando..." debe mostrar el tiempo transcurrido en segundos para que el admin sepa que no se colgó.
-- Si el admin selecciona 0 técnicos, el botón "Generar" está deshabilitado con tooltip "Seleccioná al menos un técnico".
+- El botón "Confirmar" muestra el nombre del técnico seleccionado, no solo "Confirmar".
+- El selector de ascensor está deshabilitado hasta que se elija un cliente (evita listas enormes).
+- En mobile (< 768px), las alternativas se muestran como acordeón colapsable.
+- Si el admin selecciona "hora preferida" y el técnico sugerido no puede llegar a tiempo, el LLM lo explica en la justificación.
+- Después de confirmar, el formulario se limpia automáticamente para que el admin pueda programar el siguiente trabajo sin recargar la página.

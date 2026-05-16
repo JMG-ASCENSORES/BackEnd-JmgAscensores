@@ -9,10 +9,10 @@ Controlador: `/BackEnd-JmgAscensores/src/controllers/ia-scheduler.controller.js`
 
 ## Middleware de autorización
 
-Todos los endpoints de este módulo deben incluir:
+Todos los endpoints de este módulo incluyen:
 ```javascript
-router.use(authMiddleware);          // JWT válido
-router.use(requireRole('admin'));    // solo administrador
+router.use(authenticate);        // JWT válido
+router.use(authorize('ADMIN'));  // solo administrador (rol exacto 'ADMIN' en el token)
 ```
 
 ---
@@ -21,61 +21,48 @@ router.use(requireRole('admin'));    // solo administrador
 
 ### 1. `GET /api/ia-scheduler/demand`
 
-Retorna el pool de trabajos pendientes para la fecha objetivo. Sirve para que el frontend muestre "hay X trabajos para programar mañana" antes de generar la propuesta.
+Retorna los MantenimientosFijos vencidos para la fecha objetivo. Sirve como contexto informativo para que el admin sepa qué mantenimientos están pendientes antes de usar el formulario. **No es el input del motor.**
 
 **Query params**:
-- `fecha` (optional, YYYY-MM-DD, default = mañana)
+- `fecha` (opcional, YYYY-MM-DD, default = mañana)
 
 **Response 200**:
 ```json
 {
   "fecha": "2026-05-12",
-  "total": 8,
+  "total": 3,
   "por_tipo": {
-    "mantenimiento": 5,
-    "reparacion": 2,
-    "inspeccion": 1,
+    "mantenimiento": 3,
+    "reparacion": 0,
+    "inspeccion": 0,
     "emergencia": 0
   },
   "trabajos": [
     {
       "mantenimiento_fijo_id": 12,
-      "programacion_id": null,
+      "ascensor_id": 8,
       "fuente": "mantenimiento_fijo",
       "cliente_id": 45,
       "nombre_cliente": "Edificio Torres del Sol",
       "distrito": "Miraflores",
       "tipo_trabajo": "mantenimiento",
       "hora_preferida": "09:00",
-      "tecnico_preferido_id": 3,
-      "ascensor_id": 8,
       "tipo_equipo": "hidráulico"
-    },
-    {
-      "programacion_id": 201,
-      "mantenimiento_fijo_id": null,
-      "fuente": "programacion_pendiente",
-      "cliente_id": 52,
-      "nombre_cliente": "Clínica Santa María",
-      "distrito": "San Isidro",
-      "tipo_trabajo": "reparacion",
-      "hora_preferida": null,
-      "tecnico_preferido_id": null,
-      "ascensor_id": 11,
-      "tipo_equipo": "eléctrico tracción"
     }
   ]
 }
 ```
 
+> Este endpoint permite que el frontend muestre un badge "X mantenimientos vencen mañana" y una lista de sugerencias. El admin puede hacer click en uno para prellenar el formulario.
+
 ---
 
 ### 2. `GET /api/ia-scheduler/tecnicos`
 
-Retorna los técnicos disponibles para seleccionar, con su carga preexistente para la fecha.
+Retorna los técnicos disponibles con su carga actual para la fecha.
 
 **Query params**:
-- `fecha` (optional, YYYY-MM-DD, default = mañana)
+- `fecha` (opcional, YYYY-MM-DD, default = mañana)
 
 **Response 200**:
 ```json
@@ -112,20 +99,28 @@ Retorna los técnicos disponibles para seleccionar, con su carga preexistente pa
 
 ### 3. `POST /api/ia-scheduler/generar`
 
-Endpoint principal. Ejecuta la cascada Motor → LLM y devuelve la propuesta final.
+Endpoint principal. Recibe la definición de un trabajo ad-hoc y devuelve la sugerencia de técnico óptimo con su slot calculado, más alternativas.
 
 **Body**:
 ```json
 {
   "fecha": "2026-05-12",
+  "trabajo": {
+    "cliente_id": 45,
+    "ascensor_id": 8,
+    "tipo_trabajo": "mantenimiento",
+    "hora_preferida": "09:00"
+  },
   "tecnico_ids": [3, 5, 7],
   "instruccion_admin": null
 }
 ```
 
-`instruccion_admin` puede ser null (generación sin preferencias) o string libre (ej. "priorizá emergencias").
+- `trabajo.hora_preferida`: opcional. Si el cliente tiene una ventana preferida, el motor intenta respetarla.
+- `tecnico_ids`: lista de técnicos a evaluar. Si está vacía, se evalúan todos los técnicos activos.
+- `instruccion_admin`: instrucción libre para el LLM. Puede ser null.
 
-**Response 200** (propuesta lista):
+**Response 200** (sugerencia lista):
 ```json
 {
   "fecha": "2026-05-12",
@@ -133,178 +128,169 @@ Endpoint principal. Ejecuta la cascada Motor → LLM y devuelve la propuesta fin
   "origen": "llm",
   "llm_model": "claude-haiku-4-5-20251001",
   "advertencias": [],
-  "notas_overflow": "El trabajo de reparación en La Molina no cabe en la jornada de Carlos. Opciones: (1) asignarlo a otro técnico, (2) moverlo al día siguiente, (3) autorizar extensión de jornada.",
-  
-  "tecnicos": [
+
+  "trabajo": {
+    "cliente_id": 45,
+    "ascensor_id": 8,
+    "nombre_cliente": "Edificio Torres del Sol",
+    "distrito": "Miraflores",
+    "tipo_equipo": "hidráulico",
+    "tipo_trabajo": "mantenimiento",
+    "duracion_min": 60,
+    "hora_preferida": "09:00"
+  },
+
+  "sugerencia": {
+    "trabajador_id": 3,
+    "nombre": "Carlos",
+    "apellido": "Ríos",
+    "especialidad": "Técnico de Mantenimiento",
+    "hora_inicio": "09:00",
+    "hora_fin": "10:00",
+    "traslado_min": 15,
+    "carga_previa_horas": 1.0,
+    "justificacion": "Carlos tiene un trabajo en San Isidro que termina a las 08:45. Miraflores está a 15 min de traslado, por lo que puede llegar a las 09:00 respetando la hora preferida del cliente. Es el técnico con mayor disponibilidad en zona sur."
+  },
+
+  "alternativas": [
     {
-      "trabajador_id": 3,
-      "nombre": "Carlos",
-      "apellido": "Ríos",
-      "especialidad": "Técnico de Mantenimiento",
-      "carga_horas": 7.5,
-      "carga_minutos": 450,
-      "trabajos": [
-        {
-          "programacion_id": null,
-          "mantenimiento_fijo_id": 12,
-          "fuente": "mantenimiento_fijo",
-          "cliente_id": 45,
-          "nombre_cliente": "Edificio Torres del Sol",
-          "distrito": "Miraflores",
-          "ascensor_id": 8,
-          "tipo_equipo": "hidráulico",
-          "tipo_trabajo": "mantenimiento",
-          "duracion_min": 60,
-          "hora_inicio": "08:30",
-          "hora_fin": "09:30",
-          "traslado_desde_anterior": 0,
-          "tecnico_preferido_respetado": true,
-          "overflow": false,
-          "justificacion": "Primer trabajo del día, cliente preferido por plan fijo. Zona sur compatible con el resto de la ruta."
-        }
-      ]
+      "trabajador_id": 5,
+      "nombre": "Pedro",
+      "apellido": "Lima",
+      "especialidad": "Supervisor Técnico",
+      "hora_inicio": "08:30",
+      "hora_fin": "09:30",
+      "traslado_min": 0,
+      "carga_previa_horas": 0,
+      "justificacion": "Pedro no tiene trabajos ese día. Puede empezar a las 08:30, aunque no respeta exactamente la hora preferida del cliente."
     }
   ],
-  
-  "overflow": [
-    {
-      "programacion_id": 201,
-      "nombre_cliente": "Centro Empresarial La Molina",
-      "distrito": "La Molina",
-      "tipo_trabajo": "reparacion",
-      "duracion_min": 120,
-      "trabajador_id_propuesto": 3,
-      "razon_overflow": "No cabe en la jornada de Carlos después de sus 6 trabajos previos (fin estimado 19:30).",
-      "overflow": true,
-      "justificacion": null
-    }
-  ],
-  
-  "sin_elegible": []
+
+  "sin_elegible": false,
+  "razon_sin_elegible": null,
+  "notas_llm": null
 }
 ```
 
 **Response 200 (fallback motor)**:
-Igual, pero `"origen": "motor_fallback"` y sin `justificacion` en los trabajos.
+Igual, pero `"origen": "motor_fallback"` y `justificacion: null` en todos los técnicos.
 
-**Response 400**:
+**Response 400** — trabajo inválido:
 ```json
-{ "error": "No hay trabajos pendientes para la fecha seleccionada." }
+{ "error": "El ascensor_id 99 no existe o no está activo." }
 ```
 
-**Response 400**:
+**Response 400** — sin técnico elegible:
 ```json
-{ "error": "Los tecnico_ids 99 no existen o están inactivos." }
+{
+  "error": "Ningún técnico seleccionado tiene la especialidad requerida para 'reparacion'.",
+  "sin_elegible": true
+}
+```
+
+**Response 400** — sin técnicos con disponibilidad:
+```json
+{ "error": "Todos los técnicos seleccionados tienen la jornada completa para esa fecha." }
 ```
 
 ---
 
 ### 4. `POST /api/ia-scheduler/ajustar`
 
-Aplica una instrucción del admin sobre la propuesta actual mediante el LLM. Se llama desde el chat.
+Aplica una instrucción del admin sobre la sugerencia actual mediante el LLM. Se llama desde el chat posterior a la generación.
 
 **Body**:
 ```json
 {
-  "propuesta_actual": { ... },  // la propuesta que está viendo el admin (JSON completo)
-  "instruccion": "Mové el trabajo de Surquillo de Carlos a Pedro"
+  "sugerencia_actual": { ... },
+  "instruccion": "No me des a Carlos, está saturado hoy"
 }
 ```
 
 **Response 200**: mismo schema que `/generar`. `origen: 'llm'`.
 
-**Nota**: el backend no persiste la propuesta actual — el frontend la envía completa en cada llamada. Esto evita estado server-side entre requests.
+**Nota**: el backend no persiste la sugerencia actual — el frontend la envía completa en cada llamada. Esto evita estado server-side entre requests.
 
 ---
 
 ### 5. `POST /api/ia-scheduler/confirmar`
 
-Persiste la propuesta confirmada en la base de datos. Operación en transacción atómica.
+Persiste la programación confirmada en la base de datos. Crea una única `Programacion` con el técnico ya asignado.
 
 **Body**:
 ```json
 {
   "fecha": "2026-05-12",
-  "propuesta": { ... }  // la propuesta completa tal como la ve el admin
+  "trabajo": {
+    "cliente_id": 45,
+    "ascensor_id": 8,
+    "tipo_trabajo": "mantenimiento",
+    "hora_inicio": "09:00",
+    "hora_fin": "10:00",
+    "justificacion": "Carlos tiene un trabajo en San Isidro que termina a las 08:45..."
+  },
+  "tecnico_id": 3,
+  "mantenimiento_fijo_id": 12
 }
 ```
+
+- `mantenimiento_fijo_id`: opcional. Si el trabajo proviene de un MantenimientoFijo, incluirlo para mantener la FK.
 
 **Lógica interna**:
 
 ```javascript
-async confirmar(propuesta) {
+async confirmar({ fecha, trabajo, tecnico_id, mantenimiento_fijo_id }) {
   const transaction = await sequelize.transaction();
   try {
-    for (const tecnico of propuesta.tecnicos) {
-      // 1. Por cada trabajo: crear o actualizar Programacion
-      for (const trabajo of tecnico.trabajos) {
-        let programacionId;
-        
-        if (trabajo.programacion_id === null) {
-          // Viene de MantenimientoFijo: crear Programacion nueva
-          const nuevaP = await Programacion.create({
-            titulo:               `Mantenimiento - ${trabajo.nombre_cliente}`,
-            fecha_inicio:         `${propuesta.fecha}T${trabajo.hora_inicio}:00`,
-            fecha_fin:            `${propuesta.fecha}T${trabajo.hora_fin}:00`,
-            trabajador_id:        tecnico.trabajador_id,
-            cliente_id:           trabajo.cliente_id,
-            ascensor_id:          trabajo.ascensor_id,
-            tipo_trabajo:         trabajo.tipo_trabajo,
-            estado:               'pendiente',
-            mantenimiento_fijo_id: trabajo.mantenimiento_fijo_id,
-            descripcion:          trabajo.justificacion,
-          }, { transaction });
-          programacionId = nuevaP.programacion_id;
-        } else {
-          // Ya existe: asignar técnico y actualizar horario
-          await Programacion.update({
-            trabajador_id: tecnico.trabajador_id,
-            fecha_inicio:  `${propuesta.fecha}T${trabajo.hora_inicio}:00`,
-            fecha_fin:     `${propuesta.fecha}T${trabajo.hora_fin}:00`,
-            descripcion:   trabajo.justificacion,
-          }, {
-            where: { programacion_id: trabajo.programacion_id },
-            transaction
-          });
-          programacionId = trabajo.programacion_id;
-        }
-        
-        // Guardar el programacion_id resuelto para DetalleRuta
-        trabajo._programacion_id_resuelto = programacionId;
-      }
-      
-      // 2. Crear o actualizar RutaDiaria del técnico para ese día
-      const [ruta] = await RutaDiaria.upsert({
-        trabajador_id:   tecnico.trabajador_id,
-        fecha_ruta:      propuesta.fecha,
-        numero_paradas:  tecnico.trabajos.length,
-        hora_inicio:     tecnico.trabajos[0]?.hora_inicio,
-        hora_fin:        tecnico.trabajos[tecnico.trabajos.length - 1]?.hora_fin,
-        estado_ruta:     'planificada',
+    // 1. Crear la Programacion
+    const programacion = await Programacion.create({
+      titulo:               `${trabajo.tipo_trabajo} - ${trabajo.nombre_cliente}`,
+      fecha_inicio:         `${fecha}T${trabajo.hora_inicio}:00-05:00`,
+      fecha_fin:            `${fecha}T${trabajo.hora_fin}:00-05:00`,
+      trabajador_id:        tecnico_id,
+      cliente_id:           trabajo.cliente_id,
+      ascensor_id:          trabajo.ascensor_id,
+      tipo_trabajo:         trabajo.tipo_trabajo,
+      estado:               'pendiente',
+      mantenimiento_fijo_id: mantenimiento_fijo_id ?? null,
+      descripcion:          trabajo.justificacion ?? null,
+    }, { transaction });
+
+    // 2. Crear o actualizar RutaDiaria del técnico para ese día
+    const [ruta] = await RutaDiaria.findOrCreate({
+      where: { trabajador_id: tecnico_id, fecha_ruta: fecha },
+      defaults: {
+        numero_paradas: 1,
+        hora_inicio:    trabajo.hora_inicio,
+        hora_fin:       trabajo.hora_fin,
+        estado_ruta:    'planificada',
+      },
+      transaction
+    });
+
+    // Si la ruta ya existía, actualizar hora_fin si el nuevo trabajo es posterior
+    if (ruta.hora_fin < trabajo.hora_fin) {
+      await ruta.update({
+        numero_paradas: ruta.numero_paradas + 1,
+        hora_fin:       trabajo.hora_fin,
       }, { transaction });
-      
-      // 3. Eliminar DetalleRuta anterior del técnico para ese día (si existe)
-      await DetalleRuta.destroy({
-        where: { ruta_id: ruta.ruta_id },
-        transaction
-      });
-      
-      // 4. Insertar nuevos DetalleRuta
-      for (let i = 0; i < tecnico.trabajos.length; i++) {
-        const trabajo = tecnico.trabajos[i];
-        await DetalleRuta.create({
-          ruta_id:          ruta.ruta_id,
-          programacion_id:  trabajo._programacion_id_resuelto,
-          orden_parada:     i + 1,
-          hora_llegada:     trabajo.hora_inicio,
-          hora_salida:      trabajo.hora_fin,
-        }, { transaction });
-      }
     }
-    
+
+    // 3. Insertar DetalleRuta
+    const ordenActual = await DetalleRuta.count({ where: { ruta_id: ruta.ruta_id }, transaction });
+    await DetalleRuta.create({
+      ruta_id:         ruta.ruta_id,
+      programacion_id: programacion.programacion_id,
+      cliente_id:      trabajo.cliente_id,
+      ascensor_id:     trabajo.ascensor_id,
+      orden_parada:    ordenActual + 1,
+      hora_llegada:    trabajo.hora_inicio,
+      hora_salida:     trabajo.hora_fin,
+    }, { transaction });
+
     await transaction.commit();
-    return { ok: true, programaciones_creadas: creadas, programaciones_actualizadas: actualizadas };
-    
+    return { ok: true, programacion_id: programacion.programacion_id };
+
   } catch (err) {
     await transaction.rollback();
     throw err;
@@ -316,18 +302,16 @@ async confirmar(propuesta) {
 ```json
 {
   "ok": true,
-  "programaciones_creadas": 5,
-  "programaciones_actualizadas": 2,
-  "rutas_generadas": 3
+  "programacion_id": 207
 }
 ```
 
-**Response 409 (conflicto)**:
+**Response 400** — datos inválidos:
 ```json
-{
-  "error": "La Programacion 201 fue modificada por otro usuario mientras revisabas la propuesta. Regenerá la propuesta."
-}
+{ "error": "El técnico_id 3 no tiene la especialidad requerida para 'reparacion'." }
 ```
+
+> Nota: no hay conflicto 409 en este endpoint porque no se está actualizando una Programacion existente — siempre se crea una nueva. El único conflicto posible es que el técnico tenga un solapamiento, que se valida antes de confirmar.
 
 ---
 
@@ -376,9 +360,9 @@ Actualiza la configuración. Solo admin.
 
 Todos los requests a `/api/ia-scheduler/generar` y `/api/ia-scheduler/confirmar` deben loguear:
 - `admin_id` que hizo el request.
-- Fecha objetivo.
-- Técnicos seleccionados.
-- `origen` de la propuesta (motor / llm / motor_fallback).
+- Fecha objetivo y trabajo solicitado (tipo_trabajo, distrito).
+- `origen` de la sugerencia (motor / llm / motor_fallback).
+- Técnico sugerido y técnico confirmado (pueden diferir si el admin elige una alternativa).
 - Timestamp y duración total.
 - Tokens usados (si llm_ok = true).
 
