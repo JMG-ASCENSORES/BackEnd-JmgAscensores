@@ -54,6 +54,13 @@ describe('WorkerService (integration)', () => {
         expect(t.carga_preexistente).toHaveProperty('ultima_hora_fin');
         expect(typeof t.carga_preexistente.trabajos_confirmados).toBe('number');
         expect(typeof t.carga_preexistente.minutos_comprometidos).toBe('number');
+        expect(t).toHaveProperty('trabajos_del_dia');
+        expect(Array.isArray(t.trabajos_del_dia)).toBe(true);
+        for (const job of t.trabajos_del_dia) {
+          expect(job).toHaveProperty('hora_inicio');
+          expect(job).toHaveProperty('hora_fin');
+          expect(job).toHaveProperty('distrito');
+        }
       }
     });
 
@@ -77,13 +84,15 @@ describe('WorkerService (integration)', () => {
     });
   });
 
-  describe('_obtenerCargaPreexistente()', () => {
-    it('retorna Map vacío para IDs sin programaciones', async () => {
+  describe('_obtenerDatosDelDia()', () => {
+    it('retorna Map vacíos para IDs sin programaciones', async () => {
       const fechaInicio = new Date('2026-05-12T00:00:00-05:00');
       const fechaFin = new Date('2026-05-12T23:59:59-05:00');
-      const cargas = await service._obtenerCargaPreexistente([], fechaInicio, fechaFin);
-      expect(cargas).toBeInstanceOf(Map);
-      expect(cargas.size).toBe(0);
+      const { cargaMap, trabajosMap } = await service._obtenerDatosDelDia([], fechaInicio, fechaFin);
+      expect(cargaMap).toBeInstanceOf(Map);
+      expect(cargaMap.size).toBe(0);
+      expect(trabajosMap).toBeInstanceOf(Map);
+      expect(trabajosMap.size).toBe(0);
     });
   });
 

@@ -376,6 +376,174 @@ class MotorService {
     return { tecnicosConParadas, overflow };
   }
 
+  // ─── Individual Job Evaluator (diseño Option A) ──────────────────────────
+
+  /**
+   * Busca el mejor slot disponible en la agenda del técnico para el workItem.
+   * Considera trabajos_del_dia existentes y tiempos de traslado entre distritos.
+   * @param {WorkItemEnriquecido} workItem
+   * @param {Tecnico} tecnico — debe tener trabajos_del_dia: [{ hora_inicio, hora_fin, distrito }]
+   * @returns {{ hora_inicio, hora_fin, traslado_min } | null}
+   */
+  calcularSlot(workItem, tecnico) {
+    const HORA_INICIO = toMinutos(this.config.hora_inicio_default || '08:30');
+    const HORA_FIN    = toMinutos(this.config.hora_fin_limite    || '18:30');
+    const duracion    = workItem.duracion_min || 60;
+    const horaPreferida = workItem.hora_preferida ? toMinutos(workItem.hora_preferida) : null;
+
+    const trabajosDia = [...(tecnico.trabajos_del_dia || [])].sort(
+      (a, b) => toMinutos(a.hora_inicio) - toMinutos(b.hora_inicio)
+    );
+
+    // Construir gaps disponibles: { inicio_min, fin_max, traslado_min }
+    const gaps = [];
+
+    if (trabajosDia.length === 0) {
+      const traslado = this.districtTimes.getTiempo(DISTRITO_INICIO_DEFAULT, workItem.distrito);
+      const inicioPosible = HORA_INICIO + traslado;
+      if (HORA_FIN - inicioPosible >= duracion) {
+        gaps.push({ inicio_min: inicioPosible, fin_max: HORA_FIN, traslado_min: traslado });
+      }
+    } else {
+      // Antes del primer trabajo
+      const primero = trabajosDia[0];
+      const trasladoDesdeBase = this.districtTimes.getTiempo(DISTRITO_INICIO_DEFAULT, workItem.distrito);
+      const trasladoAFirst    = this.districtTimes.getTiempo(workItem.distrito, primero.distrito || DISTRITO_INICIO_DEFAULT);
+      const inicioP = HORA_INICIO + trasladoDesdeBase;
+      const finMaxP  = toMinutos(primero.hora_inicio) - trasladoAFirst;
+      if (finMaxP - inicioP >= duracion) {
+        gaps.push({ inicio_min: inicioP, fin_max: finMaxP, traslado_min: trasladoDesdeBase });
+      }
+
+      // Entre trabajos y después del último
+      for (let i = 0; i < trabajosDia.length; i++) {
+        const prev = trabajosDia[i];
+        const next = trabajosDia[i + 1];
+        const trasladoDesde = this.districtTimes.getTiempo(prev.distrito || DISTRITO_INICIO_DEFAULT, workItem.distrito);
+        const inicioMin = toMinutos(prev.hora_fin) + trasladoDesde;
+
+        let finMax;
+        if (next) {
+          const trasladoANext = this.districtTimes.getTiempo(workItem.distrito, next.distrito || DISTRITO_INICIO_DEFAULT);
+          finMax = toMinutos(next.hora_inicio) - trasladoANext;
+        } else {
+          finMax = HORA_FIN;
+        }
+
+        if (finMax - inicioMin >= duracion) {
+          gaps.push({ inicio_min: inicioMin, fin_max: finMax, traslado_min: trasladoDesde });
+        }
+      }
+    }
+
+    if (gaps.length === 0) return null;
+
+    // Elegir el mejor slot: respeta hora_preferida, si no, el más temprano
+    let mejor = null;
+    let mejorScore = Infinity;
+    let mejorPrefiere = false; // si la preferencia cabe en este gap
+
+    for (const gap of gaps) {
+      let inicioSlot = gap.inicio_min;
+      let preferenciaCabe = false;
+
+      if (horaPreferida !== null) {
+        const conPreferencia = Math.max(gap.inicio_min, horaPreferida);
+        if (conPreferencia + duracion <= gap.fin_max) {
+          inicioSlot = conPreferencia;
+          preferenciaCabe = true;
+        }
+      } else {
+        // Sin preferencia: todos los gaps son igual de válidos para este criterio
+        preferenciaCabe = true;
+      }
+
+      // Scoring: priorizar gaps donde la preferencia cabe.
+      // Si ninguno la cumple, elegir el más cercano a la preferencia o el más temprano.
+      const cabeBonus = preferenciaCabe ? 0 : 1000000;
+      const preferenciaScore = horaPreferida !== null ? Math.abs(inicioSlot - horaPreferida) : 0;
+      const score = cabeBonus + preferenciaScore + inicioSlot / 1440; // desempate por más temprano
+
+      if (score < mejorScore) {
+        mejorScore = score;
+        mejor = { inicio: inicioSlot, traslado_min: gap.traslado_min };
+        mejorPrefiere = preferenciaCabe;
+      }
+    }
+
+    if (!mejor) return null;
+
+    return {
+      hora_inicio:  toTimeStr(mejor.inicio),
+      hora_fin:     toTimeStr(mejor.inicio + duracion),
+      traslado_min: mejor.traslado_min,
+    };
+  }
+
+  /**
+   * Evalúa todos los técnicos elegibles para un trabajo individual.
+   * Retorna sugerencia principal + alternativas ordenadas por idoneidad.
+   * @param {WorkItemEnriquecido} workItem
+   * @param {Tecnico[]} tecnicos
+   * @returns {{ sugerencia, alternativas, sin_elegible, razon_sin_elegible }}
+   */
+  evaluarTecnicos(workItem, tecnicos) {
+    const elegibles = this.candidatosElegibles(workItem, tecnicos);
+
+    if (elegibles.length === 0) {
+      return {
+        sugerencia: null,
+        alternativas: [],
+        sin_elegible: true,
+        razon_sin_elegible: `Ningún técnico activo es elegible para tipo_trabajo '${workItem.tipo_trabajo}'.`,
+      };
+    }
+
+    const candidatos = [];
+    for (const tecnico of elegibles) {
+      const slot = this.calcularSlot(workItem, tecnico);
+      if (!slot) continue;
+
+      const cargaMin = tecnico.carga_preexistente?.minutos_comprometidos || 0;
+      candidatos.push({
+        trabajador_id:      tecnico.trabajador_id,
+        nombre:             tecnico.nombre,
+        apellido:           tecnico.apellido,
+        especialidad:       tecnico.especialidad,
+        hora_inicio:        slot.hora_inicio,
+        hora_fin:           slot.hora_fin,
+        traslado_min:       slot.traslado_min,
+        carga_previa_horas: Math.round((cargaMin / 60) * 10) / 10,
+        justificacion:      null,
+        _score: this._scoreSlot(slot, cargaMin, workItem),
+      });
+    }
+
+    if (candidatos.length === 0) {
+      return {
+        sugerencia: null,
+        alternativas: [],
+        sin_elegible: true,
+        razon_sin_elegible: 'No hay hueco disponible en la agenda de ningún técnico elegible para esa fecha.',
+      };
+    }
+
+    candidatos.sort((a, b) => a._score - b._score);
+    const [principal, ...alternativasRaw] = candidatos;
+    const alternativas = alternativasRaw.map(({ _score, ...rest }) => rest);
+    const { _score: _, ...sugerencia } = principal;
+
+    return { sugerencia, alternativas, sin_elegible: false, razon_sin_elegible: null };
+  }
+
+  _scoreSlot(slot, cargaMin, workItem) {
+    const horaPreferida = workItem.hora_preferida ? toMinutos(workItem.hora_preferida) : null;
+    const inicioSlot = toMinutos(slot.hora_inicio);
+    const penalizacionHora = horaPreferida !== null ? Math.abs(inicioSlot - horaPreferida) : 0;
+    // Incluir inicioSlot para desempatar técnicos con misma carga y traslado (preferir más temprano)
+    return penalizacionHora * 10 + slot.traslado_min + cargaMin / 60 + inicioSlot / 1440;
+  }
+
   // ─── Paso 7: Orquestar ───────────────────────────────────────────────────
 
   /**
