@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Trabajador, Programacion } = require('../../models');
+const { Trabajador, Programacion, Cliente } = require('../../models');
 
 /**
  * Servicio de técnicos: obtiene la lista de técnicos activos con su
@@ -27,10 +27,10 @@ class WorkerService {
 
     if (tecnicos.length === 0) return [];
 
-    // Obtener carga preexistente para cada técnico
+    // Obtener datos del día para cada técnico
     const tecnicoIds = tecnicos.map(t => t.trabajador_id);
 
-    const cargas = await this._obtenerCargaPreexistente(tecnicoIds, fechaInicio, fechaFin);
+    const { cargaMap, trabajosMap } = await this._obtenerDatosDelDia(tecnicoIds, fechaInicio, fechaFin);
 
     // Ensamblar resultado
     return tecnicos.map(t => ({
@@ -38,23 +38,24 @@ class WorkerService {
       nombre: t.nombre,
       apellido: t.apellido,
       especialidad: t.especialidad,
-      carga_preexistente: cargas.get(t.trabajador_id) || {
+      carga_preexistente: cargaMap.get(t.trabajador_id) || {
         trabajos_confirmados: 0,
         minutos_comprometidos: 0,
         ultima_hora_fin: null
-      }
+      },
+      trabajos_del_dia: trabajosMap.get(t.trabajador_id) || []
     }));
   }
 
   /**
-   * Calcula la carga preexistente para una lista de IDs de técnicos.
-   * Usa una query por técnico para manejar los 4 posibles slots (trabajador_id, tecnico2/3/4).
-   * @returns {Map<number, {trabajos_confirmados, minutos_comprometidos, ultima_hora_fin}>}
+   * Obtiene todas las programaciones del día para los técnicos dados.
+   * Retorna carga preexistente (resumen) y trabajos_del_dia (lista ordenada por hora).
+   * @returns {{ cargaMap: Map, trabajosMap: Map }}
    */
-  async _obtenerCargaPreexistente(ids, fechaInicio, fechaFin) {
-    const cargas = new Map();
+  async _obtenerDatosDelDia(ids, fechaInicio, fechaFin) {
+    const cargaMap = new Map();
+    const trabajosMap = new Map();
 
-    // Una sola query con OR para los 4 slots
     const programaciones = await Programacion.findAll({
       where: {
         [Op.and]: [
@@ -80,10 +81,16 @@ class WorkerService {
       attributes: [
         'trabajador_id', 'tecnico2_id', 'tecnico3_id', 'tecnico4_id',
         'fecha_inicio', 'fecha_fin'
+      ],
+      include: [
+        {
+          model: Cliente,
+          attributes: ['distrito'],
+          required: false
+        }
       ]
     });
 
-    // Agrupar por técnico (cada programacion puede involucrar hasta 4 técnicos)
     for (const p of programaciones) {
       const tecnicosInvolucrados = [
         p.trabajador_id,
@@ -92,33 +99,37 @@ class WorkerService {
         p.tecnico4_id
       ].filter(id => id !== null && ids.includes(id));
 
+      const inicio = new Date(p.fecha_inicio);
+      const fin = new Date(p.fecha_fin);
+      const duracion = Math.round((fin - inicio) / 60000);
+      const horaInicioStr = this._formatTime(inicio);
+      const horaFinStr = this._formatTime(fin);
+      const distrito = p.Cliente?.distrito || null;
+
       for (const tid of tecnicosInvolucrados) {
-        if (!cargas.has(tid)) {
-          cargas.set(tid, {
-            trabajos_confirmados: 0,
-            minutos_comprometidos: 0,
-            ultima_hora_fin: null
-          });
+        // Carga preexistente
+        if (!cargaMap.has(tid)) {
+          cargaMap.set(tid, { trabajos_confirmados: 0, minutos_comprometidos: 0, ultima_hora_fin: null });
         }
-
-        const carga = cargas.get(tid);
+        const carga = cargaMap.get(tid);
         carga.trabajos_confirmados++;
-
-        // Calcular duración en minutos
-        const inicio = new Date(p.fecha_inicio);
-        const fin = new Date(p.fecha_fin);
-        const duracion = Math.round((fin - inicio) / 60000); // ms → minutos
         carga.minutos_comprometidos += duracion;
-
-        // Registrar la hora más tardía de finalización
-        const horaFinStr = this._formatTime(fin);
         if (!carga.ultima_hora_fin || horaFinStr > carga.ultima_hora_fin) {
           carga.ultima_hora_fin = horaFinStr;
         }
+
+        // Trabajos del día (para cálculo de slots)
+        if (!trabajosMap.has(tid)) trabajosMap.set(tid, []);
+        trabajosMap.get(tid).push({ hora_inicio: horaInicioStr, hora_fin: horaFinStr, distrito });
       }
     }
 
-    return cargas;
+    // Ordenar trabajos por hora de inicio
+    for (const [, trabajos] of trabajosMap) {
+      trabajos.sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio));
+    }
+
+    return { cargaMap, trabajosMap };
   }
 
   _formatTime(date) {

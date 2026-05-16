@@ -2,8 +2,7 @@ const { DemandService } = require('../services/ia-scheduler/demand.service');
 const { WorkerService } = require('../services/ia-scheduler/worker.service');
 const { MotorService } = require('../services/ia-scheduler/motor.service');
 const { DistrictTimesService } = require('../services/ia-scheduler/district-times.service');
-const { sequelize } = require('../config/database');
-const { ConfiguracionIA, Trabajador, Programacion, RutaDiaria, DetalleRuta } = require('../models');
+const { ConfiguracionIA, Trabajador, Programacion } = require('../models');
 
 // ─── Inicialización lazy — servicios se cargan al primer uso ──────────────────
 let _districtTimes = null;
@@ -36,43 +35,18 @@ const getDemand = async (req, res, next) => {
 
     const fecha = req.query.fecha || fechaDefault;
 
-    // Validar formato
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
       return res.status(400).json({ error: 'Formato de fecha inválido. Use YYYY-MM-DD.' });
     }
 
     const districtTimes = await _getDistrictTimes();
     const { demandService } = _getServices(districtTimes);
-    const pool = await demandService.obtenerPool(fecha);
+    const trabajos = await demandService.obtenerContextoMantenimientos(fecha);
 
-    const porTipo = { mantenimiento: 0, reparacion: 0, inspeccion: 0, emergencia: 0 };
-    for (const w of pool) {
-      if (porTipo.hasOwnProperty(w.tipo_trabajo)) {
-        porTipo[w.tipo_trabajo]++;
-      }
-    }
-
-    return res.status(200).json({
-      fecha,
-      total: pool.length,
-      por_tipo: porTipo,
-      trabajos: pool.map(w => ({
-        mantenimiento_fijo_id: w.mantenimiento_fijo_id,
-        programacion_id: w.programacion_id,
-        fuente: w.fuente,
-        cliente_id: w.cliente_id,
-        nombre_cliente: w.nombre_cliente,
-        distrito: w.distrito,
-        tipo_trabajo: w.tipo_trabajo,
-        hora_preferida: w.hora_preferida,
-        tecnico_preferido_id: w.tecnico_preferido_id,
-        ascensor_id: w.ascensor_id,
-        tipo_equipo: w.tipo_equipo
-      }))
-    });
+    return res.status(200).json({ fecha, total: trabajos.length, trabajos });
   } catch (error) {
     console.error('[IA-Scheduler] Error en getDemand:', error.message);
-    return res.status(500).json({ error: 'Error al obtener demanda: ' + error.message });
+    return res.status(500).json({ error: 'Error al obtener contexto de mantenimientos: ' + error.message });
   }
 };
 
@@ -125,19 +99,20 @@ const getTecnicos = async (req, res, next) => {
 
 const generar = async (req, res, next) => {
   try {
-    const { fecha, tecnico_ids, instruccion_admin } = req.body;
+    const { fecha, trabajo: trabajoInput, tecnico_ids } = req.body;
 
     if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
       return res.status(400).json({ error: 'Formato de fecha inválido. Use YYYY-MM-DD.' });
     }
-
+    if (!trabajoInput || !trabajoInput.cliente_id || !trabajoInput.ascensor_id || !trabajoInput.tipo_trabajo) {
+      return res.status(400).json({ error: 'Body inválido: trabajo.cliente_id, trabajo.ascensor_id y trabajo.tipo_trabajo son obligatorios.' });
+    }
     if (!Array.isArray(tecnico_ids) || tecnico_ids.length === 0) {
       return res.status(400).json({ error: 'Debe proporcionar al menos un tecnico_id.' });
     }
 
     const districtTimes = await _getDistrictTimes();
 
-    // Bug 1 fix: leer ventana horaria desde ConfiguracionIA
     const configRows = await ConfiguracionIA.findAll({ where: { activo: true } });
     const primerConfig = configRows[0];
     const motorConfig = {
@@ -147,26 +122,38 @@ const generar = async (req, res, next) => {
 
     const { demandService, workerService, motorService } = _getServices(districtTimes, motorConfig);
 
-    // 1. Pool de demanda
-    const pool = await demandService.obtenerPool(fecha);
-    if (pool.length === 0) {
-      return res.status(400).json({ error: 'No hay trabajos pendientes para la fecha seleccionada.' });
+    // 1. Enriquecer el trabajo con datos del equipo/cliente/config
+    let workItem;
+    try {
+      workItem = await demandService.enriquecerTrabajo(trabajoInput);
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
     }
 
-    // 2. Técnicos
+    // 2. Técnicos con agenda del día incluida
     const tecnicos = await workerService.obtenerTecnicos(tecnico_ids, fecha);
     if (tecnicos.length === 0) {
       return res.status(400).json({ error: 'Los tecnico_ids proporcionados no existen o están inactivos.' });
     }
 
-    // 3. Motor
-    const propuestaMotor = motorService.generarPropuesta(pool, tecnicos, fecha);
+    // 3. Motor: evaluar todos los técnicos para este trabajo
+    const resultado = motorService.evaluarTecnicos(workItem, tecnicos);
 
-    // Fase 1: devolver propuesta del motor directamente (sin LLM aún)
-    return res.status(200).json(propuestaMotor);
+    return res.status(200).json({
+      fecha,
+      generado_en:       new Date().toISOString(),
+      origen:            'motor',
+      trabajo:           workItem,
+      sugerencia:        resultado.sugerencia,
+      alternativas:      resultado.alternativas,
+      sin_elegible:      resultado.sin_elegible,
+      razon_sin_elegible: resultado.razon_sin_elegible,
+      notas_llm:         null,
+      advertencias:      null,
+    });
   } catch (error) {
     console.error('[IA-Scheduler] Error en generar:', error.message);
-    return res.status(500).json({ error: 'Error al generar propuesta: ' + error.message });
+    return res.status(500).json({ error: 'Error al generar sugerencia: ' + error.message });
   }
 };
 
@@ -256,148 +243,39 @@ const updateConfiguracion = async (req, res, next) => {
 
 const confirmar = async (req, res, next) => {
   try {
-    const { fecha, propuesta } = req.body;
+    const { fecha, trabajo, tecnico_id, mantenimiento_fijo_id } = req.body;
 
-    if (!fecha || !propuesta || !propuesta.tecnicos) {
-      return res.status(400).json({ error: 'Body inválido: fecha y propuesta son obligatorios.' });
-    }
-
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+    if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
       return res.status(400).json({ error: 'Formato de fecha inválido. Use YYYY-MM-DD.' });
     }
-
-    // Abrir transacción
-    const transaction = await sequelize.transaction();
-    let programacionesCreadas = 0;
-    let programacionesActualizadas = 0;
-
-    try {
-      for (const tecnico of propuesta.tecnicos) {
-        // 3.3-3.4: Por cada trabajo, INSERT o UPDATE Programacion
-        for (const trabajo of tecnico.trabajos) {
-          let programacionId;
-
-          if (trabajo.programacion_id === null) {
-            // Viene de MantenimientoFijo → crear Programacion nueva
-            const nueva = await Programacion.create({
-              titulo:                `Mantenimiento - ${trabajo.nombre_cliente}`,
-              fecha_inicio:          `${fecha}T${trabajo.hora_inicio}:00-05:00`,
-              fecha_fin:             `${fecha}T${trabajo.hora_fin}:00-05:00`,
-              trabajador_id:         tecnico.trabajador_id,
-              cliente_id:            trabajo.cliente_id,
-              ascensor_id:           trabajo.ascensor_id,
-              tipo_trabajo:          trabajo.tipo_trabajo,
-              estado:                'pendiente',
-              mantenimiento_fijo_id: trabajo.mantenimiento_fijo_id,
-              descripcion:           trabajo.justificacion || null
-            }, { transaction });
-            programacionId = nueva.programacion_id;
-            programacionesCreadas++;
-          } else {
-            // Programacion existente → optimistic locking + UPDATE
-            const existente = await Programacion.findByPk(trabajo.programacion_id, { transaction });
-
-            if (!existente) {
-              throw { status: 404, message: `La Programacion ${trabajo.programacion_id} no existe.` };
-            }
-
-            // 3.10: Optimistic locking — detectar cualquier modificación via timestamp
-            const tsExistente = existente.fecha_actualizacion?.getTime();
-            const tsRecibido = trabajo.fecha_actualizacion
-              ? new Date(trabajo.fecha_actualizacion).getTime()
-              : null;
-            if (tsRecibido === null || tsExistente !== tsRecibido) {
-              throw {
-                status: 409,
-                message: `La Programacion ${trabajo.programacion_id} fue modificada mientras revisabas la propuesta. Regenerá la propuesta.`
-              };
-            }
-
-            await Programacion.update({
-              trabajador_id: tecnico.trabajador_id,
-              fecha_inicio:  `${fecha}T${trabajo.hora_inicio}:00-05:00`,
-              fecha_fin:     `${fecha}T${trabajo.hora_fin}:00-05:00`,
-              descripcion:   trabajo.justificacion || null
-            }, {
-              where: { programacion_id: trabajo.programacion_id },
-              transaction
-            });
-            programacionId = trabajo.programacion_id;
-            programacionesActualizadas++;
-          }
-
-          // Guardar programacion_id resuelto para DetalleRuta
-          trabajo._programacion_id_resuelto = programacionId;
-        }
-
-        // 3.5: UPSERT RutaDiaria por técnico
-        const [ruta, created] = await RutaDiaria.findOrCreate({
-          where: {
-            trabajador_id: tecnico.trabajador_id,
-            fecha_ruta: fecha
-          },
-          defaults: {
-            numero_paradas: tecnico.trabajos.length,
-            hora_inicio: tecnico.trabajos[0]?.hora_inicio || null,
-            hora_fin: tecnico.trabajos[tecnico.trabajos.length - 1]?.hora_fin || null,
-            estado_ruta: 'planificada'
-          },
-          transaction
-        });
-
-        // Si ya existía, actualizar
-        if (!created) {
-          await ruta.update({
-            numero_paradas: tecnico.trabajos.length,
-            hora_inicio: tecnico.trabajos[0]?.hora_inicio || null,
-            hora_fin: tecnico.trabajos[tecnico.trabajos.length - 1]?.hora_fin || null,
-            estado_ruta: 'planificada'
-          }, { transaction });
-        }
-
-        // 3.6-3.7: DELETE old DetalleRuta + INSERT new ones
-        await DetalleRuta.destroy({
-          where: { ruta_id: ruta.ruta_id },
-          transaction
-        });
-
-        for (let i = 0; i < tecnico.trabajos.length; i++) {
-          const trabajo = tecnico.trabajos[i];
-          await DetalleRuta.create({
-            ruta_id:          ruta.ruta_id,
-            programacion_id:  trabajo._programacion_id_resuelto,
-            orden_parada:     i + 1,
-            hora_llegada:     trabajo.hora_inicio,
-            hora_salida:      trabajo.hora_fin,
-            cliente_id:       trabajo.cliente_id   || null,
-            ascensor_id:      trabajo.ascensor_id  || null
-          }, { transaction });
-        }
-      }
-
-      // 3.8: Commit
-      await transaction.commit();
-
-      return res.status(200).json({
-        ok: true,
-        programaciones_creadas: programacionesCreadas,
-        programaciones_actualizadas: programacionesActualizadas,
-        rutas_generadas: propuesta.tecnicos.length
-      });
-    } catch (err) {
-      // 3.9: Rollback
-      await transaction.rollback();
-
-      // Si es un error con status personalizado (409, 404), devolverlo
-      if (err.status) {
-        return res.status(err.status).json({ error: err.message });
-      }
-
-      throw err;
+    if (!trabajo || !trabajo.cliente_id || !trabajo.ascensor_id || !trabajo.tipo_trabajo || !trabajo.hora_inicio || !trabajo.hora_fin) {
+      return res.status(400).json({ error: 'Body inválido: trabajo.cliente_id, ascensor_id, tipo_trabajo, hora_inicio y hora_fin son obligatorios.' });
     }
+    if (!tecnico_id) {
+      return res.status(400).json({ error: 'tecnico_id es obligatorio.' });
+    }
+
+    const tipo = trabajo.tipo_trabajo;
+    const titulo = `${tipo.charAt(0).toUpperCase()}${tipo.slice(1)}` +
+      (trabajo.nombre_cliente ? ` - ${trabajo.nombre_cliente}` : '');
+
+    const nueva = await Programacion.create({
+      titulo,
+      fecha_inicio:          `${fecha}T${trabajo.hora_inicio}:00-05:00`,
+      fecha_fin:             `${fecha}T${trabajo.hora_fin}:00-05:00`,
+      trabajador_id:         tecnico_id,
+      cliente_id:            trabajo.cliente_id,
+      ascensor_id:           trabajo.ascensor_id,
+      tipo_trabajo:          trabajo.tipo_trabajo,
+      estado:                'pendiente',
+      mantenimiento_fijo_id: mantenimiento_fijo_id || null,
+      descripcion:           trabajo.justificacion || null,
+    });
+
+    return res.status(200).json({ ok: true, programacion_id: nueva.programacion_id });
   } catch (error) {
     console.error('[IA-Scheduler] Error en confirmar:', error.message);
-    return res.status(500).json({ error: 'Error al confirmar propuesta: ' + error.message });
+    return res.status(500).json({ error: 'Error al confirmar: ' + error.message });
   }
 };
 

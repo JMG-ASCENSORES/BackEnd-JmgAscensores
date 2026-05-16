@@ -199,6 +199,66 @@ class DemandService {
     }));
   }
 
+  // ─── Enriquecimiento de trabajo individual ────────────────────────────────
+
+  /**
+   * Enriquece un trabajo ad-hoc con datos de Ascensor, Cliente y ConfiguracionIA.
+   * @param {{ cliente_id, ascensor_id, tipo_trabajo, hora_preferida }} trabajoInput
+   * @returns {WorkItemEnriquecido}
+   */
+  async enriquecerTrabajo(trabajoInput) {
+    const { cliente_id, ascensor_id, tipo_trabajo, hora_preferida } = trabajoInput;
+
+    const ascensor = await Ascensor.findOne({
+      where: { ascensor_id },
+      attributes: ['ascensor_id', 'tipo_equipo', 'marca', 'modelo'],
+      include: [{
+        model: Cliente,
+        where: { cliente_id, estado_activo: true },
+        attributes: ['cliente_id', 'nombre_comercial', 'distrito']
+      }]
+    });
+
+    if (!ascensor || !ascensor.Cliente) {
+      throw new Error('Equipo o cliente no encontrado, o el cliente está inactivo.');
+    }
+
+    const config = await ConfiguracionIA.findOne({ where: { tipo_trabajo, activo: true } });
+
+    return {
+      cliente_id: ascensor.Cliente.cliente_id,
+      ascensor_id: ascensor.ascensor_id,
+      nombre_cliente: ascensor.Cliente.nombre_comercial,
+      distrito: ascensor.Cliente.distrito,
+      tipo_equipo: ascensor.tipo_equipo,
+      marca: ascensor.marca || null,
+      tipo_trabajo,
+      duracion_min: config?.duracion_min ?? 60,
+      hora_preferida: hora_preferida || null,
+    };
+  }
+
+  // ─── Contexto de mantenimientos vencidos (para panel informativo) ─────────
+
+  /**
+   * Devuelve los mantenimientos vencidos para la fecha — solo los campos del panel.
+   * @param {string} fechaObjetivo — 'YYYY-MM-DD'
+   * @returns {MantenimientoVencido[]}
+   */
+  async obtenerContextoMantenimientos(fechaObjetivo) {
+    const fuenteA = await this.obtenerFuenteA(fechaObjetivo);
+    return fuenteA.map(item => ({
+      mantenimiento_fijo_id: item.mantenimiento_fijo_id,
+      ascensor_id: item.ascensor_id,
+      cliente_id: item.cliente_id,
+      nombre_cliente: item.nombre_cliente,
+      distrito: item.distrito,
+      tipo_equipo: item.tipo_equipo,
+      tipo_trabajo: item.tipo_trabajo,
+      hora_preferida: item.hora_preferida,
+    }));
+  }
+
   // ─── Orquestador ──────────────────────────────────────────────────────────
 
   /**

@@ -4,9 +4,9 @@ const authenticate = require('../middlewares/auth.middleware');
 const authorize = require('../middlewares/authorize.middleware');
 const controller = require('../controllers/ia-scheduler.controller');
 
-// Todos los endpoints requieren autenticación + rol Administrador
+// Todos los endpoints requieren autenticación + rol ADMIN
 router.use(authenticate);
-router.use(authorize('Administrador'));
+router.use(authorize('ADMIN'));
 
 router.get('/demand', controller.getDemand);
 router.get('/tecnicos', controller.getTecnicos);
