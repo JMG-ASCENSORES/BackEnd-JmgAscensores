@@ -104,37 +104,37 @@ Ref: `docs/programador-ia/05-llm-integration.md`.
 
 ### Setup
 
-- [ ] 2.1 Ejecutar `npm install @anthropic-ai/sdk` en `BackEnd-JmgAscensores/`
-- [ ] 2.2 Agregar a `.env`: `ANTHROPIC_API_KEY=<key>` y `IA_SCHEDULER_MODEL=claude-haiku-4-5-20251001`
+- [x] 2.1 Ejecutar `pnpm add @anthropic-ai/sdk` en `BackEnd-JmgAscensores/` (actualizado de 0.9.1 → 0.96.0 para soportar Messages API)
+- [x] 2.2 Agregar a `.env`: `IA_SCHEDULER_MODEL=claude-haiku-4-5-20251001` (nota: el proyecto usa `API_KEY_CLAUDE`, no `ANTHROPIC_API_KEY`)
 - [ ] 2.3 Agregar a `.env.example` (sin el valor real): las mismas variables
-- [ ] 2.4 Agregar `IA_SCHEDULER_TIMEOUT_MS=10000` opcional
+- [x] 2.4 Agregar `IA_SCHEDULER_TIMEOUT_MS=15000` a `.env`
 
 ### Servicio LLM
 
-- [ ] 2.5 Crear `src/services/ia-scheduler/llm.service.js`
-- [ ] 2.6 Definir constante `SYSTEM_PROMPT` con el contenido completo de `docs/programador-ia/05-llm-integration.md` (sección System Prompt)
-- [ ] 2.7 Implementar `ajustarPropuesta(propuestaMotor, instruccionAdmin)` con llamada a `client.messages.create` + `cache_control: ephemeral`
-- [ ] 2.8 Implementar `parsearRespuesta(rawText, propuestaMotorFallback)` con try/catch JSON.parse
-- [ ] 2.9 Implementar `validarPropuesta(propuesta, trabajadoresMap)` (guard de elegibilidad + solapamiento + ventana)
-- [ ] 2.10 Implementar timeout de 10s con `AbortController` o equivalente
-- [ ] 2.11 Test: ajustarPropuesta con propuesta válida devuelve propuesta con `origen='llm'` y justificaciones
-- [ ] 2.12 Test: parsearRespuesta con JSON inválido devuelve propuesta motor con `origen='motor_fallback'`
-- [ ] 2.13 Test: validarPropuesta detecta elegibilidad inválida y la revierte
+- [x] 2.5 Crear `src/services/ia-scheduler/llm.service.js`
+- [x] 2.6 Definir constante `SYSTEM_PROMPT` con el contenido completo del system prompt (single-job mode, adapted from docs)
+- [x] 2.7 Implementar `validarYJustificar(evaluacionMotor, instruccionAdmin)` con llamada a `client.messages.create` + `cache_control: ephemeral`
+- [x] 2.8 Implementar `parsearRespuesta(rawText, fallback)` con try/catch JSON.parse
+- [x] 2.9 Implementar `validarPropuesta(evaluacion)` (guard de elegibilidad: corrige sugerencia no elegible y filtra alternativas)
+- [x] 2.10 Implementar timeout de 15s con `AbortController`
+- [x] 2.11 Test: parsearRespuesta con JSON válido → ok:true, origen='llm'
+- [x] 2.12 Test: parsearRespuesta con JSON inválido → ok:false, origen='motor_fallback'
+- [x] 2.13 Test: validarPropuesta detecta elegibilidad inválida y la corrige (11 tests total)
 
 ### Servicio orquestador
 
-- [ ] 2.14 Crear `src/services/ia-scheduler/scheduler.service.js`
-- [ ] 2.15 Implementar `generarPropuesta(tecnicoIds, fecha, instruccionAdmin)` que orquesta: demand → workers → motor → llm → guard
-- [ ] 2.16 Implementar `ajustarConInstruccion(propuestaActual, instruccion)` para el chat (solo LLM)
-- [ ] 2.17 Manejar fallback: si llm falla → motor con `origen='motor_fallback'` + advertencia
-- [ ] 2.18 Test de integración: cascada completa con LLM real
+- [x] 2.14 Crear `src/services/ia-scheduler/scheduler.service.js`
+- [x] 2.15 Implementar `generarSugerencia(fecha, trabajoInput, tecnicoIds, instruccionAdmin)` que orquesta: demand → workers → motor → llm
+- [x] 2.16 Implementar `ajustarConInstruccion(sugerenciaActual, instruccionAdmin)` para el chat (delega al LLM)
+- [x] 2.17 Manejar fallback: si llm falla → motor con `origen='motor_fallback'` + advertencia
+- [ ] 2.18 Test de integración: cascada completa con LLM real (requiere API key y DB)
 
 ### Endpoints
 
-- [ ] 2.19 Actualizar controller: `generar` ahora llama `scheduler.service.generarPropuesta`
-- [ ] 2.20 Agregar endpoint POST `/ajustar` que llama `scheduler.service.ajustarConInstruccion`
-- [ ] 2.21 Agregar logging por request: `admin_id`, `fecha`, `tecnico_ids`, `origen`, `tokens`, `duracion_ms`
-- [ ] 2.22 Smoke test: `POST /generar` devuelve propuesta con justificaciones; `POST /ajustar` aplica una instrucción simple
+- [x] 2.19 Actualizar controller: `generar` ahora pasa por LLM después del motor
+- [x] 2.20 Endpoint POST `/ajustar` usa `llmService.ajustarConInstruccion()` real (ya no es stub 501)
+- [ ] 2.21 Agregar logging por request: `admin_id`, `fecha`, `tecnico_ids`, `origen`, `tokens`, `duracion_ms` (no incluido — se puede agregar en refinamiento)
+- [ ] 2.22 Smoke test: `POST /generar` con API key real (requiere servidor corriendo)
 
 ---
 

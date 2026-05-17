@@ -1,6 +1,8 @@
 const { DemandService } = require('../services/ia-scheduler/demand.service');
 const { WorkerService } = require('../services/ia-scheduler/worker.service');
 const { MotorService } = require('../services/ia-scheduler/motor.service');
+const { LLMService } = require('../services/ia-scheduler/llm.service');
+const { SchedulerService } = require('../services/ia-scheduler/scheduler.service');
 const { DistrictTimesService } = require('../services/ia-scheduler/district-times.service');
 const { ConfiguracionIA, Trabajador, Programacion, RutaDiaria, DetalleRuta, sequelize } = require('../models');
 
@@ -9,6 +11,7 @@ let _districtTimes = null;
 let _demandService = null;
 let _workerService = null;
 let _motorService = null;
+let _llmService = null;
 
 async function _getDistrictTimes() {
   if (!_districtTimes) {
@@ -22,7 +25,8 @@ function _getServices(districtTimes, motorConfig = {}) {
   if (!_demandService) _demandService = new DemandService();
   if (!_workerService) _workerService = new WorkerService();
   if (!_motorService) _motorService = new MotorService(districtTimes, motorConfig);
-  return { demandService: _demandService, workerService: _workerService, motorService: _motorService };
+  if (!_llmService) _llmService = new LLMService();
+  return { demandService: _demandService, workerService: _workerService, motorService: _motorService, llmService: _llmService };
 }
 
 // ─── GET /api/ia-scheduler/demand ──────────────────────────────────────────────
@@ -147,7 +151,7 @@ const generar = async (req, res, next) => {
       hora_fin_limite:     primerConfig ? String(primerConfig.hora_fin_limite).substring(0, 5)     : '18:30'
     };
 
-    const { demandService, workerService, motorService } = _getServices(districtTimes, motorConfig);
+    const { demandService, workerService, motorService, llmService } = _getServices(districtTimes, motorConfig);
 
     // 1. Enriquecer el trabajo con datos del equipo/cliente/config
     let workItem;
@@ -166,17 +170,43 @@ const generar = async (req, res, next) => {
     // 3. Motor: evaluar todos los técnicos para este trabajo
     const resultado = motorService.evaluarTecnicos(workItem, tecnicos);
 
-    return res.status(200).json({
+    const evaluacionMotor = {
       fecha,
-      generado_en:       new Date().toISOString(),
-      origen:            'motor',
-      trabajo:           workItem,
-      sugerencia:        resultado.sugerencia,
-      alternativas:      resultado.alternativas,
-      sin_elegible:      resultado.sin_elegible,
+      generado_en: new Date().toISOString(),
+      origen: 'motor',
+      trabajo: workItem,
+      sugerencia: resultado.sugerencia,
+      alternativas: resultado.alternativas,
+      sin_elegible: resultado.sin_elegible,
       razon_sin_elegible: resultado.razon_sin_elegible,
-      notas_llm:         null,
-      advertencias:      null,
+      notas_llm: null,
+      advertencias: null,
+    };
+
+    // 4. LLM: validación, justificaciones y reordenamiento
+    let evaluacionFinal;
+    try {
+      const { ok, evaluacion } = await llmService.validarYJustificar(
+        evaluacionMotor,
+        req.body.instruccion_admin || null
+      );
+      evaluacionFinal = evaluacion;
+      // Si el LLM falló y hay sugerencia del motor, preservamos las notas_llm y advertencias originales
+      if (!ok && evaluacionFinal.origen === 'motor_fallback') {
+        evaluacionFinal.notas_llm = `LLM no disponible: ${evaluacion.error || 'error desconocido'}`;
+      }
+    } catch (llmError) {
+      // Si el LLM lanza una excepción inesperada, usamos el motor directamente
+      console.error('[IA-Scheduler] LLM falló inesperadamente:', llmError.message);
+      evaluacionFinal = {
+        ...evaluacionMotor,
+        notas_llm: `LLM error: ${llmError.message}`,
+      };
+    }
+
+    return res.status(200).json({
+      ...evaluacionFinal,
+      llm_model: process.env.IA_SCHEDULER_MODEL || 'claude-haiku-4-5-20251001',
     });
   } catch (error) {
     console.error('[IA-Scheduler] Error en generar:', error.message);
@@ -187,7 +217,39 @@ const generar = async (req, res, next) => {
 // ─── POST /api/ia-scheduler/ajustar ────────────────────────────────────────────
 
 const ajustar = async (req, res, next) => {
-  return res.status(501).json({ error: 'Endpoint pendiente de implementación (Fase 2 — requiere ANTHROPIC_API_KEY).' });
+  try {
+    const { evaluacion_actual, instruccion_admin } = req.body;
+
+    if (!evaluacion_actual || !instruccion_admin) {
+      return res.status(400).json({
+        error: 'Body inválido: evaluacion_actual e instruccion_admin son obligatorios.',
+      });
+    }
+
+    const districtTimes = await _getDistrictTimes();
+    const { llmService } = _getServices(districtTimes);
+
+    const { ok, evaluacion, error } = await llmService.ajustarConInstruccion(
+      evaluacion_actual,
+      instruccion_admin
+    );
+
+    if (!ok) {
+      return res.status(200).json({
+        ...evaluacion,
+        llm_model: process.env.IA_SCHEDULER_MODEL || 'claude-haiku-4-5-20251001',
+        advertencia: `LLM no disponible, usando fallback del motor: ${error}`,
+      });
+    }
+
+    return res.status(200).json({
+      ...evaluacion,
+      llm_model: process.env.IA_SCHEDULER_MODEL || 'claude-haiku-4-5-20251001',
+    });
+  } catch (error) {
+    console.error('[IA-Scheduler] Error en ajustar:', error.message);
+    return res.status(500).json({ error: 'Error al ajustar sugerencia: ' + error.message });
+  }
 };
 
 // ─── GET /api/ia-scheduler/configuracion ───────────────────────────────────────
