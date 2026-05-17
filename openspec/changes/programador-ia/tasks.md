@@ -226,14 +226,14 @@ Ref: `docs/programador-ia/08-frontend-ux.md` (secciones Timeline y Footer).
 
 Ref: `docs/programador-ia/08-frontend-ux.md` (sección Chat).
 
-- [ ] 6.1 Crear `ai-scheduler-chat.component.ts` con input + botón enviar
-- [ ] 6.2 Implementar Signal `chatMessages` y `adjusting`
-- [ ] 6.3 Enter en el input dispara envío
-- [ ] 6.4 Al enviar: llamar `iaSchedulerService.ajustar({ propuesta_actual, instruccion })`
-- [ ] 6.5 Actualizar `propuestaActual` Signal con la nueva respuesta (timeline se re-renderiza reactivamente)
-- [ ] 6.6 Mensajes del chat se muestran como burbujas (user a la derecha, sistema a la izquierda)
-- [ ] 6.7 Spinner "Ajustando..." durante la llamada
-- [ ] 6.8 Manejo de error: si el ajuste falla, mostrar mensaje en el chat y mantener la propuesta anterior
+- [x] 6.1 Crear `ai-scheduler-chat.component.ts` con input + botón enviar
+- [x] 6.2 Implementar Signal `chatMessages` y `adjusting`
+- [x] 6.3 Enter en el input dispara envío
+- [x] 6.4 Al enviar: llamar `iaSchedulerService.ajustar({ propuesta_actual, instruccion })`
+- [x] 6.5 Actualizar `propuestaActual` Signal con la nueva respuesta (timeline se re-renderiza reactivamente)
+- [x] 6.6 Mensajes del chat se muestran como burbujas (user a la derecha, sistema a la izquierda)
+- [x] 6.7 Spinner "Ajustando..." durante la llamada
+- [x] 6.8 Manejo de error: si el ajuste falla, mostrar mensaje en el chat y mantener la propuesta anterior
 
 ---
 
