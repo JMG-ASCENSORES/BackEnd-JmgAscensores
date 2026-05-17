@@ -31,7 +31,7 @@ Sistema de gestión de mantenimientos de ascensores desarrollado con Node.js, Ex
 
 - Node.js 18+
 - PostgreSQL 12+
-- npm o yarn
+- pnpm 11+ (`npm install -g pnpm`)
 
 ## 🔧 Instalación
 
@@ -44,14 +44,14 @@ cd Back---JMG
 2. **Instalar dependencias**
 
 ```bash
-npm install
+pnpm install
 ```
 
-Si hay problemas con npm, instalar manualmente:
+Si es la primera vez que usás pnpm, instalarlo globalmente:
 
 ```bash
-npm install bcryptjs jsonwebtoken joi multer axios pdfkit express-rate-limit
-npm install @anthropic-ai/sdk twilio
+npm install -g pnpm
+pnpm install
 ```
 
 3. **Configurar variables de entorno**
@@ -90,10 +90,10 @@ CREATE DATABASE jmg_ascensores;
 
 ```bash
 # Desarrollo
-npm run dev
+pnpm dev
 
 # Producción
-npm start
+pnpm start
 ```
 
 ## 📚 API Endpoints

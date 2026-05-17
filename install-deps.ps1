@@ -23,7 +23,7 @@ $optionalDeps = @(
 Write-Host "`nInstalando dependencias principales..." -ForegroundColor Yellow
 foreach ($dep in $dependencies) {
     Write-Host "Instalando $dep..." -ForegroundColor Cyan
-    npm install $dep
+    pnpm add $dep
 }
 
 Write-Host "`n¿Deseas instalar dependencias opcionales (Claude AI y Twilio)? (S/N)" -ForegroundColor Yellow
@@ -33,9 +33,9 @@ if ($response -eq "S" -or $response -eq "s") {
     Write-Host "`nInstalando dependencias opcionales..." -ForegroundColor Yellow
     foreach ($dep in $optionalDeps) {
         Write-Host "Instalando $dep..." -ForegroundColor Cyan
-        npm install $dep
+        pnpm add $dep
     }
 }
 
 Write-Host "`n✅ Instalación completada!" -ForegroundColor Green
-Write-Host "Ejecuta 'npm run dev' para iniciar el servidor" -ForegroundColor Green
+Write-Host "Ejecuta 'pnpm dev' para iniciar el servidor" -ForegroundColor Green
