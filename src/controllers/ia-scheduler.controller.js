@@ -134,9 +134,6 @@ const generar = async (req, res, next) => {
         return res.status(400).json({ error: 'No hay técnicos activos en el sistema.' });
       }
     }
-    if (ids.length > 10) {
-      return res.status(400).json({ error: `Se permite un máximo de 10 técnicos por evaluación. Recibidos: ${ids.length}. Especificá un subconjunto.` });
-    }
     if (trabajoInput.hora_preferida && !/^\d{2}:\d{2}$/.test(trabajoInput.hora_preferida)) {
       return res.status(400).json({ error: 'Formato de hora_preferida inválido. Use HH:MM.' });
     }
