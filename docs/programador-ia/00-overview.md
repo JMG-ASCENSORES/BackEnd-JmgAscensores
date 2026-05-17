@@ -129,25 +129,26 @@ No hay "pool de demanda" — la demanda es el trabajo que el admin acaba de defi
 
 ## Estado de la implementación
 
-- [x] Fase 0: Migraciones de base de datos — 15/15 tasks, PostgreSQL en Render
-- [x] Fase 1: Motor determinista (backend) — 38/38 tasks, 71 tests, 4 servicios (modo batch — requiere adaptación a modo single-job)
-- [ ] Fase 2: Integración LLM (cascada)
-- [x] Fase 3: Endpoint /confirmar — 12/12 tasks, INSERT/UPDATE transaccionales, optimistic locking
-- [x] Fase 4: Frontend — componente base + selector — implementado en modo batch, requiere redesign a formulario
-- [ ] Fase 4R: Redesign frontend a formulario individual (reemplaza Fase 4 completada)
-- [ ] Fase 5: Frontend — panel de sugerencia + alternativas
-- [ ] Fase 6: Frontend — chat de ajustes
-- [ ] Fase 7: Testing y ajuste de prompts
+- [x] Fase 0: Migraciones de base de datos — PostgreSQL en Render, 400 distritos, ConfiguracionIA
+- [x] Fase 1: Motor determinista — single-job mode, calcularSlot + evaluarTecnicos
+- [x] Fase 2: Integración LLM — Claude Haiku 4.5, prompt caching, guard de elegibilidad
+- [x] Fase 3: Endpoint /confirmar — transacción atómica, RutaDiaria, DetalleRuta
+- [x] Fase 4R: Frontend formulario — cliente, ascensor, tipo, hora preferida
+- [x] Fase 5: Panel de sugerencia — sugerencia principal + alternativas + confirmar
+- [x] Fase 6: Chat de ajustes — lenguaje natural vía Claude
+- [x] Fase 7: Testing — 94 tests en 9 suites
 
-### Implementación completada
+### ✅ IMPLEMENTACIÓN COMPLETA
 
 | Componente | Archivos | Descripción |
 |---|---|---|
 | Modelos | `ConfiguracionIA.js`, `TablaDistritoLima.js` | 2 tablas nuevas + seeds |
 | Schema | `DetalleRuta.js` (+2 cols), `models/index.js` | FK a Programaciones |
-| Servicios | `demand`, `worker`, `district-times`, `motor` | Carga preexistente + algoritmo |
-| API | `ia-scheduler.controller.js`, `routes` | 5 endpoints protegidos |
-| Tests | 5 suites, 71 tests | Unitarios + integración + smoke |
+| Motor | `motor.service.js` | calcularSlot, evaluarTecnicos, nearest-neighbor |
+| LLM | `llm.service.js`, `scheduler.service.js` | Claude Haiku + fallback + guard |
+| API | `controller`, `routes` | 6 endpoints: demand, tecnicos, generar, ajustar, confirmar, config |
+| Frontend | 5 componentes standalone | Form, suggestion, demand-context, chat, root |
+| Tests | 9 suites, 94 tests | Unitarios + integración + E2E + smoke |
 | Migraciones | `scripts/migrations/`, `scripts/seeds/` | PostgreSQL adaptado |
 
 Ver plan completo en `10-implementation-phases.md`.

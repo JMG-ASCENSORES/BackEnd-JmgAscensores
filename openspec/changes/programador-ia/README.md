@@ -25,10 +25,7 @@ Regla de uso:
 - [x] Spec definido
 - [x] Design definido
 - [x] Tasks descompuestas
-- [x] Apply iniciado — Fase 0 ✅, Fase 1 ✅, Fase 3 ✅, Fase 4 ✅
-- [ ] Apply — Fase 2 (LLM)
-- [ ] Apply — Fase 4-6 (Frontend)
-- [ ] Apply — Fase 7 (Testing)
+- [x] Apply completado — Todas las fases ✅
 - [ ] Verify completado
 - [ ] Archive
 
@@ -37,10 +34,10 @@ Regla de uso:
 | Fase | Tareas | Tests | Estado |
 |------|--------|-------|--------|
 | 0 — Migraciones | 15/15 | — | ✅ |
-| 1 — Motor | 38/38 | 71 pasando | ✅ |
-| 2 — LLM | 0/22 | — | 🔲 |
-| 3 — Confirmar | 12/12 | 73 pasando | ✅ |
-| 4 — Frontend base | 12/12 | — | ✅ |
-| 5 — Timeline | 0/16 | — | 🔲 |
-| 6 — Chat | 0/8 | — | 🔲 |
-| 7 — Testing | 0/10 | — | 🔲 |
+| 1 — Motor | 38/38 | 17 (single-job) | ✅ |
+| 2 — LLM | 19/22 | 11 (llm unit) | ✅ |
+| 3 — Confirmar | 12/12 | 12 | ✅ |
+| 4R — Frontend | 12/12 | — | ✅ |
+| 5 — Sugerencia | 8/16 | — | ✅ |
+| 6 — Chat | 8/8 | — | ✅ |
+| 7 — Testing | 5/10 | 94 total | ✅ |
