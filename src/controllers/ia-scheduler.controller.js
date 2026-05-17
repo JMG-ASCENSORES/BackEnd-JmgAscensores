@@ -2,7 +2,6 @@ const { DemandService } = require('../services/ia-scheduler/demand.service');
 const { WorkerService } = require('../services/ia-scheduler/worker.service');
 const { MotorService } = require('../services/ia-scheduler/motor.service');
 const { LLMService } = require('../services/ia-scheduler/llm.service');
-const { SchedulerService } = require('../services/ia-scheduler/scheduler.service');
 const { DistrictTimesService } = require('../services/ia-scheduler/district-times.service');
 const { ConfiguracionIA, Trabajador, Programacion, RutaDiaria, DetalleRuta, sequelize } = require('../models');
 
@@ -162,7 +161,7 @@ const generar = async (req, res, next) => {
     }
 
     // 2. Técnicos con agenda del día incluida
-    const tecnicos = await workerService.obtenerTecnicos(tecnico_ids, fecha);
+    const tecnicos = await workerService.obtenerTecnicos(ids, fecha);
     if (tecnicos.length === 0) {
       return res.status(400).json({ error: 'Los tecnico_ids proporcionados no existen o están inactivos.' });
     }
@@ -186,14 +185,13 @@ const generar = async (req, res, next) => {
     // 4. LLM: validación, justificaciones y reordenamiento
     let evaluacionFinal;
     try {
-      const { ok, evaluacion } = await llmService.validarYJustificar(
+      const { ok, evaluacion, error: llmError } = await llmService.validarYJustificar(
         evaluacionMotor,
         req.body.instruccion_admin || null
       );
       evaluacionFinal = evaluacion;
-      // Si el LLM falló y hay sugerencia del motor, preservamos las notas_llm y advertencias originales
       if (!ok && evaluacionFinal.origen === 'motor_fallback') {
-        evaluacionFinal.notas_llm = `LLM no disponible: ${evaluacion.error || 'error desconocido'}`;
+        evaluacionFinal.notas_llm = `LLM no disponible: ${llmError || 'error desconocido'}`;
       }
     } catch (llmError) {
       // Si el LLM lanza una excepción inesperada, usamos el motor directamente
