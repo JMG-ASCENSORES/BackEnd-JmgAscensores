@@ -108,14 +108,14 @@ describe('LLMService', () => {
       expect(result.error).toBe('Respuesta no parseable');
     });
 
-    it('JSON con texto markdown alrededor → debe fallar', () => {
+    it('JSON envuelto en markdown → strips las fences y parsea correctamente', () => {
       const fallback = createFallbackEvaluacion();
-      const jsonWithMarkdown = '```json\n{"origen":"llm"}\n```';
+      const jsonWithMarkdown = '```json\n{"origen":"llm","sugerencia":null,"alternativas":[]}\n```';
 
       const result = service.parsearRespuesta(jsonWithMarkdown, fallback);
 
-      expect(result.ok).toBe(false);
-      expect(result.evaluacion.origen).toBe('motor_fallback');
+      expect(result.ok).toBe(true);
+      expect(result.evaluacion.origen).toBe('llm');
     });
   });
 

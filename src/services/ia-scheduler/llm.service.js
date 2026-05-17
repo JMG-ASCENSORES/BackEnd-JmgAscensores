@@ -150,7 +150,8 @@ class LLMService {
    */
   parsearRespuesta(rawText, fallback) {
     try {
-      const parsed = JSON.parse(rawText);
+      const clean = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+      const parsed = JSON.parse(clean);
       parsed.origen = 'llm';
       return { ok: true, evaluacion: this.validarPropuesta(parsed) };
     } catch (err) {
