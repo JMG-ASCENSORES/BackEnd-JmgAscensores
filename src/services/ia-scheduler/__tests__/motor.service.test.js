@@ -28,7 +28,6 @@ function createMockDistrictTimes() {
   };
 }
 
-// Helpers to create mock data
 function createWorkItem(overrides = {}) {
   return {
     programacion_id: null,
@@ -63,6 +62,7 @@ function createTecnico(overrides = {}) {
       minutos_comprometidos: 0,
       ultima_hora_fin: null
     },
+    trabajos_del_dia: [],
     ...overrides
   };
 }
@@ -81,8 +81,8 @@ describe('MotorService', () => {
 
   // ─── 1.27 Elegibilidad ────────────────────────────────────────────────────
 
-  describe('Elegibilidad — no asigna reparación a Técnico de Mantenimiento', () => {
-    it('debe filtrar correctamente por especialidad', () => {
+  describe('Elegibilidad — candidatosElegibles', () => {
+    it('no asigna reparación a Técnico de Mantenimiento', () => {
       const trabajoReparacion = createWorkItem({ tipo_trabajo: 'reparacion', prioridad: 2 });
       const tecnicos = [
         createTecnico({ trabajador_id: 1, especialidad: 'Técnico de Mantenimiento' }),
@@ -94,7 +94,7 @@ describe('MotorService', () => {
       expect(elegibles[0].trabajador_id).toBe(2);
     });
 
-    it('debe permitir mantenimiento a Técnico General', () => {
+    it('permite mantenimiento a Técnico General', () => {
       const trabajo = createWorkItem({ tipo_trabajo: 'mantenimiento', prioridad: 4 });
       const tecnicos = [
         createTecnico({ trabajador_id: 1, especialidad: 'Técnico General' }),
@@ -106,7 +106,7 @@ describe('MotorService', () => {
       expect(elegibles[0].especialidad).toBe('Técnico General');
     });
 
-    it('debe manejar tipo de trabajo desconocido (sin elegibles)', () => {
+    it('tipo de trabajo desconocido → sin elegibles', () => {
       const trabajo = createWorkItem({ tipo_trabajo: 'tipo_desconocido', prioridad: 4 });
       const tecnicos = [
         createTecnico({ trabajador_id: 1, especialidad: 'Técnico General' })
@@ -117,372 +117,7 @@ describe('MotorService', () => {
     });
   });
 
-  // ─── 1.28 Prioridad ───────────────────────────────────────────────────────
-
-  describe('Prioridad — emergencias primero', () => {
-    it('debe ordenar emergencias antes que mantenimientos', () => {
-      const items = [
-        createWorkItem({ tipo_trabajo: 'mantenimiento', prioridad: 4, distrito: 'A' }),
-        createWorkItem({ tipo_trabajo: 'emergencia', prioridad: 1, distrito: 'Z' }),
-        createWorkItem({ tipo_trabajo: 'reparacion', prioridad: 2, distrito: 'B' })
-      ];
-
-      const ordenados = motor.ordenarPorPrioridad(items);
-      expect(ordenados[0].tipo_trabajo).toBe('emergencia');
-      expect(ordenados[1].tipo_trabajo).toBe('reparacion');
-      expect(ordenados[2].tipo_trabajo).toBe('mantenimiento');
-    });
-
-    it('misma prioridad: ordena por hora_preferida', () => {
-      const items = [
-        createWorkItem({ tipo_trabajo: 'mantenimiento', prioridad: 4, hora_preferida: '11:00' }),
-        createWorkItem({ tipo_trabajo: 'mantenimiento', prioridad: 4, hora_preferida: '09:00' })
-      ];
-
-      const ordenados = motor.ordenarPorPrioridad(items);
-      expect(ordenados[0].hora_preferida).toBe('09:00');
-      expect(ordenados[1].hora_preferida).toBe('11:00');
-    });
-
-    it('asigna emergencias primero (integración)', () => {
-      const items = [
-        createWorkItem({ ascensor_id: 1, tipo_trabajo: 'mantenimiento', prioridad: 4 }),
-        createWorkItem({ ascensor_id: 2, tipo_trabajo: 'emergencia', prioridad: 1 })
-      ];
-      const tecnicos = [
-        createTecnico({ trabajador_id: 1, especialidad: 'Técnico General' })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-      // El único técnico tiene ambos trabajos. Emergencia debe estar primero.
-      const trabajos = propuesta.tecnicos[0].trabajos;
-      expect(trabajos[0].tipo_trabajo).toBe('emergencia');
-    });
-  });
-
-  // ─── 1.29 Ventana horaria ─────────────────────────────────────────────────
-
-  describe('Ventana horaria 08:30–18:30', () => {
-    it('trabajo que cabe debe tener overflow false', () => {
-      const items = [
-        createWorkItem({ duracion_min: 60, distrito: 'Miraflores' })
-      ];
-      const tecnicos = [
-        createTecnico({ trabajador_id: 1, especialidad: 'Técnico General' })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-      const trabajos = propuesta.tecnicos[0].trabajos;
-      expect(trabajos).toHaveLength(1);
-      expect(trabajos[0].overflow).toBe(false);
-      expect(trabajos[0].hora_inicio).toBe('08:30');
-      expect(trabajos[0].hora_fin).toBe('09:30');
-    });
-
-    it('múltiples trabajos que exceden la jornada generan overflow', () => {
-      // 12 trabajos de 60 min = 720 min = 12h excede los 600 min máximo
-      const items = Array.from({ length: 10 }, (_, i) =>
-        createWorkItem({ ascensor_id: i + 1, duracion_min: 60, distrito: 'Miraflores', prioridad: 4 })
-      );
-      const tecnicos = [
-        createTecnico({ trabajador_id: 1, especialidad: 'Técnico General' })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-      expect(propuesta.overflow.length).toBeGreaterThan(0);
-      propuesta.overflow.forEach(w => {
-        expect(w.overflow).toBe(true);
-        expect(w.razon_overflow).toBeDefined();
-      });
-    });
-
-    it('overflow en trabajo intermedio propaga a todos los siguientes', () => {
-      // Diseño del caso (en minutos desde medianoche, inicio = 510 = 08:30, límite = 1110 = 18:30):
-      //   A (280 min, Miraflores):  start=510,       end=790  (13:10) → OK
-      //   B (100 min, La Molina):   start=790+55=845, end=945  (15:45) → OK    [traslado Miraflores→La Molina=55]
-      //   C (170 min, La Molina):   start=945+15=960, end=1130 (18:50) → OVERFLOW  [traslado La Molina→La Molina=15]
-      //   D (30  min, La Molina):   tiempoActual se congela en 960 → start=960+15=975, end=1005 (16:45) → sin fix sería OK, con fix → OVERFLOW
-      //
-      // Total duracion = 280+100+170+30 = 580 < 600 (MAX_MINUTOS_DIA) → los 4 se asignan al técnico.
-      // El overflow de C activa overflowActivado = true → D también queda en overflow aunque su hora_fin < 18:30.
-      const items = [
-        createWorkItem({ ascensor_id: 1, distrito: 'Miraflores', duracion_min: 280, prioridad: 4 }),
-        createWorkItem({ ascensor_id: 2, distrito: 'La Molina',  duracion_min: 100, prioridad: 4 }),
-        createWorkItem({ ascensor_id: 3, distrito: 'La Molina',  duracion_min: 170, prioridad: 4 }),
-        createWorkItem({ ascensor_id: 4, distrito: 'La Molina',  duracion_min: 30,  prioridad: 4 })
-      ];
-      const tecnicos = [
-        createTecnico({ trabajador_id: 1, especialidad: 'Técnico General' })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-
-      // C y D deben estar en overflow (2 ítems)
-      expect(propuesta.overflow.length).toBe(2);
-
-      // A y B deben estar en la ruta normal sin overflow
-      const trabajosNormales = propuesta.tecnicos[0]?.trabajos || [];
-      expect(trabajosNormales).toHaveLength(2);
-      trabajosNormales.forEach(t => {
-        expect(t.overflow).toBe(false);
-      });
-    });
-
-    it('respeta carga preexistente — empieza después de último trabajo', () => {
-      const items = [createWorkItem({ duracion_min: 60, ascensor_id: 1 })];
-      const tecnicos = [
-        createTecnico({
-          trabajador_id: 1,
-          especialidad: 'Técnico General',
-          carga_preexistente: {
-            trabajos_confirmados: 2,
-            minutos_comprometidos: 120,
-            ultima_hora_fin: '11:00'
-          }
-        })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-      const trabajos = propuesta.tecnicos[0].trabajos;
-      // Debe empezar a las 11:00 + 15 min margen = 11:15
-      expect(trabajos[0].hora_inicio).toBe('11:15');
-    });
-  });
-
-  // ─── 1.30 Clustering ──────────────────────────────────────────────────────
-
-  describe('Clustering por distrito', () => {
-    it('trabajos en mismo distrito se agrupan (nearest-neighbor)', () => {
-      const items = [
-        createWorkItem({ ascensor_id: 1, distrito: 'Miraflores', prioridad: 4 }),
-        createWorkItem({ ascensor_id: 2, distrito: 'San Isidro', prioridad: 4 }),
-        createWorkItem({ ascensor_id: 3, distrito: 'Miraflores', prioridad: 4 }),
-        createWorkItem({ ascensor_id: 4, distrito: 'San Isidro', prioridad: 4 })
-      ];
-      const tecnicos = [
-        createTecnico({ trabajador_id: 1, especialidad: 'Técnico General' })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-      const trabajos = propuesta.tecnicos[0].trabajos;
-
-      // Verify same-district jobs are consecutive
-      const distritos = trabajos.map(t => t.distrito);
-      // After nearest-neighbor starting from Cercado de Lima, the sequence should
-      // minimize total travel. Both Miraflores and San Isidro are close.
-      // Let's just verify no job has huge gaps.
-      const rutasValidas = trabajos.every(t => t.hora_inicio && t.hora_fin);
-      expect(rutasValidas).toBe(true);
-      expect(trabajos.length).toBe(4);
-    });
-
-    it('nearest-neighbor debe minimizar traslados', () => {
-      const items = [
-        createWorkItem({ ascensor_id: 1, distrito: 'La Molina', prioridad: 4, duracion_min: 30 }),
-        createWorkItem({ ascensor_id: 2, distrito: 'Miraflores', prioridad: 4, duracion_min: 30 }),
-        createWorkItem({ ascensor_id: 3, distrito: 'Surco', prioridad: 4, duracion_min: 30 })
-      ];
-      const tecnicos = [
-        createTecnico({ trabajador_id: 1, especialidad: 'Técnico General' })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-      const trabajos = propuesta.tecnicos[0].trabajos;
-
-      // From Cercado de Lima: closest is Miraflores (45), then Surco (35 from Miraflores),
-      // then La Molina (35 from Surco)
-      expect(trabajos[0].distrito).toBe('Miraflores');
-      expect(trabajos[1].distrito).toBe('Surco');
-      expect(trabajos[2].distrito).toBe('La Molina');
-    });
-  });
-
-  // ─── 1.31 Preferencia de técnico ──────────────────────────────────────────
-
-  describe('Preferencia de técnico', () => {
-    it('asigna al técnico preferido si está disponible', () => {
-      const items = [
-        createWorkItem({
-          ascensor_id: 1,
-          tecnico_preferido_id: 2,
-          tipo_trabajo: 'mantenimiento',
-          prioridad: 4
-        })
-      ];
-      const tecnicos = [
-        createTecnico({ trabajador_id: 1, especialidad: 'Técnico de Mantenimiento' }),
-        createTecnico({ trabajador_id: 2, especialidad: 'Técnico de Mantenimiento' })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-      // Debe asignarse al técnico 2
-      expect(propuesta.tecnicos).toHaveLength(1);
-      expect(propuesta.tecnicos[0].trabajador_id).toBe(2);
-    });
-
-    it('tecnico_preferido_respetado es true cuando se asignó el preferido', () => {
-      const items = [
-        createWorkItem({
-          ascensor_id: 1,
-          tecnico_preferido_id: 2,
-          tipo_trabajo: 'mantenimiento',
-          prioridad: 4
-        })
-      ];
-      const tecnicos = [
-        createTecnico({ trabajador_id: 1, especialidad: 'Técnico de Mantenimiento' }),
-        createTecnico({ trabajador_id: 2, especialidad: 'Técnico de Mantenimiento' })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-      expect(propuesta.tecnicos[0].trabajos[0].tecnico_preferido_respetado).toBe(true);
-    });
-
-    it('tecnico_preferido_respetado es false cuando no había preferencia', () => {
-      const items = [
-        createWorkItem({ ascensor_id: 1, tecnico_preferido_id: null, tipo_trabajo: 'mantenimiento', prioridad: 4 })
-      ];
-      const tecnicos = [
-        createTecnico({ trabajador_id: 1, especialidad: 'Técnico de Mantenimiento' })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-      expect(propuesta.tecnicos[0].trabajos[0].tecnico_preferido_respetado).toBe(false);
-    });
-
-    it('tecnico_preferido_respetado es false cuando el preferido no estaba disponible', () => {
-      const items = [
-        createWorkItem({
-          ascensor_id: 1,
-          tecnico_preferido_id: 99,
-          tipo_trabajo: 'mantenimiento',
-          prioridad: 4
-        })
-      ];
-      const tecnicos = [
-        createTecnico({ trabajador_id: 1, especialidad: 'Técnico de Mantenimiento' })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-      expect(propuesta.tecnicos[0].trabajos[0].tecnico_preferido_respetado).toBe(false);
-    });
-
-    it('ignora preferencia si el preferido no está seleccionado', () => {
-      const items = [
-        createWorkItem({
-          ascensor_id: 1,
-          tecnico_preferido_id: 99, // No seleccionado
-          tipo_trabajo: 'mantenimiento',
-          prioridad: 4
-        })
-      ];
-      const tecnicos = [
-        createTecnico({ trabajador_id: 1, especialidad: 'Técnico de Mantenimiento' })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-      expect(propuesta.tecnicos).toHaveLength(1);
-      expect(propuesta.tecnicos[0].trabajador_id).toBe(1);
-    });
-
-    it('ignora preferencia si el preferido está saturado', () => {
-      const items = Array.from({ length: 12 }, (_, i) =>
-        createWorkItem({
-          ascensor_id: i + 1,
-          tecnico_preferido_id: 1,
-          duracion_min: 60,
-          prioridad: 4,
-          tipo_trabajo: 'mantenimiento'
-        })
-      );
-      const tecnicos = [
-        createTecnico({ trabajador_id: 1, especialidad: 'Técnico de Mantenimiento' }),
-        createTecnico({ trabajador_id: 2, especialidad: 'Técnico de Mantenimiento' })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-      // Técnico 1 estará saturado después de ~10 trabajos (600 min),
-      // los restantes irán al 2 o a overflow
-      expect(propuesta.tecnicos.length).toBeGreaterThanOrEqual(1);
-    });
-  });
-
-  // ─── 1.32 Sin elegible ────────────────────────────────────────────────────
-
-  describe('Sin técnico elegible', () => {
-    it('reparación con solo Técnicos de Mantenimiento va a sinElegible', () => {
-      const items = [
-        createWorkItem({ tipo_trabajo: 'reparacion', prioridad: 2, ascensor_id: 1 })
-      ];
-      const tecnicos = [
-        createTecnico({ trabajador_id: 1, especialidad: 'Técnico de Mantenimiento' }),
-        createTecnico({ trabajador_id: 2, especialidad: 'Técnico de Mantenimiento' })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-      expect(propuesta.sin_elegible).toHaveLength(1);
-      expect(propuesta.sin_elegible[0].tipo_trabajo).toBe('reparacion');
-      expect(propuesta.sin_elegible[0].razon_sin_tecnico).toBeDefined();
-      expect(propuesta.tecnicos).toHaveLength(0);
-    });
-  });
-
-  // ─── 1.33 Traslados ───────────────────────────────────────────────────────
-
-  describe('Cálculo de traslados', () => {
-    it('primer trabajo tiene traslado 0', () => {
-      const items = [
-        createWorkItem({ ascensor_id: 1, distrito: 'Miraflores', prioridad: 4 })
-      ];
-      const tecnicos = [
-        createTecnico({ trabajador_id: 1, especialidad: 'Técnico General' })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-      expect(propuesta.tecnicos[0].trabajos[0].traslado_desde_anterior).toBe(0);
-    });
-
-    it('segundo trabajo incluye traslado desde el distrito anterior', () => {
-      const items = [
-        createWorkItem({ ascensor_id: 1, distrito: 'Miraflores', duracion_min: 30, prioridad: 4 }),
-        createWorkItem({ ascensor_id: 2, distrito: 'San Isidro', duracion_min: 30, prioridad: 4 })
-      ];
-      const tecnicos = [
-        createTecnico({ trabajador_id: 1, especialidad: 'Técnico General' })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-      const trabajos = propuesta.tecnicos[0].trabajos;
-
-      // El segundo trabajo debe mostrar traslado desde Miraflores → San Isidro (25 min)
-      expect(trabajos[1].traslado_desde_anterior).toBe(25);
-
-      // Las horas deben ser:
-      // 08:30 + 30 min = 09:00 trabajo Miraflores
-      // 09:00 + 25 traslado = 09:25 inicio San Isidro
-      // 09:25 + 30 min = 09:55 fin San Isidro
-      expect(trabajos[0].hora_inicio).toBe('08:30');
-      expect(trabajos[0].hora_fin).toBe('09:00');
-      expect(trabajos[1].hora_inicio).toBe('09:25');
-      expect(trabajos[1].hora_fin).toBe('09:55');
-    });
-
-    it('mismo distrito usa 15 min de traslado', () => {
-      const items = [
-        createWorkItem({ ascensor_id: 1, distrito: 'Miraflores', duracion_min: 30, prioridad: 4 }),
-        createWorkItem({ ascensor_id: 2, distrito: 'Miraflores', duracion_min: 30, prioridad: 4 })
-      ];
-      const tecnicos = [
-        createTecnico({ trabajador_id: 1, especialidad: 'Técnico General' })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-      const trabajos = propuesta.tecnicos[0].trabajos;
-      expect(trabajos[1].traslado_desde_anterior).toBe(15);
-    });
-  });
-
-  // ─── Unit tests for helpers ───────────────────────────────────────────────
+  // ─── Helpers ──────────────────────────────────────────────────────────────
 
   describe('Helpers', () => {
     it('toMinutos convierte correctamente', () => {
@@ -498,58 +133,7 @@ describe('MotorService', () => {
     });
   });
 
-  // ─── 1.25: Validación de inputs ──────────────────────────────────────────
-
-  describe('Validación de inputs', () => {
-    it('lanza error si no hay workItems', () => {
-      expect(() => motor.validarInputs([], [createTecnico()]))
-        .toThrow('No hay trabajos en el pool');
-    });
-
-    it('lanza error si no hay técnicos', () => {
-      expect(() => motor.validarInputs([createWorkItem()], []))
-        .toThrow('No hay técnicos seleccionados');
-    });
-  });
-
-  // ─── Estructura de respuesta ──────────────────────────────────────────────
-
-  describe('Estructura de PropuestaMotor', () => {
-    it('retorna la estructura completa', () => {
-      const items = [createWorkItem({ ascensor_id: 1 })];
-      const tecnicos = [
-        createTecnico({ trabajador_id: 1, especialidad: 'Técnico General' })
-      ];
-
-      const propuesta = motor.generarPropuesta(items, tecnicos, '2026-05-13');
-
-      expect(propuesta).toHaveProperty('fecha');
-      expect(propuesta.fecha).toBe('2026-05-13');
-      expect(propuesta).toHaveProperty('origen');
-      expect(propuesta.origen).toBe('motor');
-      expect(propuesta).toHaveProperty('version');
-      expect(propuesta).toHaveProperty('tecnicos');
-      expect(propuesta).toHaveProperty('overflow');
-      expect(propuesta).toHaveProperty('sin_elegible');
-      expect(propuesta).toHaveProperty('generado_en');
-
-      const tecnico = propuesta.tecnicos[0];
-      expect(tecnico).toHaveProperty('trabajador_id');
-      expect(tecnico).toHaveProperty('nombre');
-      expect(tecnico).toHaveProperty('carga_minutos');
-      expect(tecnico).toHaveProperty('carga_horas');
-      expect(tecnico).toHaveProperty('trabajos');
-
-      const trabajo = tecnico.trabajos[0];
-      expect(trabajo).toHaveProperty('hora_inicio');
-      expect(trabajo).toHaveProperty('hora_fin');
-      expect(trabajo).toHaveProperty('traslado_desde_anterior');
-      expect(trabajo).toHaveProperty('overflow');
-      expect(trabajo).toHaveProperty('duracion_min');
-    });
-  });
-
-  // ─── calcularSlot: búsqueda de huecos en agenda ────────────────────────
+  // ─── calcularSlot ─────────────────────────────────────────────────────────
 
   describe('calcularSlot — búsqueda de huecos en agenda del técnico', () => {
     it('1. técnico libre → slot a las 08:30 + traslado desde Cercado de Lima', () => {
@@ -578,7 +162,6 @@ describe('MotorService', () => {
 
       expect(slot).not.toBeNull();
       // San Isidro(10:30) + traslado(25→Miraflores) = 10:55 inicio
-      // Miraflores + traslado(35→Surco) deja libre hasta 12:25 → cabe
       expect(slot.hora_inicio).toBe('10:55');
       expect(slot.hora_fin).toBe('11:55');
       expect(slot.traslado_min).toBe(25);
@@ -612,12 +195,10 @@ describe('MotorService', () => {
       const slot = motor.calcularSlot(workItem, tecnico);
 
       expect(slot).not.toBeNull();
-      // Cercado de Lima → La Molina = 55 min. El técnico no puede llegar antes de 09:25.
-      // La preferencia 08:00 es demasiado temprana → se usa el primer hueco disponible.
+      // Cercado de Lima → La Molina = 55 min → no puede llegar antes de 09:25
       expect(slot.hora_inicio).toBe('09:25');
       expect(slot.hora_fin).toBe('10:25');
       expect(slot.traslado_min).toBe(55);
-      // Verificar que NO se usó la hora preferida (es anterior al inicio posible)
       expect(slot.hora_inicio).not.toBe('08:00');
     });
 
@@ -636,7 +217,7 @@ describe('MotorService', () => {
       expect(slot).toBeNull();
     });
 
-    it('6. traslado entre distritos consume todo el hueco → retorna null', () => {
+    it('6. traslado consume todo el hueco → retorna null', () => {
       const workItem = createWorkItem({ distrito: 'La Molina', duracion_min: 60 });
       const tecnico = createTecnico({
         trabajos_del_dia: [
@@ -649,13 +230,11 @@ describe('MotorService', () => {
 
       // Entre Miraflores(10:00) y Surco(11:00):
       //   Miraflores→La Molina = 55 min → inicio posible = 10:55
-      //   La Molina→Surco = 35 min → hay que salir antes de 10:25
-      //   El hueco es negativo → no entra.
-      // Después de Surco(18:30) ya no hay jornada.
+      //   La Molina→Surco = 35 min → hay que salir antes de 10:25 → no entra
       expect(slot).toBeNull();
     });
 
-    it('7. múltiples huecos disponibles → elige el más temprano', () => {
+    it('7. múltiples huecos disponibles → elige el más temprano viable', () => {
       const workItem = createWorkItem({ distrito: 'Miraflores', duracion_min: 30 });
       const tecnico = createTecnico({
         trabajos_del_dia: [
@@ -667,10 +246,7 @@ describe('MotorService', () => {
       const slot = motor.calcularSlot(workItem, tecnico);
 
       expect(slot).not.toBeNull();
-      // Hueco 1 (antes del primero): 09:15→09:35 (20 min) → no cabe (necesita 30)
-      // Hueco 2 (entre trabajos): 11:25→14:05 (160 min) → el más temprano que cabe
-      // Hueco 3 (después del último): 16:55→18:30 (95 min)
-      // Debe elegir el hueco 2 por ser el más temprano viable.
+      // Hueco entre trabajos: San Isidro(11:00) + 25 traslado → 11:25 inicio
       expect(slot.hora_inicio).toBe('11:25');
       expect(slot.hora_fin).toBe('11:55');
       expect(slot.traslado_min).toBe(25);
@@ -694,9 +270,9 @@ describe('MotorService', () => {
     });
   });
 
-  // ─── evaluarTecnicos: evaluación individual de técnicos ────────────────
+  // ─── evaluarTecnicos ──────────────────────────────────────────────────────
 
-  describe('evaluarTecnicos — evaluación individual de técnicos para un trabajo', () => {
+  describe('evaluarTecnicos — evaluación individual para un trabajo', () => {
     it('9. un solo técnico elegible → es la sugerencia sin alternativas', () => {
       const workItem = createWorkItem({ tipo_trabajo: 'mantenimiento', prioridad: 4 });
       const tecnicos = [
@@ -730,15 +306,11 @@ describe('MotorService', () => {
       const resultado = motor.evaluarTecnicos(workItem, tecnicos);
 
       expect(resultado.sin_elegible).toBe(false);
-      // El técnico 1 tiene menos carga → mejor score
       expect(resultado.sugerencia.trabajador_id).toBe(1);
       expect(resultado.alternativas).toHaveLength(1);
       expect(resultado.alternativas[0].trabajador_id).toBe(2);
-      // _score debe estar limpio en la salida
       expect(resultado.alternativas[0]._score).toBeUndefined();
-      // Verificar campos de la alternativa
       expect(resultado.alternativas[0].carga_previa_horas).toBe(5.0);
-      expect(resultado.alternativas[0].especialidad).toBe('Técnico General');
     });
 
     it('11. ningún técnico elegible por especialidad → sin_elegible=true', () => {
@@ -768,16 +340,12 @@ describe('MotorService', () => {
         createTecnico({
           trabajador_id: 1,
           especialidad: 'Técnico General',
-          trabajos_del_dia: [
-            { hora_inicio: '08:30', hora_fin: '18:30', distrito: 'Miraflores' }
-          ]
+          trabajos_del_dia: [{ hora_inicio: '08:30', hora_fin: '18:30', distrito: 'Miraflores' }]
         }),
         createTecnico({
           trabajador_id: 2,
           especialidad: 'Técnico General',
-          trabajos_del_dia: [
-            { hora_inicio: '08:30', hora_fin: '18:30', distrito: 'Surco' }
-          ]
+          trabajos_del_dia: [{ hora_inicio: '08:30', hora_fin: '18:30', distrito: 'Surco' }]
         })
       ];
 

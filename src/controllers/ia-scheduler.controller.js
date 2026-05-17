@@ -2,7 +2,7 @@ const { DemandService } = require('../services/ia-scheduler/demand.service');
 const { WorkerService } = require('../services/ia-scheduler/worker.service');
 const { MotorService } = require('../services/ia-scheduler/motor.service');
 const { DistrictTimesService } = require('../services/ia-scheduler/district-times.service');
-const { ConfiguracionIA, Trabajador, Programacion } = require('../models');
+const { ConfiguracionIA, Trabajador, Programacion, RutaDiaria, DetalleRuta, sequelize } = require('../models');
 
 // ─── Inicialización lazy — servicios se cargan al primer uso ──────────────────
 let _districtTimes = null;
@@ -43,7 +43,12 @@ const getDemand = async (req, res, next) => {
     const { demandService } = _getServices(districtTimes);
     const trabajos = await demandService.obtenerContextoMantenimientos(fecha);
 
-    return res.status(200).json({ fecha, total: trabajos.length, trabajos });
+    const por_tipo = { mantenimiento: 0, reparacion: 0, inspeccion: 0, emergencia: 0 };
+    for (const t of trabajos) {
+      if (por_tipo[t.tipo_trabajo] !== undefined) por_tipo[t.tipo_trabajo]++;
+    }
+
+    return res.status(200).json({ fecha, total: trabajos.length, por_tipo, trabajos });
   } catch (error) {
     console.error('[IA-Scheduler] Error en getDemand:', error.message);
     return res.status(500).json({ error: 'Error al obtener contexto de mantenimientos: ' + error.message });
@@ -104,11 +109,33 @@ const generar = async (req, res, next) => {
     if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
       return res.status(400).json({ error: 'Formato de fecha inválido. Use YYYY-MM-DD.' });
     }
+    const TIPOS_VALIDOS = ['mantenimiento', 'reparacion', 'inspeccion', 'emergencia'];
     if (!trabajoInput || !trabajoInput.cliente_id || !trabajoInput.ascensor_id || !trabajoInput.tipo_trabajo) {
       return res.status(400).json({ error: 'Body inválido: trabajo.cliente_id, trabajo.ascensor_id y trabajo.tipo_trabajo son obligatorios.' });
     }
-    if (!Array.isArray(tecnico_ids) || tecnico_ids.length === 0) {
-      return res.status(400).json({ error: 'Debe proporcionar al menos un tecnico_id.' });
+    if (!TIPOS_VALIDOS.includes(trabajoInput.tipo_trabajo)) {
+      return res.status(400).json({ error: `tipo_trabajo inválido. Valores permitidos: ${TIPOS_VALIDOS.join(', ')}` });
+    }
+    if (tecnico_ids !== undefined && !Array.isArray(tecnico_ids)) {
+      return res.status(400).json({ error: 'tecnico_ids debe ser un array.' });
+    }
+
+    let ids = Array.isArray(tecnico_ids) && tecnico_ids.length > 0 ? tecnico_ids : null;
+    if (!ids) {
+      const activos = await Trabajador.findAll({
+        where: { estado_activo: true },
+        attributes: ['trabajador_id']
+      });
+      ids = activos.map(t => t.trabajador_id);
+      if (ids.length === 0) {
+        return res.status(400).json({ error: 'No hay técnicos activos en el sistema.' });
+      }
+    }
+    if (ids.length > 10) {
+      return res.status(400).json({ error: `Se permite un máximo de 10 técnicos por evaluación. Recibidos: ${ids.length}. Especificá un subconjunto.` });
+    }
+    if (trabajoInput.hora_preferida && !/^\d{2}:\d{2}$/.test(trabajoInput.hora_preferida)) {
+      return res.status(400).json({ error: 'Formato de hora_preferida inválido. Use HH:MM.' });
     }
 
     const districtTimes = await _getDistrictTimes();
@@ -155,6 +182,12 @@ const generar = async (req, res, next) => {
     console.error('[IA-Scheduler] Error en generar:', error.message);
     return res.status(500).json({ error: 'Error al generar sugerencia: ' + error.message });
   }
+};
+
+// ─── POST /api/ia-scheduler/ajustar ────────────────────────────────────────────
+
+const ajustar = async (req, res, next) => {
+  return res.status(501).json({ error: 'Endpoint pendiente de implementación (Fase 2 — requiere ANTHROPIC_API_KEY).' });
 };
 
 // ─── GET /api/ia-scheduler/configuracion ───────────────────────────────────────
@@ -242,16 +275,20 @@ const updateConfiguracion = async (req, res, next) => {
 // ─── POST /api/ia-scheduler/confirmar ──────────────────────────────────────────
 
 const confirmar = async (req, res, next) => {
+  const transaction = await sequelize.transaction();
   try {
     const { fecha, trabajo, tecnico_id, mantenimiento_fijo_id } = req.body;
 
     if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      await transaction.rollback();
       return res.status(400).json({ error: 'Formato de fecha inválido. Use YYYY-MM-DD.' });
     }
     if (!trabajo || !trabajo.cliente_id || !trabajo.ascensor_id || !trabajo.tipo_trabajo || !trabajo.hora_inicio || !trabajo.hora_fin) {
+      await transaction.rollback();
       return res.status(400).json({ error: 'Body inválido: trabajo.cliente_id, ascensor_id, tipo_trabajo, hora_inicio y hora_fin son obligatorios.' });
     }
     if (!tecnico_id) {
+      await transaction.rollback();
       return res.status(400).json({ error: 'tecnico_id es obligatorio.' });
     }
 
@@ -259,6 +296,7 @@ const confirmar = async (req, res, next) => {
     const titulo = `${tipo.charAt(0).toUpperCase()}${tipo.slice(1)}` +
       (trabajo.nombre_cliente ? ` - ${trabajo.nombre_cliente}` : '');
 
+    // 1. Crear la Programacion
     const nueva = await Programacion.create({
       titulo,
       fecha_inicio:          `${fecha}T${trabajo.hora_inicio}:00-05:00`,
@@ -270,10 +308,46 @@ const confirmar = async (req, res, next) => {
       estado:                'pendiente',
       mantenimiento_fijo_id: mantenimiento_fijo_id || null,
       descripcion:           trabajo.justificacion || null,
+    }, { transaction });
+
+    // 2. Crear o actualizar RutaDiaria del técnico para ese día
+    const [ruta, created] = await RutaDiaria.findOrCreate({
+      where: { trabajador_id: tecnico_id, fecha_ruta: fecha },
+      defaults: {
+        numero_paradas: 1,
+        hora_inicio:    trabajo.hora_inicio,
+        hora_fin:       trabajo.hora_fin,
+        estado_ruta:    'planificada',
+      },
+      transaction
     });
 
+    if (!created) {
+      const updates = { numero_paradas: (ruta.numero_paradas || 0) + 1 };
+      const horaInicioRuta = ruta.hora_inicio ? String(ruta.hora_inicio).substring(0, 5) : null;
+      if (!horaInicioRuta || trabajo.hora_inicio < horaInicioRuta) updates.hora_inicio = trabajo.hora_inicio;
+      const horaFinRuta = ruta.hora_fin ? String(ruta.hora_fin).substring(0, 5) : null;
+      if (!horaFinRuta || trabajo.hora_fin > horaFinRuta) updates.hora_fin = trabajo.hora_fin;
+      await ruta.update(updates, { transaction });
+    }
+
+    // 3. Insertar DetalleRuta al final de la secuencia existente
+    const ordenActual = await DetalleRuta.count({ where: { ruta_id: ruta.ruta_id }, transaction });
+    await DetalleRuta.create({
+      ruta_id:         ruta.ruta_id,
+      programacion_id: nueva.programacion_id,
+      cliente_id:      trabajo.cliente_id,
+      ascensor_id:     trabajo.ascensor_id,
+      orden_parada:    ordenActual + 1,
+      hora_llegada:    trabajo.hora_inicio,
+      hora_salida:     trabajo.hora_fin,
+    }, { transaction });
+
+    await transaction.commit();
     return res.status(200).json({ ok: true, programacion_id: nueva.programacion_id });
+
   } catch (error) {
+    await transaction.rollback();
     console.error('[IA-Scheduler] Error en confirmar:', error.message);
     return res.status(500).json({ error: 'Error al confirmar: ' + error.message });
   }
@@ -283,6 +357,7 @@ module.exports = {
   getDemand,
   getTecnicos,
   generar,
+  ajustar,
   confirmar,
   getConfiguracion,
   updateConfiguracion

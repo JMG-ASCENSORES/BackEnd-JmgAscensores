@@ -487,3 +487,16 @@ Al confirmar un trabajo originado en un MantenimientoFijo, se incluye `mantenimi
 - En mobile (< 768px), las alternativas se muestran como acordeón colapsable.
 - Si el admin selecciona "hora preferida" y el técnico sugerido no puede llegar a tiempo, el LLM lo explica en la justificación.
 - Después de confirmar, el formulario se limpia automáticamente para que el admin pueda programar el siguiente trabajo sin recargar la página.
+
+## Limitación conocida del chat de ajustes
+
+El chat es **sin estado acumulado en el LLM**. Cada instrucción que el admin envía reemplaza la anterior — el LLM no recuerda las instrucciones previas del mismo chat.
+
+**Ejemplo del caso problemático:**
+1. Admin escribe: "no me des a Carlos" → el LLM excluye a Carlos.
+2. Admin escribe: "tampoco a Pedro" → el LLM excluye a Pedro, **pero Carlos puede volver a aparecer** porque esa instrucción ya no está en el contexto.
+
+**Cómo comunicarlo al admin:** agregar un texto de ayuda bajo el input del chat:
+> _"Cada ajuste reemplaza al anterior. Si querés excluir a varios técnicos, escribilos juntos: 'no me des a Carlos ni a Pedro'."_
+
+Esta limitación es intencional en v1 — acumular el historial en el LLM aumentaría el costo por llamada y la latencia. Se puede revisar en Fase 7 si el feedback del admin lo requiere.

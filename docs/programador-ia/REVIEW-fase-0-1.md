@@ -6,6 +6,19 @@
 
 ---
 
+## Resumen de estado
+
+| # | Severidad | Descripción | Estado |
+|---|---|---|---|
+| Bug 1 | Medio | Motor siempre usa ventana horaria hardcodeada | ✅ Corregido 2026-05-16 |
+| Bug 2 | Menor | `tecnico_preferido_respetado` siempre `false` | ✅ Corregido 2026-05-16 |
+| Obs 1 | Info | `getTecnicos` no usa instancia lazy de WorkerService | ✅ Corregido 2026-05-16 |
+| Obs 2 | Info | Overflow intermedio no propaga a trabajos subsiguientes | ✅ Corregido 2026-05-16 |
+| Obs 3 | Info | Tests de integración pasan con BD vacía | ⏳ Fase 7 |
+| Naming | Info | TablaDistritoLima vs TablaDistritosLima | ⏳ Pendiente |
+
+---
+
 ## Índice
 
 1. [Bug 1 — Motor siempre usa ventana horaria hardcodeada](#bug-1)
@@ -19,7 +32,7 @@
 ---
 
 <a name="bug-1"></a>
-## Bug 1 — MEDIO: El motor siempre usa la ventana horaria hardcodeada
+## Bug 1 — MEDIO ✅ CORREGIDO: El motor siempre usa la ventana horaria hardcodeada
 
 ### Archivos involucrados
 - `src/controllers/ia-scheduler.controller.js` — línea 24
@@ -92,10 +105,14 @@ const propuestaMotor = motorService.generarPropuesta(pool, tecnicos, fecha);
 
 Alternativa: invalidar `_motorService = null` en el handler `updateConfiguracion` para que se reconstruya en el próximo request de generación. Esto evita tener que leer la config en cada `generar`.
 
+### Corrección aplicada (2026-05-16)
+
+El handler `generar` en `ia-scheduler.controller.js` lee `ConfiguracionIA` de BD en cada request y pasa `motorConfig` al constructor de `MotorService`. El handler `updateConfiguracion` invalida `_motorService = null` para forzar reconstrucción con la config actualizada.
+
 ---
 
 <a name="bug-2"></a>
-## Bug 2 — MENOR: `tecnico_preferido_respetado` siempre es `false`
+## Bug 2 — MENOR ✅ CORREGIDO: `tecnico_preferido_respetado` siempre es `false`
 
 ### Archivos involucrados
 - `src/services/ia-scheduler/motor.service.js` — método `elegirTecnico` (líneas 137-158) y `_toTrabajoEnRuta` (líneas 441-463)
@@ -160,10 +177,14 @@ lista.push({ ...workItem, tecnico_preferido_respetado: preferidoRespetado });
 asignaciones.set(elegido.trabajador_id, lista);
 ```
 
+### Corrección aplicada (2026-05-16)
+
+Implementado en `motor.service.js` dentro de `asignarTecnicos()`. El flag `preferidoRespetado` se calcula comparando `elegido.trabajador_id` con `workItem.tecnico_preferido_id` y se propaga al objeto antes de agregarlo a la lista de asignaciones.
+
 ---
 
 <a name="obs-1"></a>
-## Observación 1 — `getTecnicos` no usa la instancia lazy de WorkerService
+## Observación 1 — ✅ CORREGIDA: `getTecnicos` no usa la instancia lazy de WorkerService
 
 ### Archivos involucrados
 - `src/controllers/ia-scheduler.controller.js` — líneas 102-104
@@ -203,7 +224,7 @@ const { workerService } = _getServices(districtTimes);
 ---
 
 <a name="obs-2"></a>
-## Observación 2 — Comportamiento de `calcularHorarios` con overflow intermedio
+## Observación 2 — ✅ CORREGIDA: Comportamiento de `calcularHorarios` con overflow intermedio
 
 ### Archivos involucrados
 - `src/services/ia-scheduler/motor.service.js` — método `calcularHorarios` (líneas 287-340)
@@ -263,6 +284,10 @@ for (let i = 0; i < secuencia.length; i++) {
   }
 }
 ```
+
+### Corrección aplicada (2026-05-16)
+
+Implementado en `motor.service.js` con el flag `overflowActivado`. Una vez que un trabajo genera overflow, el flag se activa y todos los trabajos subsiguientes de la secuencia también se marcan como overflow sin continuar el cálculo de `tiempoActual`.
 
 ---
 
@@ -373,11 +398,11 @@ Esta sección documenta las decisiones de implementación que son correctas, par
 
 ## Prioridad de corrección
 
-| # | Severidad | Descripción | Esfuerzo estimado |
-|---|---|---|---|
-| Bug 1 | Medio | Motor no recibe config de BD — ventana horaria no configurable | ~30 min |
-| Bug 2 | Menor | `tecnico_preferido_respetado` siempre `false` | ~15 min |
-| Obs 1 | Info | `getTecnicos` no usa instancia lazy de WorkerService | ~5 min |
-| Obs 2 | Info | Overflow intermedio no propaga a trabajos subsiguientes | ~20 min |
-| Obs 3 | Info | Tests de integración pasan con BD vacía | Fase 7 |
-| Naming | Info | TablaDistritoLima vs TablaDistritosLima | ~10 min |
+| # | Severidad | Descripción | Esfuerzo estimado | Estado |
+|---|---|---|---|---|
+| Bug 1 | Medio | Motor no recibe config de BD — ventana horaria no configurable | ~30 min | ✅ 2026-05-16 |
+| Bug 2 | Menor | `tecnico_preferido_respetado` siempre `false` | ~15 min | ✅ 2026-05-16 |
+| Obs 1 | Info | `getTecnicos` no usa instancia lazy de WorkerService | ~5 min | ✅ 2026-05-16 |
+| Obs 2 | Info | Overflow intermedio no propaga a trabajos subsiguientes | ~20 min | ✅ 2026-05-16 |
+| Obs 3 | Info | Tests de integración pasan con BD vacía | Fase 7 | ⏳ Pendiente |
+| Naming | Info | TablaDistritoLima vs TablaDistritosLima | ~10 min | ⏳ Pendiente |

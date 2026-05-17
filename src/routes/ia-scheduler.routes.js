@@ -11,6 +11,7 @@ router.use(authorize('ADMIN'));
 router.get('/demand', controller.getDemand);
 router.get('/tecnicos', controller.getTecnicos);
 router.post('/generar', controller.generar);
+router.post('/ajustar', controller.ajustar);
 router.post('/confirmar', controller.confirmar);
 router.get('/configuracion', controller.getConfiguracion);
 router.put('/configuracion', controller.updateConfiguracion);
